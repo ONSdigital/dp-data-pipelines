@@ -27,8 +27,8 @@ _How_ the pipelines mentioned below actually work is covered in the following _I
 
 This system works as follow:
 
-- The lambda triggers a buildspec, for an example lets use [pipeline-dataset-ingress.v1.yml](./pipeline-ingress-v1.yml)
-- This particular buildspec triggers a python pipeline of [./pipeline/dataset-ingress_v1.py](./pipeline/ingress_v1.py)
+- The lambda triggers a buildspec, for an example lets use [pipeline-dataset-ingress.v1.yml](./pipeline-dataset-ingress-v1.yml)
+- This particular buildspec triggers a python pipeline of [./pipeline/dataset_ingress_v1.py](./pipeline/dataset_ingress_v1.py)
 - The pipeline will have an s3 url which will be decompressed to the working dir, it provides:
      - source data
      - configuration options (such as which "transform" script to be applied to the source data)
