@@ -3,9 +3,9 @@
 
 ## Ingress Config V1
 
-The following is an example of the ingress v1 `pipeline-config.json`.
+The following is an example of the dataset ingress v1 `pipeline-config.json`.
 
-Note: This  is _intended_ for use with an ingress_v1 pipeline, but you could implement a new pipeline that can be configured by a config of this structure and equally you could create a v2 ingress config for use by the v1 ingress pipeline.
+Note: This  is _intended_ for use with an dataset_ingress_v1 pipeline, but you could implement a new pipeline that can be configured by a config of this structure and equally you could create a v2 ingress config for use by the v1 ingress pipeline.
 
 Simply put - pipelines and pipeline-configs are both versioned resource but while they are related most direct assumptions have been abstracted to the point where they only loosely coupled.
 
@@ -26,7 +26,7 @@ Simply put - pipelines and pipeline-configs are both versioned resource but whil
         }
     ],
     "priority": "1",
-    "pipeline": "pipeline-ingress-vi.yml",
+    "pipeline": "pipeline-dataset-ingress-vi.yml",
     "options": {
         "pipeline_details": "sdmx.default" 
     }
