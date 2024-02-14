@@ -2,9 +2,9 @@
 
 Documentation of the pipeline variants that can be called from this directory.
 
-## ingress_v1
+## dataset_ingress_v1
 
-The ingress v1 pipelines is intended for the use case of:
+The dataset ingress v1 pipeline is intended for the use case of:
 
 - given an environment variable of `SOURCE` that specifies an s3 bucket with a tarf file in it.
 - and a compatible ./pipeline-config.json (such as v1)
@@ -22,4 +22,4 @@ The config for this pipeline provides:
 - 0-n Supplementary files to be uploaded alongside csv and metadata (such as an sdmx file)
 - a "pipeline_details" key - this identifies the transformation code required to convert the SDMX to csv+metadata along with specifying what sanity checks to run. Please see [pipeline-details](../shared/details.py).
 
-Beyond this high level view, the [python code that represents this](./ingress_v1.py) is a conciously simple set of linear commands and should be fairly easy to follow.
+Beyond this high level view, the [python code that represents this](./dataset_ingress_v1.py) is a conciously simple set of linear commands and should be fairly easy to follow.
