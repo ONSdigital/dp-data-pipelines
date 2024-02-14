@@ -26,7 +26,7 @@ Simply put - pipelines and pipeline-configs are both versioned resource but whil
         }
     ],
     "priority": "1",
-    "pipeline": "pipeline-dataset-ingress-vi.yml",
+    "pipeline": "pipeline-dataset-ingress-v1.yml",
     "options": {
         "pipeline_details": "sdmx.default" 
     }
