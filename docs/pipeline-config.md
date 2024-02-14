@@ -12,7 +12,7 @@ Simply put - pipelines and pipeline-configs are both versioned resource but whil
 ```json
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/schemas/ingress/config/v1.json",
+    "$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/schemas/dataset-ingress/config/v1.json",
     "required_files": [
         {
             "matches": "*.sdmx",
