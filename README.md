@@ -28,7 +28,7 @@ _How_ the pipelines mentioned below actually work is covered in the following _I
 This system works as follow:
 
 - The lambda triggers a buildspec, for an example lets use [pipeline-ingress.v1.yml](./pipeline-ingress-v1.yml)
-- This particular buildspec triggers [./pipelines/ingress_v1.py: ingress_v1()](./pipelines/ingress_v1.py)
+- This particular buildspec triggers a python pipeline of [./pipeline/ingress_v1.py](./pipeline/ingress_v1.py)
 - The pipeline will have an s3 url which will be decompressed to the working dir, it provides:
      - source data
      - configuration options (such as which "transform" script to be applied to the source data)
