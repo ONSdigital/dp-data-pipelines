@@ -27,7 +27,7 @@ _How_ the pipelines mentioned below actually work is covered in the following _I
 
 This system works as follow:
 
-- The lambda triggers a builspec, for an example lets use [pipeline-ingress.v1.yml](./pipeline-ingress-v1.yml)
+- The lambda triggers a buildspec, for an example lets use [pipeline-ingress.v1.yml](./pipeline-ingress-v1.yml)
 - This particular buildspec triggers [./pipelines/ingress_v1.py: ingress_v1()](./pipelines/ingress_v1.py)
 - The pipeline will have an s3 url which will be decompressed to the working dir, it provides:
      - source data
@@ -35,7 +35,7 @@ This system works as follow:
 
 For specific details using the above example please see:
 
-- 1.) [The pipeline-config.json - v1](./docs/pipeline-config.md).
-- 2.) [The ./pipelines readme - ingress_v1](./pipelines/README.md)
-- 3.) [The buildspec pipeline-ingress.v1.yml](./pipeline-ingress-v1.yml)
+- 1.) [The ingress v1 pipeline-config.json readme](./docs/pipeline-config.md).
+- 2.) [The ingress v1 pipeline code readme](./pipeline/readme.md)
+- 3.) [The pipeline-ingress.v1.yml buildspec](./pipeline-ingress-v1.yml)
 
