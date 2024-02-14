@@ -1,7 +1,7 @@
 
 def ingress_v1():
     """
-    Version one of the data ingress pipeline.
+    Version one of the dataset ingress pipeline.
     """
     
     # ... the rough list of steps this pipeline will perform follow ...
