@@ -1,0 +1,5 @@
+# Instructions to run v1 ingress pipeline.
+# literally something like:
+
+# import pipeline
+# pipeline.ingress_v1()
