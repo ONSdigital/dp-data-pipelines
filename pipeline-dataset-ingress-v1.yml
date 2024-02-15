@@ -2,4 +2,4 @@
 # literally something like:
 
 # import pipeline
-# pipeline.ingress_v1()
+# pipeline.dataset_ingress_v1()

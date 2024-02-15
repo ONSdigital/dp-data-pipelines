@@ -1,5 +1,5 @@
 
-def ingress_v1():
+def dataset_ingress_v1():
     """
     Version one of the dataset ingress pipeline.
     """

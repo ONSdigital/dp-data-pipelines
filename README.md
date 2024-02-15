@@ -38,4 +38,3 @@ For specific details using the above example please see:
 - 1.) [The ingress v1 pipeline-config.json readme](./docs/pipeline-config.md).
 - 2.) [The dataset ingress v1 pipeline code readme](./pipeline/README.md)
 - 3.) [The pipeline-dataset-ingress.v1.yml buildspec](./pipeline-dataset-ingress-v1.yml)
-
