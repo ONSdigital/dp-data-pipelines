@@ -40,7 +40,7 @@ explanations of fields follows:
 | $schema | The version of the jsons schma standard in use. |  Yes | Yes |
 | $id | a **uri*** uniquely identifying the schema for this config. | Yes | Yes |
 | required_files | regex patterns and counts for source files that should be submitted alongside this config | Yes | No |
-| supplementary_distributions | regex patterns and counts for supplementary distributions that should be submitted alongside this config | Yes (but can be an empty list) | No |
+| supplementary_distributions | regex patterns and counts for supplementary distributions that should be submitted alongside this config. For example: an sdmx file to be uploaded alongside the csv data derived from it. | Yes (but can be an empty list) | No |
 | priority | Future proofing, currently unused | No | No |
 | pipeline | The buildspec to use when this pipeline is triggered | Yes | No |
 | options -> pipeline_details | An identifier used to specifiy which data transformation function is ran against the source in question. Please see [../pipeline/shared/details.py](../pipeline/shared/details.py) | Yes | No |
