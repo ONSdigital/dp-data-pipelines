@@ -42,6 +42,19 @@ For specific details using the above example please see:
 
 ## Repository Structure
 
-The following is the (initial, it'll change) structure of this repository, **this does not need to be kept up to date with every change** - it's intended to help explain how the triggering logic for this repo works.
+The following is the (initially, it'll expand over time) structure of this repository, **this does not need to be kept up to date with every change** - it's intended to help explain how the triggering logic for this repo works.
 
-![`structure`](./docs/structure.png)
+```
+- /dp-data-pipelines
+     - /schemas
+     - /builder                           # Contains Dockerfile for image
+     - /pipelines
+          - s3_tar_received.py            # Uses contents of tar to decide wbich /pipeline/* to call
+          - pipeline
+               - /shared
+               - dataset_ingress_v1.py
+     - /tests
+     - /features
+     - s3_tar_received.yml                # Calls ./pipelines/s3_tar_recieved.py. Triggered by lambda
+     - builder.yml                        # Rebuilds /builder/Dockerfile on changes to that directory
+```
