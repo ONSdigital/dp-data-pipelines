@@ -25,20 +25,13 @@ _How_ the pipelines mentioned below actually work is covered in the following _I
 
 ### Implementation
 
-This system works as follow:
+The initial example of this system works as follows:
 
-- The lambda triggers a buildspec, for an example lets use [pipeline-dataset-ingress.v1.yml](./pipeline-dataset-ingress-v1.yml)
-- This particular buildspec triggers a python pipeline of [./pipeline/dataset_ingress_v1.py](./pipeline/dataset_ingress_v1.py)
-- The pipeline will have an s3 url which will be decompressed to the working dir, it provides:
-     - source data
-     - configuration options (such as which "transform" script to be applied to the source data)
+- The lambda triggers the buildspec [./s3_tar_received.yml](./s3_tar_received.yml).
+- This triggers [./pipelines/s3_tar_received.py](./pipelines/s3_tar_received.py) - this function triggers a pipeline from `./pipelines/pipeline` based on the [pipeline-config.json](./docs/pipeline-config.md) present in the tar file.
+- **In our initial use case** it triggers our intial pipeline [dataset_ingress_v1.py](./pipelines/pipeline/dataset_ingress_v1.py).
 
-For specific details using the above example please see:
-
-- 1.) [The ingress v1 pipeline-config.json readme](./docs/pipeline-config.md).
-- 2.) [The dataset ingress v1 pipeline code readme](./pipeline/README.md)
-- 3.) [The pipeline-dataset-ingress.v1.yml buildspec](./pipeline-dataset-ingress-v1.yml)
-
+The principle here is that the the details in pipeline config can be used to nuance which pipeline from `./pipelines/pipeline` is called as well as the options that are passed to it.
 
 ## Repository Structure
 
