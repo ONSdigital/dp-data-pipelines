@@ -76,7 +76,7 @@ def metadata_validation_error(metadata_path, error: Exception) -> str:
     TODO: given  a path to some json metadata thats not valid and the exception
     that was raised trying to validate it, make a user friendly message.
     """
-    message = "Metadata json file has filed validation: {metadata_path}"
+    message = "Metadata json file has failed validation: {metadata_path}"
     return message
 
 
