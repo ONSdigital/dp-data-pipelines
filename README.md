@@ -9,7 +9,7 @@ There are two things to understand here:
 - Architecture
 - Implementation
 
-We'll take each in turn.
+We'll take each in turn then discuss repository structure.
 
 
 ### Architecture
@@ -38,3 +38,10 @@ For specific details using the above example please see:
 - 1.) [The ingress v1 pipeline-config.json readme](./docs/pipeline-config.md).
 - 2.) [The dataset ingress v1 pipeline code readme](./pipeline/README.md)
 - 3.) [The pipeline-dataset-ingress.v1.yml buildspec](./pipeline-dataset-ingress-v1.yml)
+
+
+## Repository Structure
+
+The following is the (initial, it'll change) structure of this repository, **this does not need to be kept up to date with every change** - it's intended to help explain how the triggering logic for this repo works.
+
+![`structure`](./docs/structure.png)

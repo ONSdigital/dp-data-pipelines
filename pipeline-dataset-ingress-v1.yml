@@ -1,5 +1,0 @@
-# Instructions to run v1 ingress pipeline.
-# literally something like:
-
-# import pipeline
-# pipeline.dataset_ingress_v1()

@@ -1,23 +1,19 @@
+from pathlib import Path
 
-def dataset_ingress_v1():
+# IMPORTANT
+# We probably want to break these stages out a bit
+# to help with reusibility
+def dataset_ingress_v1(files_dir: Path):
     """
     Version one of the dataset ingress pipeline.
+
+    files_dir: Path to the directory where the input
+    files for this pipeline are located.
     """
     
-    # ... the rough list of steps this pipeline will perform follow ...
+    # verify that the specified required files have been provided
 
-    # IN ALL CASES, the FOLLOWING STEPS WILL BE IN TRY CATCH
-    # BLOCKS AND WILL NOTIFY RELEVANT PARTIES IN EVENT OF FAILURE
-
-    # decompress tar file to workspace
-
-    # confirm we have a config
-
-    # use config schema to confirm that config is valid
-
-    # verify that the specified required files are in the tar file
-
-    # verify that the specified supplementary distributions are in the tar file 
+    # verify that the specified supplementary distributions have been provided
 
     # use config "pipeline" key to get the transform and sanity checking code for the source in question
 
