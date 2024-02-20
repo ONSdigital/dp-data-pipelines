@@ -1,0 +1,26 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json",
+    "required_files": [
+        {
+            "matches": "*.sdmx",
+            "count": "1"
+        }
+    ],
+    "supplementary_distributions": [
+        {
+            "matches": "*.sdmx",
+            "count": "1"
+        },
+        {
+            "matches": "*.sfmx",
+            "count": "1"
+        },
+        {
+            "matches": "*.sgmx",
+            "count": "1"
+        }
+    ],
+    "priority": "1",
+    "pipeline": "sdmx.default" 
+}
