@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v8.json",
+    "$id": "https://raw.githubusercontent.com/ONSdigital/kjhkjgjhghghgfhfghghjgkuygfhvmngvbcdgnfn.json",
     "required_files": [
         {
             "matches": "*.sdmx",

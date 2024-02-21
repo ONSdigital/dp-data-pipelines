@@ -1,6 +1,4 @@
-
-# triggered by: ../s3_tar_recieved_trigger.yml
-def s3_tar_received():
+def start():
     """
     Handles the required behaviour when recieving a tar file via an
     s3 url.
