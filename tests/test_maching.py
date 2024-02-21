@@ -8,17 +8,16 @@ from pipeline.structures.functions.matching import get_supplementary_distributio
 
 def test_get_supplementary_distribution_patterns_invalid_id():
     """This test will check if the function does flag invalid `$id`"""
-    try:
 
-        path_to_file = Path("tests/test-cases/test_json_invalid_no_id.json")
+    path_to_file = Path("tests/test-cases/test_json_invalid_no_id.json")
 
-        with path_to_file.open() as jf:
-            content = json.load(jf)
+    with path_to_file.open() as jf:
+        content = json.load(jf)
 
+    with pytest.raises(ValueError) as err:
+        get_supplementary_distribution_patterns(content)
 
-        results = get_supplementary_distribution_patterns(content)
-    except ValueError:
-        pass
+    assert "the `$id` value is missing or incorrect! It should be https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json" == str(err.value)
 
 
 
