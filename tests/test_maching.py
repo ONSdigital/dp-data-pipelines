@@ -62,7 +62,23 @@ def test_get_required_file_patterns_valid_id():
         content = json.load(jf)
 
 
-    results = get_supplementary_distribution_patterns(content)
+    results = get_required_file_patterns(content)
 
-    assert len(results) == 1
+    assert len(results) == 3
     assert results[0] == "*.sdmx"
+    assert results[1] == "*.ddmx"
+    assert results[2] == "*.bdmx"
+
+
+def test_get_required_file_patterns_invalid_id():
+    """This test will check if the function does flag invalid `$id`"""
+
+    path_to_file = Path("tests/test-cases/test_json_requiered_files_invalid_id.json")
+
+    with path_to_file.open() as jf:
+        content = json.load(jf)
+
+    with pytest.raises(ValueError) as err:
+        get_required_file_patterns(content)
+
+    assert "the `$id` value is missing or incorrect! It should be https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json" == str(err.value)
