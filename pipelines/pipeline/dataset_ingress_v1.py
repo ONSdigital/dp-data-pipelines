@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 # IMPORTANT
 # We probably want to break these stages out a bit
 # to help with reusibility
@@ -10,7 +11,7 @@ def dataset_ingress_v1(files_dir: Path):
     files_dir: Path to the directory where the input
     files for this pipeline are located.
     """
-    
+
     # verify that the specified required files have been provided
 
     # verify that the specified supplementary distributions have been provided

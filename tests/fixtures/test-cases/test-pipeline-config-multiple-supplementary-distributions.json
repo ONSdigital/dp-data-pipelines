@@ -11,6 +11,14 @@
         {
             "matches": "*.sdmx",
             "count": "1"
+        },
+        {
+            "matches": "*.xls",
+            "count": "1"
+        },
+        {
+            "matches": "*.csv",
+            "count": "1"
         }
     ],
     "priority": "1",
