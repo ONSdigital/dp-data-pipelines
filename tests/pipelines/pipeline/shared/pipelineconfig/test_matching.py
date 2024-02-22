@@ -1,9 +1,5 @@
 import pytest
 
-import sys
-print(sys.path)
-
-
 from pipelines.pipeline.shared.pipelineconfig.matching import get_supplementary_distribution_patterns
 from tests.fixtures.configs import (
     config_unknown_id,
