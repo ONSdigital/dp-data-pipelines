@@ -1,0 +1,6 @@
+# TODO - instructions that run on git push.
+# To build an image from contents of `./builder
+# but only if files on this path have been changed by the git push.
+# Should push an image to AWS, naming to follow branch
+# i.e sandbox builder image is updated on changes
+# to contents of ./builders on the sandbox branch. 
