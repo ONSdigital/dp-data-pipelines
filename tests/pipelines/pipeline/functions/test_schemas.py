@@ -42,4 +42,7 @@ def test_get_config_schema_path_no_local_schema():
     }
     with pytest.raises(FileNotFoundError) as e:
         get_config_schema_path(config)
-    assert "Local schema not found" in str(e.value)
+    assert (
+        "Local schema not found from $id 'https://raw.githubusercontent.com/ONSdigital/dp-data-pipelines/sandbox/schemas/dataset-ingress/config/no-local-schema.json'"
+        in str(e.value)
+    )
