@@ -1,7 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "tests",
-        "dp-data-pipelines"
+        "tests"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
