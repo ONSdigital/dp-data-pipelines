@@ -2,7 +2,7 @@ import pytest
 
 def test_notify_se_webook_raises_for_missing_env_var():
     """
-    Test that when we import notify, an assertion error
+    Test that when we import notification, an assertion error
     is correctly raised if we're missing the env var
     specifying the software engineering slack webhook
     """
@@ -21,9 +21,9 @@ def test_notify_se_webook_raises_for_missing_env_var():
 
 def test_notify_ps_webook_raises_for_missing_env_var():
     """
-    Test that when we import notify, an assertion error
+    Test that when we import notification, an assertion error
     is correctly raised if we're missing the env var
-    specifying the software engineering slack webhook
+    specifying the publishing support slack webhook
     """
 
     # use monkeypatch to set all the env vars other than
@@ -40,9 +40,9 @@ def test_notify_ps_webook_raises_for_missing_env_var():
 
 def test_notify_de_webook_raises_for_missing_env_var():
     """
-    Test that when we import notify, an assertion error
+    Test that when we import notification, an assertion error
     is correctly raised if we're missing the env var
-    specifying the software engineering slack webhook
+    specifying the data engineering slack webhook
     """
 
     # use monkeypatch to set all the env vars other than
@@ -59,9 +59,9 @@ def test_notify_de_webook_raises_for_missing_env_var():
 
 def test_notify_ds_webook_raises_for_missing_env_var():
     """
-    Test that when we import notify, an assertion error
+    Test that when we import notification, an assertion error
     is correctly raised if we're missing the env var
-    specifying the software engineering slack webhook
+    specifying the data submmitter of validation error slack webhook
     """
 
     # use monkeypatch to set all the env vars other than
