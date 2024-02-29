@@ -6,14 +6,14 @@
 
 
 from pathlib import Path
+import pandas as pd
+import json
 
 def stub_smdx_default_v1():
     """
     Placeholder function - A fake transform.
     Generates 2 very basic files
     """
-    import pandas as pd
-    import json
     csv_file = Path("data.csv")
     json_file = Path("metadata.json")
 
