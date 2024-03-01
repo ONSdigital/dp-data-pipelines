@@ -15,7 +15,7 @@ def test_notify_se_webook_raises_for_missing_env_var():
     mp.setenv("DS_SLACK_WEBHOOK", "not-used")
 
     with pytest.raises(AssertionError) as e:
-        from pipelines.pipeline.shared import notification
+        from dpypelines.pipeline.shared import notification
 
     assert "Unable to find required environment variable SE_SLACK_WEBHOOK" in str(e)
 
@@ -53,7 +53,7 @@ def test_notify_de_webook_raises_for_missing_env_var():
     mp.setenv("DS_SLACK_WEBHOOK", "not-used")
 
     with pytest.raises(AssertionError) as e:
-        from pipelines.pipeline.shared import notification
+        from dpypelines.pipeline.shared import notification
 
     assert "Unable to find required environment variable DE_SLACK_WEBHOOK" in str(e) 
 
@@ -72,6 +72,6 @@ def test_notify_ds_webook_raises_for_missing_env_var():
     mp.setenv("SE_SLACK_WEBHOOK", "not-used")
 
     with pytest.raises(AssertionError) as e:
-        from pipelines.pipeline.shared import notification
+        from dpypelines.pipeline.shared import notification
 
     assert "Unable to find required environment variable DS_SLACK_WEBHOOK" in str(e)         

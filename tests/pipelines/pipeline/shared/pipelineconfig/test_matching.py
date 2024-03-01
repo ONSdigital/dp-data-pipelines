@@ -1,6 +1,6 @@
 import pytest
 
-from pipelines.pipeline.shared.pipelineconfig.matching import get_supplementary_distribution_patterns
+from dpypelines.pipeline.shared.pipelineconfig.matching import get_supplementary_distribution_patterns
 from tests.fixtures.configs import (
     config_unknown_id,
     config_valid_multiple_supplementary_distributions
