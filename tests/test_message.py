@@ -10,113 +10,85 @@ from pipeline.shared.functions.message import (
 
 
 def test_unexpected_error():
-    try:
-        assert 1 == 2
-    except Exception as e:
-        human_readable_output = unexpected_error(e.message, e)
+    error = Exception("Some file is missing.")
+    expected_message = """
+        Something went wrong
 
-    # assert human_readable_output == "An unexpected error occured with error message: {msg}"
-    assert type(human_readable_output) == str
+        Error: Some file is missing.
+    """
+
+    assert unexpected_error("Something went wrong", error) == expected_message
 
 
 def test_cant_find_scheama():
-    try:
-        config_dict = {
-            "$schema": "http://json-schema.org/draft-04/schema#",
-            "$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json",
-            "required_files": [
-                {
-                    "matches": "*.sdmx",
-                    "count": "1"
-                }
-            ],
-            "supplementary_distributions": [
-                {
-                    "matches": "*.sdmx",
-                    "count": "1"
-                }
-            ],
-            "priority": "1",
-            "pipeline": "sdmx.default" 
-        }
-        assert config_dict["$schema"] == 2
-    except Exception as e:
-        human_readable_output = cant_find_scheama(config_dict, e)
+    error = Exception("Something went wrong")
+    config_dict = {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json"
+    }
 
-    # assert human_readable_output == "An unexpected error occured with error message: {msg}"
+    human_readable_output = cant_find_scheama(config_dict, error)
+
+    assert 'We got an error when trying to identify the schema for the pipeline-conifg.json using the pipeline-config.json.' in human_readable_output
+    assert 'Pipeline-config.json:' in human_readable_output
+    assert '"$schema": "http://json-schema.org/draft-04/schema#"' in human_readable_output
+    assert '"$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json"' in human_readable_output
+    assert 'Error: Something went wrong' in human_readable_output
     assert type(human_readable_output) == str
 
 
 def test_invlaid_config():
-    try:
-        config_dict = {
-            "$schema": "http://json-schema.org/invalid/schema#",
-            "$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json",
-            "required_files": [
-                {
-                    "matches": "*.sdmx",
-                    "count": "1"
-                }
-            ],
-            "supplementary_distributions": [
-                {
-                    "matches": "*.sdmx",
-                    "count": "1"
-                }
-            ],
-            "priority": "1",
-            "pipeline": "sdmx.default" 
-        }
-        assert config_dict["$schema"] == "http://json-schema.org/draft-04/schema#"
-    except Exception as e:
-        human_readable_output = invlaid_config(config_dict, e)
-
-    # assert human_readable_output == "An unexpected error occured with error message: {msg}"
+    error = Exception("Someting went wrong")
+    config_dict = {
+        "$schema": "http://json-schema.org/invalid/schema#",
+        "$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json"
+    }
+    human_readable_output = invlaid_config(config_dict, error)
+    
+    assert "The pipeline config that was provided is failing to validate." in human_readable_output
+    assert "Pipeline-config.json:" in human_readable_output
+    assert '"$schema": "http://json-schema.org/invalid/schema#"' in human_readable_output
+    assert '"$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json"' in human_readable_output
+    assert "Error: Someting went wrong" in human_readable_output
     assert type(human_readable_output) == str
 
 
 def test_unknown_pipeline():
-    try:
-        all_pipeline_details = {
-            "sdmx.default": {
-                "transform": "smdx_default_v1",
-                "transform_inputs": {
-                    "*.sdmx": "sdmx_sanity_check_v1"
-                },
-                "transform_kwargs": {}
-            }
-        }
-        pipeline_name = all_pipeline_details[0]
-        pipeline_options = {
-            "pipeline idemtifier": "pipeline123"
-        }
-        assert pipeline_name == pipeline_options["pipeline idemtifier"]
-    except Exception as e:
-        human_readable_output = unknown_pipeline(pipeline_name, pipeline_options)
+    
+    pipeline_name = "sdmx.default"
+    pipeline_options = {
+        "pipeline idemtifier": "pipeline123"
+    }
 
-    # assert human_readable_output == "An unexpected error occured with error message: {msg}"
+    human_readable_output = unknown_pipeline(pipeline_name, pipeline_options)
+
+    assert 'Pipeline name is missing from the pipeline configurations.' in human_readable_output
+    assert 'Pipeline: sdmx.default' in human_readable_output
+    assert 'Pipeline Configurations:' in human_readable_output
+    assert '"pipeline idemtifier": "pipeline123"' in human_readable_output
     assert type(human_readable_output) == str
 
 
 def test_metadata_validation_error():
-    try:
-        metadata = {}
-        metadata_path = "/some_parent_dir/some_dir/metadata.json"
-        assert metadata == True
-    except Exception as e:
-        human_readable_output = metadata_validation_error(metadata_path, e)
+    error = Exception("Something went wrong")
+    human_readable_output = metadata_validation_error("/some_parent_dir/some_dir/metadata.json", error)
+    expected_output = """
+        Metadata json file has failed validation: /some_parent_dir/some_dir/metadata.json
+        Error: Something went wrong
+    """
 
-    # assert human_readable_output == "An unexpected error occured with error message: {msg}"
+    assert human_readable_output == expected_output
     assert type(human_readable_output) == str
 
 
 def test_expected_local_file_missing():
-    try:
-        pipeline_name = "Pipeline123"
-        file_path = "/some_parent_dir/some_dir/some_json.json"
-        assert 1 == 2
-    except Exception as e:
-        human_readable_output = expected_local_file_missing(e.message, file_path, pipeline_name)
-
-    # assert human_readable_output == "An unexpected error occured with error message: {msg}"
+    human_readable_output = expected_local_file_missing("Something went wrong", "/some_parent_dir/some_dir/some_json.json", "Pipeline123")
+    expected_output = """
+        A pipeline has encountered an issue finding a local file.
+        
+        Pipeline's name: Pipeline123
+        File: /some_parent_dir/some_dir/some_json.json
+        Message: Something went wrong
+    """
+    assert human_readable_output == expected_output
     assert type(human_readable_output) == str
