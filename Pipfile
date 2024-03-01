@@ -5,8 +5,13 @@ name = "pypi"
 
 [packages]
 pytest = "*"
+dpytools = {git = "https://github.com/ONSdigital/dp-python-tools.git"}
 
 [dev-packages]
+black = "*"
+isort = "*"
+ruff = "*"
+pytest-cov = "*"
 
 [requires]
-python_version = "3.12"
+python_version = "3.11"
