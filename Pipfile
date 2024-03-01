@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 pytest = "*"
+pandas = "*"
 dpytools = {git = "https://github.com/ONSdigital/dp-python-tools.git"}
 
 [dev-packages]
