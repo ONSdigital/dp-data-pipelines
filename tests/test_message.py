@@ -14,6 +14,7 @@ def test_unexpected_error():
     expected_message = """
         Something went wrong
 
+        Error type: Exception
         Error: Some file is missing.
     """
 
@@ -33,12 +34,13 @@ def test_cant_find_scheama():
     assert 'Pipeline-config.json:' in human_readable_output
     assert '"$schema": "http://json-schema.org/draft-04/schema#"' in human_readable_output
     assert '"$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json"' in human_readable_output
+    assert 'Error type: Exception' in human_readable_output
     assert 'Error: Something went wrong' in human_readable_output
     assert type(human_readable_output) == str
 
 
 def test_invlaid_config():
-    error = Exception("Someting went wrong")
+    error = Exception("Something went wrong")
     config_dict = {
         "$schema": "http://json-schema.org/invalid/schema#",
         "$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json"
@@ -49,7 +51,8 @@ def test_invlaid_config():
     assert "Pipeline-config.json:" in human_readable_output
     assert '"$schema": "http://json-schema.org/invalid/schema#"' in human_readable_output
     assert '"$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json"' in human_readable_output
-    assert "Error: Someting went wrong" in human_readable_output
+    assert 'Error type: Exception' in human_readable_output
+    assert "Error: Something went wrong" in human_readable_output
     assert type(human_readable_output) == str
 
 
@@ -74,6 +77,7 @@ def test_metadata_validation_error():
     human_readable_output = metadata_validation_error("/some_parent_dir/some_dir/metadata.json", error)
     expected_output = """
         Metadata json file has failed validation: /some_parent_dir/some_dir/metadata.json
+        Error type: Exception
         Error: Something went wrong
     """
 

@@ -10,16 +10,18 @@ def unexpected_error(msg: str, error: Exception) -> str:
     We've caught an unexpected error. Make a sensible message explaining
     the problem.
     """
+    error_type = error.__class__.__name__
     message = f"""
         {msg}
 
+        Error type: {error_type}
         Error: {error}
     """
 
     return message
 
 
-def cant_find_scheama(config_dict, err: Exception) -> str:
+def cant_find_scheama(config_dict, error: Exception) -> str:
     """
     We got an error when trying to identify the schema for the pipeline-conifg.json using the
     pipeline-config.json.
@@ -27,12 +29,14 @@ def cant_find_scheama(config_dict, err: Exception) -> str:
     Using the config-dict and the exceptioncreate a clear and informative message about what
     the problem is."""
     formatted_config_dict = json.dumps(config_dict, indent=2)
+    error_type = error.__class__.__name__
     message = f"""  
         We got an error when trying to identify the schema for the pipeline-conifg.json using the pipeline-config.json.
         
         Pipeline-config.json: {formatted_config_dict}
         
-        Error: {err}
+        Error type: {error_type}
+        Error: {error}
     """
     return message
 
@@ -44,11 +48,13 @@ def invlaid_config(config_dict, error: Exception) -> str:
     Provide suitable information so someone can find out why.
     """
     formatted_config_dict = json.dumps(config_dict, indent=2)
+    error_type = error.__class__.__name__
     message = f"""
         The pipeline config that was provided is failing to validate.
         
         Pipeline-config.json: {formatted_config_dict}
 
+        Error type: {error_type}
         Error: {error}
     """
     return message
@@ -75,8 +81,10 @@ def metadata_validation_error(metadata_path, error: Exception) -> str:
     The metadata has generated as validation error. Use the metadata and the error to create a
     sensible message explaining the problem.
     """
+    error_type = error.__class__.__name__
     message = f"""
         Metadata json file has failed validation: {metadata_path}
+        Error type: {error_type}
         Error: {error}
     """
     return message
