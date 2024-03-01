@@ -5,7 +5,11 @@ name = "pypi"
 
 [packages]
 pytest = "*"
+<<<<<<< HEAD
 pandas = "*"
+=======
+dpytools = {git = "https://github.com/ONSdigital/dp-python-tools.git"}
+>>>>>>> sandbox
 
 [dev-packages]
 black = "*"
