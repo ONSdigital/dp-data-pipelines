@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "$id": "https://raw.githubusercontent.com/ONSdigital/kjhkjgjhghghgfhfghghjgkuygfhvmngvbcdgnfn.json",
+    "$id": "https://raw.githubusercontent.com/ONSdigital/dp-data-pipelines/sandbox/schemas/dataset-ingress/config/v1.json",
     "required_files": [
         {
             "matches": "*.sdmx",
@@ -14,5 +14,5 @@
         }
     ],
     "priority": "1",
-    "pipeline": "sdmx.default" 
+    "pipeline": "sdmx.default"
 }
