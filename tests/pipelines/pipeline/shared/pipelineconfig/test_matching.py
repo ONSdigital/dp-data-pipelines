@@ -13,7 +13,10 @@ from tests.fixtures.configs import (
 )
 
 
-def test_get_supplementary_distribution_patterns_valid_id(config_valid_id):
+def test_get_supplementary_distribution_patterns_single_match(config_valid_id):
+    """
+    Ensures that a config file with one match returns one result
+    """
     results = get_supplementary_distribution_patterns(config_valid_id)
 
     assert len(results) == 1
@@ -21,6 +24,9 @@ def test_get_supplementary_distribution_patterns_valid_id(config_valid_id):
 
 
 def test_no_supplementary_distributions(config_no_supplementary_distributions):
+    """
+    Ensures that the correct error is raised if the `supplementary_distributions` field is missing from the config file
+    """
     with pytest.raises(AssertionError) as err:
         get_supplementary_distribution_patterns(config_no_supplementary_distributions)
     assert "'supplementary_distributions' field not found in config dictionary" in str(
@@ -31,8 +37,9 @@ def test_no_supplementary_distributions(config_no_supplementary_distributions):
 def test_get_supplementary_distribution_patterns_multiple_matches(
     config_valid_multiple_matches,
 ):
-    """This test will check if the function does return the number of expected values (in this case one)"""
-
+    """
+    Ensures that a config file with multiple matches returns three results
+    """
     results = get_supplementary_distribution_patterns(config_valid_multiple_matches)
 
     assert len(results) == 3
@@ -40,8 +47,9 @@ def test_get_supplementary_distribution_patterns_multiple_matches(
 
 
 def test_get_supplementary_distribution_patterns_invalid_id(config_invalid_id):
-    """This test will check if the function correctly raises for an unknown `$id`"""
-
+    """
+    Ensures that the correct error is raised for an invalid `$id` value in the config file
+    """
     with pytest.raises(NotImplementedError) as err:
         get_supplementary_distribution_patterns(config_invalid_id)
 
@@ -51,7 +59,10 @@ def test_get_supplementary_distribution_patterns_invalid_id(config_invalid_id):
     )
 
 
-def test_get_required_files_patterns_valid_id(config_valid_id):
+def test_get_required_files_patterns_single_match(config_valid_id):
+    """
+    Ensures that a config file with one match returns one result
+    """
     results = get_required_files_patterns(config_valid_id)
 
     assert len(results) == 1
@@ -59,6 +70,9 @@ def test_get_required_files_patterns_valid_id(config_valid_id):
 
 
 def test_no_required_files(config_no_required_files):
+    """
+    Ensures that the correct error is raised if the `required_files` field is missing from the config file
+    """
     with pytest.raises(AssertionError) as err:
         get_required_files_patterns(config_no_required_files)
     assert "'required_files' field not found in config dictionary" in str(err.value)
@@ -67,8 +81,9 @@ def test_no_required_files(config_no_required_files):
 def test_get_required_files_patterns_multiple_matches(
     config_valid_multiple_matches,
 ):
-    """This test will check if the function does return the number of expected values (in this case one)"""
-
+    """
+    Ensures that a config file with multiple matches returns three results
+    """
     results = get_required_files_patterns(config_valid_multiple_matches)
 
     assert len(results) == 3
@@ -76,8 +91,9 @@ def test_get_required_files_patterns_multiple_matches(
 
 
 def test_get_required_files_patterns_invalid_id(config_invalid_id):
-    """This test will check if the function correctly raises for an unknown `$id`"""
-
+    """
+    Ensures that the correct error is raised for an invalid `$id` value in the config file
+    """
     with pytest.raises(NotImplementedError) as err:
         get_required_files_patterns(config_invalid_id)
 
