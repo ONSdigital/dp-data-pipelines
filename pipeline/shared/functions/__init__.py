@@ -1,1 +1,0 @@
-from pipeline.shared.functions import message
