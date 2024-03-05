@@ -21,7 +21,7 @@ def unexpected_error(msg: str, error: Exception) -> str:
     return message
 
 
-def cant_find_scheama(config_dict, error: Exception) -> str:
+def cant_find_schema(config_dict, error: Exception) -> str:
     """
     We got an error when trying to identify the schema for the pipeline-conifg.json using the
     pipeline-config.json.
@@ -31,7 +31,7 @@ def cant_find_scheama(config_dict, error: Exception) -> str:
     formatted_config_dict = json.dumps(config_dict, indent=2)
     error_type = error.__class__.__name__
     message = f"""  
-        We got an error when trying to identify the schema for the pipeline-conifg.json using the pipeline-config.json.
+        We got an error when trying to identify the schema for the pipeline-config.json using the pipeline-config.json.
         
         Pipeline-config.json: {formatted_config_dict}
         
@@ -41,7 +41,7 @@ def cant_find_scheama(config_dict, error: Exception) -> str:
     return message
 
 
-def invlaid_config(config_dict, error: Exception) -> str:
+def invalid_config(config_dict, error: Exception) -> str:
     """
     The pipeline config that was provided is failing to validate.
 

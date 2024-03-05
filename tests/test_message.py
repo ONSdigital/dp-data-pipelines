@@ -1,8 +1,8 @@
 import pytest
 from pipelines.pipeline.shared.message import (
     unexpected_error, 
-    cant_find_scheama,
-    invlaid_config,
+    cant_find_schema,
+    invalid_config,
     unknown_pipeline,
     metadata_validation_error,
     expected_local_file_missing
@@ -28,7 +28,7 @@ def test_cant_find_scheama():
         "$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json"
     }
 
-    human_readable_output = cant_find_scheama(config_dict, error)
+    human_readable_output = cant_find_schema(config_dict, error)
 
     assert 'We got an error when trying to identify the schema for the pipeline-conifg.json using the pipeline-config.json.' in human_readable_output
     assert 'Pipeline-config.json:' in human_readable_output
@@ -39,13 +39,13 @@ def test_cant_find_scheama():
     assert type(human_readable_output) == str
 
 
-def test_invlaid_config():
+def test_invalid_config():
     error = Exception("Something went wrong")
     config_dict = {
         "$schema": "http://json-schema.org/invalid/schema#",
         "$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json"
     }
-    human_readable_output = invlaid_config(config_dict, error)
+    human_readable_output = invalid_config(config_dict, error)
     
     assert "The pipeline config that was provided is failing to validate." in human_readable_output
     assert "Pipeline-config.json:" in human_readable_output
