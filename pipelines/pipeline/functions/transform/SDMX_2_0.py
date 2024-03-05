@@ -1,9 +1,17 @@
 import json
+import string
 import xmltodict
 import pandas as pd
-from gssutils import *
 from datetime import datetime, date
 
+def pathify_func(text: str):
+    """This function was made to pathify a string and return it"""
+
+    no_punctuation = text.translate(str.maketrans('','', string.punctuation))
+
+    pathified = no_punctuation.replace(' ', '-')
+
+    return pathified.lower()
 
 def set_key(dictionary, key, value):
      if key not in dictionary:
@@ -65,19 +73,19 @@ def xmlToCsvSDMX2_0(input_path, output_path):
 
     # and this is the main loop which goes through each series block and pulls out the observational data and sticks in under the right header where it exists, then adding the new columns for the remaining variables inside the obs tags
 
-    for i in range(len(tables)):
-        list = tables[i] # get a series block
+    for table_index in range(len(tables)):
+        list = tables[table_index] # get a series block
         headers_df = header_frame # create an df of the headers we have so far
         obs_df = pd.DataFrame() # create an empty df for the headers remaining in the obs tag
 
-        for i in list.items(): # as we move through the series block we go through each value and see if it matches one of the headers we already have
-            if i[0] in headers: # if the header matches we insert the value for this header
+        for item in list.items(): # as we move through the series block we go through each value and see if it matches one of the headers we already have
+            if item[0] in headers: # if the header matches we insert the value for this header
                 temp = []
-                temp.append(i[1])
-                headers_df[i[0]] = temp
+                temp.append(item[1])
+                headers_df[item[0]] = temp
                 # I think this is a point of performance loss, we should only have to check the headers once per series block rather than looping past it every time (TODO)
             else: # if not then its an observation so we crete a temporary mini df with the 4 values in the obs tag and then append it to a dataframe containing all the observations for this series block, then repeat for each obs tag
-                for entry in i[1]:
+                for entry in item[1]:
                     temp_df = pd.DataFrame()
                     for obs in entry.items():
                         temp = []
@@ -93,12 +101,13 @@ def xmlToCsvSDMX2_0(input_path, output_path):
 
     # the following is just tidying up the column headers so theyre not filled with @ and such, pretty sure there's an easier way to do this but hey ho
 
-    headerReplace = [s.replace('@', '') for s in full_table.columns]
+    #headerReplace = [s.replace('@', '') for s in full_table.columns]
+    header_replace = { x: x.replace('@', '') for x in full_table.columns }
     headerNorm = {}
     for key in full_table.columns:
-        for value in headerReplace:
+        for value in header_replace:
             headerNorm[key] = value
-            headerReplace.remove(value)
+            header_replace.pop(value)
             break
     full_table.rename(columns=headerNorm, inplace=True)
 
@@ -135,22 +144,22 @@ def generate_editions_metadata(transformedCSV, structureXML, outputPath, metadat
     # Here we're going through each header in the tidyCSV and attempting to match it up with the DSD informaion we got before, for other headers (such as the metadata columns) we assume the datatype is just a string
     full_dimensions = {}
 
-    for i in tidyCSV.columns:
-        if i in dimensions.keys():
-            full_dimensions[i] = i
-            if len(dimensions[i]) == 3:
-                set_key(full_dimensions, i, dimensions[i][0])
-                set_key(full_dimensions, i, dimensions[i][1])   
-                set_key(full_dimensions, i, dimensions[i][2])          
+    for column in tidyCSV.columns:
+        if column in dimensions.keys():
+            full_dimensions[column] = column
+            if len(dimensions[column]) == 3:
+                set_key(full_dimensions, column, dimensions[column][0])
+                set_key(full_dimensions, column, dimensions[column][1])   
+                set_key(full_dimensions, column, dimensions[column][2])          
             else:
-                set_key(full_dimensions, i, dimensions[i][0])
-                set_key(full_dimensions, i, dimensions[i][1])
-                set_key(full_dimensions, i, 'string')
+                set_key(full_dimensions, column, dimensions[column][0])
+                set_key(full_dimensions, column, dimensions[column][1])
+                set_key(full_dimensions, column, 'string')
         else:
-            full_dimensions[i] = i
-            set_key(full_dimensions, i, i.lower())
-            set_key(full_dimensions, i, i.lower())
-            set_key(full_dimensions, i, 'string')
+            full_dimensions[column] = column
+            set_key(full_dimensions, column, column.lower())
+            set_key(full_dimensions, column, column.lower())
+            set_key(full_dimensions, column, 'string')
 
     full_dimensions_list = list(full_dimensions.values())
 
@@ -161,13 +170,13 @@ def generate_editions_metadata(transformedCSV, structureXML, outputPath, metadat
 
     # now a very terrible and hardcoded implementation of applying what little metadata we have to as many fields as possible
 
-    editions_template['@id'] = 'https://staging.idpd.uk/datasets/' + pathify(dataset_title) + '/editions'
+    editions_template['@id'] = 'https://staging.idpd.uk/datasets/' + pathify_func(dataset_title) + '/editions'
     editions_template['title'] = dataset_title
 
     current_edition = editions_template['editions'][0] # This will get the first entry in the editions list to use as a template (TODO: include editions list length to check if this will be the first edition or an addition and create addendum)
         
-    current_edition['@id'] = 'https://staging.idpd.uk/datasets/' + pathify(dataset_title) + '/editions/' + str(datetime.now().strftime("%Y-%m"))
-    current_edition['in_series'] = 'https://staging.idpd.uk/datasets/' + pathify(dataset_title)
+    current_edition['@id'] = 'https://staging.idpd.uk/datasets/' + pathify_func(dataset_title) + '/editions/' + str(datetime.now().strftime("%Y-%m"))
+    current_edition['in_series'] = 'https://staging.idpd.uk/datasets/' + pathify_func(dataset_title)
     current_edition['identifier'] = str(datetime.now().strftime("%Y-%m"))
     current_edition['title'] = dataset_title
     current_edition['summary'] = "" # Doesnt appear to have any summary or description in the supporting XML which isnt surprising but means we have nothing for these 2 fields at entry
@@ -184,8 +193,8 @@ def generate_editions_metadata(transformedCSV, structureXML, outputPath, metadat
     current_edition['spatial_coverage'] = list(tidyCSV.REF_AREA.unique()) # this is certainly not gonna be correct in the long run but we can replace it later or remove it 
     current_edition['temporal_resolution'] = list(tidyCSV.TIME_FORMAT.unique())
     current_edition['temporal_coverage'] = {'start' : min(tidyCSV.TIME_PERIOD), 'end' : max(tidyCSV.TIME_PERIOD)} # This will need a lot of formatting/conditions to end up as datetime from what could be varying format of input
-    current_edition['versions_url'] = 'https://staging.idpd.uk/datasets/' + pathify(dataset_title) + '/editions/' + str(datetime.now().strftime("%Y-%m")) + '/versions'
-    current_edition['versions'] = {'@id': 'https://staging.idpd.uk/datasets/' + pathify(dataset_title) + '/editions/' + str(datetime.now().strftime("%Y-%m")) + '/versions/1',
+    current_edition['versions_url'] = 'https://staging.idpd.uk/datasets/' + pathify_func(dataset_title) + '/editions/' + str(datetime.now().strftime("%Y-%m")) + '/versions'
+    current_edition['versions'] = {'@id': 'https://staging.idpd.uk/datasets/' + pathify_func(dataset_title) + '/editions/' + str(datetime.now().strftime("%Y-%m")) + '/versions/1',
                                 'issued': data["mes:Structure"]['mes:Header']['mes:Prepared'].split('.')[0] + 'Z'}
     current_edition['next_release'] = "" # could we infer this from issued date and frequency if we include that in the config?
 
@@ -205,7 +214,7 @@ def generate_editions_metadata(transformedCSV, structureXML, outputPath, metadat
 
     # dump out metadata file
 
-    with open(outputPath + pathify(dataset_title) + "_" + str(datetime.now().strftime("%Y-%m")) + "-metadata.json", "w") as outfile:
+    with open(outputPath + pathify_func(dataset_title) + "_" + str(datetime.now().strftime("%Y-%m")) + "-metadata.json", "w") as outfile:
         json.dump(editions_template, outfile, ensure_ascii=False, indent=4)
 
 
