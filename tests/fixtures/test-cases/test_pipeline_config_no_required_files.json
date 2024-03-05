@@ -1,0 +1,12 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$id": "https://raw.githubusercontent.com/ONSdigital/dp-data-pipelines/sandbox/schemas/dataset-ingress/config/v1.json",
+    "supplementary_distributions": [
+        {
+            "matches": "*.sdmx",
+            "count": "1"
+        }
+    ],
+    "priority": "1",
+    "pipeline": "sdmx.default"
+}
