@@ -1,9 +1,17 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "$id": "https://raw.githubusercontent.com/ONSdigital/sandbox/initial-structure/schemas/ingress/config/v1.json",
+    "$id": "https://raw.githubusercontent.com/ONSdigital/dp-data-pipelines/sandbox/schemas/dataset-ingress/config/v1.json",
     "required_files": [
         {
             "matches": "*.sdmx",
+            "count": "1"
+        },
+        {
+            "matches": "*.csv",
+            "count": "1"
+        },
+        {
+            "matches": "*.xls",
             "count": "1"
         }
     ],
@@ -13,14 +21,14 @@
             "count": "1"
         },
         {
-            "matches": "*.xls",
+            "matches": "*.csv",
             "count": "1"
         },
         {
-            "matches": "*.csv",
+            "matches": "*.xls",
             "count": "1"
         }
     ],
     "priority": "1",
-    "pipeline": "sdmx.default" 
+    "pipeline": "sdmx.default"
 }
