@@ -1,5 +1,5 @@
 import pytest
-from pipeline.shared.functions.message import (
+from pipelines.pipeline.shared.message import (
     unexpected_error, 
     cant_find_scheama,
     invlaid_config,
