@@ -25,17 +25,18 @@ The following is the (initially, it'll expand over time) structure of this repos
 
 ```
 - /dp-data-pipelines
-     - /schemas
      - /builder                           # Contains Dockerfile for image
-     - /pipelines
+     - /dpypelines
           - s3_tar_received.py            # Uses contents of tar to decide wbich /pipeline/* to call
+          - /schmeas
           - pipeline
                - /shared
+               - /functions
                - dataset_ingress_v1.py
      - /tests
      - /features
      - s3_tar_received.yml                # Calls ./pipelines/s3_tar_recieved.py. Triggered by lambda
-     - builder.yml                        # Rebuilds /builder/Dockerfile on changes to that directory
+     - pyproject.toml
 ```
 
 Licence
