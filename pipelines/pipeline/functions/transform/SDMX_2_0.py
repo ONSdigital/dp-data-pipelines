@@ -1,17 +1,8 @@
 import json
-import string
 import xmltodict
 import pandas as pd
 from datetime import datetime, date
-
-def pathify_func(text: str):
-    """This function was made to pathify a string and return it"""
-
-    no_punctuation = text.translate(str.maketrans('','', string.punctuation))
-
-    pathified = no_punctuation.replace(' ', '-')
-
-    return pathified.lower()
+from pipelines.pipeline.shared.utils import pathify_func
 
 def set_key(dictionary, key, value):
      if key not in dictionary:
