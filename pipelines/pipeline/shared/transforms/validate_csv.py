@@ -1,10 +1,18 @@
+# these validations are based off of a limited knowledge of what the final csv will look like and contain
+# seems likely that more validation steps will want to be added, extra steps can be added easily into
+# the validate_csv() function. If the new validation step checks columns one at a time then add inside
+# of the loop within validate_csv
+
+
 from typing import List, Any
 from pathlib import Path
 import pandas as pd
 import json
 
 def _read_in_csv(csv):
-    # will read in first 5 lines of csv as a check
+    """
+    given a csv will read in first 5 lines as a check
+    """
     try:
         df_sample = pd.read_csv(csv, nrows=5)
     except:
@@ -12,6 +20,10 @@ def _read_in_csv(csv):
         
         
 def _read_in_metadata(metadata):
+    """
+    given a metadata json file attempts to read in a metadata json file
+    returns the metadata as a dict if successful
+    """
     try:
         with open(metadata, 'r') as f:
             metadata_json = json.load(f)
@@ -21,6 +33,9 @@ def _read_in_metadata(metadata):
         
 
 def _check_metadata_columns(metadata_json):
+    """
+    given a metadata json file checks that the column data is where it is expected to be
+    """
     try:
         metadata_json['editions'][0]['table_schema']['columns']
     except:
@@ -31,8 +46,7 @@ def _correct_columns_exist(csv, columns: List[str]):
     """
     given a list of columns, make sure those columns are in the csv
     """
-    # reading in columns only
-    df = pd.read_csv(csv, nrows=0)
+    df = pd.read_csv(csv, nrows=0) # reading in columns only
     
     assert len(df.columns) == len(columns), f"Number of columns in csv file ({len(df.columns)}) does not match len of expected columns ({len(columns)})"
     
@@ -45,10 +59,9 @@ def _correct_columns_exist(csv, columns: List[str]):
 
 def _column_has_type(df, column: str, data_type: Any):
     """
-    given a csv a column name and a type, make sure that all
+    given a df, a column name and a type, make sure that all
     values in that column can be case to that type (int, float, str etc)
     """
-    # expected value is from the metadata, observed value is from the dataframe 
     # just a dict to tody up any spelling discrepancies
     type_dict = {
             'string': 'str',
@@ -58,12 +71,12 @@ def _column_has_type(df, column: str, data_type: Any):
             'float': 'float'
         }
     
-    expected_data_type = type_dict.get(data_type.lower(), None)
+    expected_data_type = type_dict.get(data_type.lower(), None) # expected value is from the metadata
     
     if expected_data_type == None:
         raise NotImplementedError(f"Currently have no conversion for data_type {data_type} given from metadata")
     
-    observed_data_type = df[column].dtypes
+    observed_data_type = df[column].dtypes # observed value is from the dataframe 
     
     # pandas dataframes store dtypes as numpy dtypes so cannot be directly compared 
     # with regular python dtypes
@@ -82,7 +95,7 @@ def _column_has_type(df, column: str, data_type: Any):
 
 def _column_has_no_blanks(df, column: str):
     """
-    given a csv a column name conform that there are
+    given a df and a column name confirm that there are
     no blank entries in the column.
     """
     # will treat '' & pd.isnull as blanks                 
@@ -98,7 +111,6 @@ def _column_has_no_blanks(df, column: str):
                 raise ValueError(f"{column} has blank entries - '{value}' found")
 
 
-# Main validation function, intended for being called from the pipeline
 def validate_csv(csv_path: Path, metadata_path: Path):
     """
     Validate a csv
@@ -126,7 +138,7 @@ def validate_csv(csv_path: Path, metadata_path: Path):
         
     _correct_columns_exist(csv_path, list(expected_columns))
     
-    # validating each column - _column_has_type() & _column_has_no_blanks()
+    # validating each column
     # will be reading in column data here to avoid reading in twice per column
     for col in expected_columns:
         df_column = pd.read_csv(csv_path, usecols=[col]) # df with one column
