@@ -1,0 +1,87 @@
+{
+    "@context": "https://staging.idpd.uk/#ns",
+    "@id": "https://staging.idpd.uk/datasets/supply-table-at-basic-prices-including-a-transformation-into-purchaser-s-prices/editions",
+    "@type": "hydra:Collection",
+    "title": "Supply table at basic prices including a transformation into purchaser's prices",
+    "editions": [
+        {
+            "@id": "https://staging.idpd.uk/datasets/supply-table-at-basic-prices-including-a-transformation-into-purchaser-s-prices/editions/2024-02",
+            "@type": "dcat:Dataset",
+            "in_series": "https://staging.idpd.uk/datasets/supply-table-at-basic-prices-including-a-transformation-into-purchaser-s-prices",
+            "identifier": "2024-02",
+            "title": "Supply table at basic prices including a transformation into purchaser's prices",
+            "summary": "",
+            "description": "",
+            "publisher": "",
+            "creator": "",
+            "contact_point": {
+                "name": "",
+                "email": ""
+            },
+            "topics": "",
+            "frequency": "",
+            "keywords": [
+                "",
+                ""
+            ],
+            "licence": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+            "issued": "2017-11-07T21:02:43Z",
+            "modified": "2024-01-24T12:58:48Z",
+            "spatial_resolution": [
+                "W2"
+            ],
+            "spatial_coverage": [
+                "GB"
+            ],
+            "temporal_resolution": [
+                "P1Y"
+            ],
+            "temporal_coverage": {
+                "start": 1997,
+                "end": 2020
+            },
+            "versions_url": "https://staging.idpd.uk/datasets/supply-table-at-basic-prices-including-a-transformation-into-purchaser-s-prices/editions/2024-02/versions",
+            "versions": {
+                "@id": "https://staging.idpd.uk/datasets/supply-table-at-basic-prices-including-a-transformation-into-purchaser-s-prices/editions/2024-02/versions/1",
+                "issued": "2017-11-07T21:02:43Z"
+            },
+            "next_release": "",
+            "table_schema": {
+                "columns": [
+                    {
+                        "name": "ID",
+                        "datatype": "string",
+                        "titles": "id",
+                        "description": "id"
+                    },
+                    {
+                        "name": "TIME_PERIOD",
+                        "datatype": "int",
+                        "titles": "time_period",
+                        "description": "Time period"
+                    },
+                    {
+                        "name": "OBS_VALUE",
+                        "datatype": "int",
+                        "titles": "obs_value",
+                        "description": "Observation value"
+                    },
+                    {
+                        "name": "OBS_STATUS",
+                        "datatype": "string",
+                        "titles": "obs_status",
+                        "description": "Observation status"
+                    },
+                    {
+                        "name": "CONF_STATUS",
+                        "datatype": "string",
+                        "titles": "conf_status",
+                        "description": "Confidentiality status"
+                    }
+                ]
+            }
+        }
+    ],
+    "count": 1,
+    "offset": 0
+}
