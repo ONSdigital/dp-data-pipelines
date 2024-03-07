@@ -1,6 +1,6 @@
 import pytest
 
-from pipelines.pipeline.functions.schemas import get_config_schema_path
+from dpypelines.pipeline.functions.schemas import get_config_schema_path
 
 
 def test_get_config_schema_path():
@@ -13,7 +13,7 @@ def test_get_config_schema_path():
         "pipeline": "sdmx.default",
     }
     local_schema_path = get_config_schema_path(config)
-    assert "dp-data-pipelines/schemas/dataset-ingress/config/v1.json" in str(
+    assert "dp-data-pipelines/dpypelines/schemas/dataset-ingress/config/v1.json" in str(
         local_schema_path
     )
 
