@@ -1,6 +1,6 @@
 import pytest
 
-from pipelines.pipeline.shared.pipelineconfig.matching import (
+from dpypelines.pipeline.shared.pipelineconfig.matching import (
     get_supplementary_distribution_patterns,
     get_required_files_patterns,
 )
