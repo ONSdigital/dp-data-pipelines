@@ -1,4 +1,3 @@
-import json
 import os
 
 from dpytools.slack.slack import SlackMessenger
