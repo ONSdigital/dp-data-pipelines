@@ -19,26 +19,6 @@ This repository is provided as an installable python package
 
 TODO: Add usage instructions here.
 
-## Repository Structure
-
-The following is the (initially, it'll expand over time) structure of this repository, **this does not need to be kept up to date with every change** - it's intended to help explain how the triggering logic for this repo works.
-
-```
-- /dp-data-pipelines
-     - /builder                           # Contains Dockerfile for image
-     - /dpypelines
-          - s3_tar_received.py            # Uses contents of tar to decide wbich /pipeline/* to call
-          - /schmeas
-          - pipeline
-               - /shared
-               - /functions
-               - dataset_ingress_v1.py
-     - /tests
-     - /features
-     - s3_tar_received.yml                # Calls ./pipelines/s3_tar_recieved.py. Triggered by lambda
-     - pyproject.toml
-```
-
 Licence
 -------
 
