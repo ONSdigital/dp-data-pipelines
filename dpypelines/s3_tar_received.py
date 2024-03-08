@@ -1,7 +1,9 @@
-def start():
+def start(s3_object_name: str):
     """
-    Handles the required behaviour when recieving a tar file via an
-    s3 url.
+    Handles the required behaviour when recieving a tar file indicated
+    by an s3 object name.
+
+    Example s3_object_name: my-bucket/my-data.tar
     """
 
     # IN ALL CASES, the FOLLOWING STEPS WILL BE IN TRY CATCH
