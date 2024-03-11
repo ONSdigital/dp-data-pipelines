@@ -1,6 +1,6 @@
 from pathlib import Path
 from local_directory_store import LocalDirectoryStore
-from pipelines.pipeline.shared.notification import data_engineering
+from dpypelines.pipeline.shared.notification import data_engineering
 
 def dataset_ingress_v1(files_dir: str):
     """

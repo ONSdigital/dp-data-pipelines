@@ -1,6 +1,6 @@
 import pytest
 
-from pipelines.pipeline.functions.config import get_pipeline_identifier_from_config
+from dpypelines.pipeline.functions.config import get_pipeline_identifier_from_config
 
 def test_get_pipeline_identifier_from_config():
     config_dict = {

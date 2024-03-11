@@ -1,13 +1,15 @@
 # TODO - these functions need creating properly
-# these are just placeholder functions doing very basic things 
+# these are just placeholder functions doing very basic things
 # so that they can be picked up by other scripts
 # delete both stub_ functions and change the other functions as required
 # the output paths from smdx_default_v1() were just made up so change as required too
 
 
-from pathlib import Path
-import pandas as pd
 import json
+from pathlib import Path
+
+import pandas as pd
+
 
 def stub_smdx_default_v1():
     """
@@ -27,16 +29,18 @@ def stub_smdx_default_v1():
     }
     with open(json_file, "w") as outfile:
         json.dump(metadata_json, outfile)
-    
+
+
 def stub_sdmx_sanity_check_v1():
     """
     Placeholder function - A fake sdmx sanity check that does nothing.
     """
 
+
 def smdx_default_v1(sdmx_file: Path):
     stub_smdx_default_v1()
     return Path("data.csv"), Path("metadata.json")
 
+
 def sdmx_sanity_check_v1(sdmx_file: Path):
     stub_sdmx_sanity_check_v1()
-
