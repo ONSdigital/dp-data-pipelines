@@ -2,21 +2,23 @@ from pathlib import Path
 from local_directory_store import LocalDirectoryStore
 from dpypelines.pipeline.shared.notification import data_engineering
 
-def dataset_ingress_v1(files_dir: str):
+def dataset_ingress_v1(files_dir: str) -> None:
     """
     Version one of the dataset ingress pipeline.
 
-    files_dir: Path to the directory where the input
-    files for this pipeline are located.
-    """
+    Args:
+        files_dir (str): Path to the directory where the input files for this pipeline are located.
 
+    Raises:
+        ValueError: If required files, supplementary distributions, or pipeline configuration are not found in the input directory.
+        Exception: If any other error occurs.
+    """
     try:
         # create a LocalDirectoryStore object
         local_store = LocalDirectoryStore(files_dir)
 
-        # verify that the specified required files have been provided
-        required_files = local_store.get_required_files_patterns()
-        if  not local_store.verify_required_file(required_files):
+        # verify that the specified required files have been provide
+        if not local_store.verify_required_file():
             raise ValueError("Required files not found in the input directory.")
         
         # verify that the specified supplementary distributions have been provided
@@ -28,16 +30,15 @@ def dataset_ingress_v1(files_dir: str):
         if not pipeline_config:
             raise ValueError("Pipeline configuration not found in the input directory.")
         
-    except Exception as e:
+    except ValueError as value_error:
         # Notify data engineering in the event of an issue
-        data_engineering(e)
-        raise  
-    
-    # verify that the specified required files have been provided
+        data_engineering(value_error)
+        raise
 
-    # verify that the specified supplementary distributions have been provided
-
-    # use config "pipeline" key to get the transform and sanity checking code for the source in question
+    except Exception as general_error:
+        # Notify data engineering in the event of an issue
+        data_engineering(general_error)
+        raise 
 
     # run transform to create csv+json from sdmx (or whatever source)
 
