@@ -23,7 +23,7 @@ def start(s3_object_name: str):
         raise err
 
     try:
-        store = LocalDirectoryStore("inputs")
+        store = LocalDirectoryStore("inputs/data") # booooo
         notify.data_engineering("Sanity check 3 passed: We can access the extracted data via a LocalDirectoryStore")
     except Exception as err:
         notify.data_engineering(f"XXX Failed to create local directory store from extracted files. Go poke glue logs. XXX. Error {err}")
