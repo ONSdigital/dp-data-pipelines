@@ -1,6 +1,6 @@
 from dpytools.stores.directory.local import LocalDirectoryStore
 import pytest
-from pipelines.pipeline.shared.message import (
+from dpypelines.pipeline.shared.message import (
     unexpected_error, 
     cant_find_schema,
     invalid_config,
