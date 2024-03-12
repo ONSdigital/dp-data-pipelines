@@ -1,6 +1,6 @@
 import pytest
 
-from dpypelines.pipeline.functions.schemas import get_config_schema_path
+from dpypelines.pipeline.shared.schemas import get_config_schema_path
 
 
 def test_get_config_schema_path():
