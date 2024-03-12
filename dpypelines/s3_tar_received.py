@@ -1,4 +1,6 @@
 from dpytools.s3.basic import decompress_s3_tar
+import os
+
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.shared import notification as notify
@@ -11,19 +13,23 @@ def start(s3_object_name: str):
     Example s3_object_name: my-bucket/my-data.tar
     """
 
+    print(os.environ.keys())
+
     notify.data_engineering("Sanity check 1 passed: Glue pipeline can notify webhook")
 
     try:
         decompress_s3_tar(s3_object_name, "outputs")
         notify.data_engineering("Sanity check 2 passed: We can decompress the submitted tar file")
     except Exception as err:
-        notify.data_engineering("XXX Failed to decompress from s3. Go poke glue logs. XXX")
+        notify.data_engineering(f"XXX Failed to decompress from s3. Go poke glue logs. XXX. Error {err}")
+        raise err
 
     try:
         store = LocalDirectoryStore("outputs")
         notify.data_engineering("Sanity check 3 passed: We can access the extracted data via a LocalDirectoryStore")
     except Exception as err:
-        notify.data_engineering("XXX Failed to create local directory store from extracted files. Go poke glue logs. XXX")
+        notify.data_engineering(f"XXX Failed to create local directory store from extracted files. Go poke glue logs. XXX. Error {err}")
+        raise err
 
     try:
         files = store.get_file_names()
@@ -38,4 +44,5 @@ def start(s3_object_name: str):
             {files_as_text_list}
                                 """)
     except Exception as err:
-        notify.data_engineering("XXX Failed to create local directory store from extracted files. Go poke glue logs. XXX")
+        notify.data_engineering(f"XXX Failed to list files in local directory store. Go poke glue logs. XXX. Error {err}")
+        raise err
