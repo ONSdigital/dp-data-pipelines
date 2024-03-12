@@ -14,18 +14,19 @@ def start(s3_object_name: str):
     """
 
     print(os.environ.keys())
+    submitted_dir = s3_object_name.split("/")[-1].rstrip(".tar")
 
     notify.data_engineering("Sanity check 1 passed: Glue pipeline can notify webhook")
 
     try:
-        decompress_s3_tar(s3_object_name, "outputs")
+        decompress_s3_tar(s3_object_name, ".")
         notify.data_engineering("Sanity check 2 passed: We can decompress the submitted tar file")
     except Exception as err:
         notify.data_engineering(f"XXX Failed to decompress from s3. Go poke glue logs. XXX. Error {err}")
         raise err
 
     try:
-        store = LocalDirectoryStore("outputs")
+        store = LocalDirectoryStore(submitted_dir")
         notify.data_engineering("Sanity check 3 passed: We can access the extracted data via a LocalDirectoryStore")
     except Exception as err:
         notify.data_engineering(f"XXX Failed to create local directory store from extracted files. Go poke glue logs. XXX. Error {err}")
