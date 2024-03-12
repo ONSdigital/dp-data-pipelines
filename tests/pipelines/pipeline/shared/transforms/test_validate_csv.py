@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 from pipelines.pipeline.shared.transforms.validate_csv import (
-    _read_in_csv,
+    _read_in_csv_check,
     _correct_columns_exist,
     _dataframe_has_no_blanks,
     _dataframe_has_no_duplicates,
@@ -14,11 +14,11 @@ from pipelines.pipeline.shared.transforms.validate_csv import (
 test_dir = Path(__file__).parents[4]
 fixtures_files_dir = Path(test_dir / "fixtures/test-cases")
 
-def test_read_in_csv_invalid_csv_path():
+def test_read_in_csv_check_invalid_csv_path():
     csv_path = Path('')
     
     with pytest.raises(AssertionError) as err:
-        _read_in_csv(csv_path)
+        _read_in_csv_check(csv_path)
         
     assert "Invalid csv_path" in str(err.value)
 
@@ -26,7 +26,7 @@ def test_validate_csv_invalid_file():
     csv_path = Path('data.csv')
     
     with pytest.raises(Exception) as err:
-        _read_in_csv(csv_path)
+        _read_in_csv_check(csv_path)
         
     assert str(err.value) == f"Failed to read in csv - {csv_path}"
 

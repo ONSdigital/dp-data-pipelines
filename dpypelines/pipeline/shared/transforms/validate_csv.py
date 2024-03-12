@@ -7,7 +7,7 @@ from typing import List
 from pathlib import Path
 import pandas as pd
 
-def _read_in_csv(csv_path):
+def _read_in_csv_check(csv_path):
     """
     given a csv will read in first 5 lines as a check
     """
@@ -82,7 +82,7 @@ def validate_csv(csv_path: Path, columns: List[str]):
     # this function could look something like the below
 
     # check that csv_path can be read in
-    # _read_in_csv(csv_path)
+    # _read_in_csv_check(csv_path)
     
     # check correct columns in data
     # _dataframe_correct_columns_exist(csv_path, columns)
