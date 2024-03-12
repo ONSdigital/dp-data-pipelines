@@ -23,8 +23,17 @@ def start(s3_object_name: str):
         raise err
 
     try:
-        store = LocalDirectoryStore("inputs/data") # booooo
-        notify.data_engineering("Sanity check 3 passed: We can access the extracted data via a LocalDirectoryStore")
+        directories = [d for d in os.listdir("inputs") if os.path.isdir(os.path.join("inputs", d))]
+        assert len(directories) == 1, (
+            "Aborting, input directory has more than one directory in it"
+        )
+        decompressed_directory = directories[0]
+    except Exception as err:
+        notify.data_engineering(f"Sanity check 3 passed: We know the sub directory we've decompressed to: {decompressed_directory}")
+
+    try:
+        store = LocalDirectoryStore(f"inputs/{decompressed_directory}")
+        notify.data_engineering("Sanity check 4 passed: We can access the extracted data via a LocalDirectoryStore")
     except Exception as err:
         notify.data_engineering(f"XXX Failed to create local directory store from extracted files. Go poke glue logs. XXX. Error {err}")
         raise err
