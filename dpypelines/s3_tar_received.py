@@ -20,7 +20,7 @@ def start(s3_object_name: str):
 
         # decompress tar file to workspace
         files_path = Path("./")
-        contents = decompress_s3_tar(s3_object_name, files_path)
+        decompress_s3_tar(s3_object_name, files_path)
         localStore = LocalDirectoryStore(files_path)
     except Exception as error:
         notify.data_engineering("ERROR MESSAGE")
@@ -48,6 +48,6 @@ def start(s3_object_name: str):
 
     
         # use the config info to select and run the appropriate pipeline,
-        
+
         # there should literally by a field in the pipeline-config telling
         # us which pipeline from ./pipeline/* to call.
