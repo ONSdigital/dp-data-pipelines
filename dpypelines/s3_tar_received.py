@@ -13,43 +13,29 @@ def start(s3_object_name: str):
     Example s3_object_name: my-bucket/my-data.tar
     """
 
-    notify.data_engineering("Sanity check 1 passed: Glue pipeline can notify webhook")
-
+    # Decompress the tar to ./inputs
     try:
         decompress_s3_tar(s3_object_name, "inputs")
-        notify.data_engineering("Sanity check 2 passed: We can decompress the submitted tar file")
     except Exception as err:
-        notify.data_engineering(f"XXX Failed to decompress from s3. Go poke glue logs. XXX. Error {err}")
+        notify.data_engineering("MESSAGE")
         raise err
 
+    # Identify the child directory we've just decompressed to within /inputs
     try:
         directories = [d for d in os.listdir("inputs") if os.path.isdir(os.path.join("inputs", d))]
         assert len(directories) == 1, (
-            "Aborting, input directory has more than one directory in it"
+            "Aborting, input directory has more than one directory within it"
         )
         decompressed_directory = directories[0]
     except Exception as err:
-        notify.data_engineering(f"Sanity check 3 passed: We know the sub directory we've decompressed to: {decompressed_directory}")
+        notify.data_engineering("MESSAGE")
+        raise err
 
+    # Create a local directory store using our new files
     try:
         store = LocalDirectoryStore(f"inputs/{decompressed_directory}")
-        notify.data_engineering("Sanity check 4 passed: We can access the extracted data via a LocalDirectoryStore")
     except Exception as err:
-        notify.data_engineering(f"XXX Failed to create local directory store from extracted files. Go poke glue logs. XXX. Error {err}")
+        notify.data_engineering("MESSAGE")
         raise err
-
-    try:
-        files = store.get_file_names()
-        files_as_text_list = "\n".join(files)
-        notify.data_engineering(f"""
-            All sanity checks passed.
-                                
-            We have unpacked the s3 tar from the create event to a local directory store.
-                                
-            Files received are:
-                                
-            {files_as_text_list}
-                                """)
-    except Exception as err:
-        notify.data_engineering(f"XXX Failed to list files in local directory store. Go poke glue logs. XXX. Error {err}")
-        raise err
+    
+    notify.data_engineering("WORKED")
