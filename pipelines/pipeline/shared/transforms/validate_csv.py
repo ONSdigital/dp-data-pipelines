@@ -60,7 +60,7 @@ def _dataframe_has_no_duplicates(df):
     assert len(df) == len(df.drop_duplicates()), "Found duplicate rows in the dataframe, failed validation"
     
 
-def dataframing_slicing(csv_path):
+def dataframing_slicing(csv_path) -> List[pd.core.frame.DataFrame]:
     """
     given a csv path read in the dataframe as slices and return these slices as a list
     """
