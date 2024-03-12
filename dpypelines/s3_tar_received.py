@@ -1,3 +1,8 @@
+from dpytools.s3.basic import decompress_s3_tar
+from dpytools.stores.directory.local import LocalDirectoryStore
+
+from dpypelines.pipeline.shared import notification as notify
+
 def start(s3_object_name: str):
     """
     Handles the required behaviour when recieving a tar file indicated
@@ -6,17 +11,31 @@ def start(s3_object_name: str):
     Example s3_object_name: my-bucket/my-data.tar
     """
 
-    # IN ALL CASES, the FOLLOWING STEPS WILL BE IN TRY CATCH
-    # BLOCKS AND WILL NOTIFY RELEVANT PARTIES IN EVENT OF FAILURE
+    notify.data_engineering("Sanity check 1 passed: Glue pipeline can notify webhook")
 
-    # decompress tar file to workspace
+    try:
+        decompress_s3_tar(s3_object_name, "outputs")
+        notify.data_engineering("Sanity check 2 passed: We can decompress the submitted tar file")
+    except Exception as err:
+        notify.data_engineering("XXX Failed to decompress from s3. Go poke glue logs. XXX")
 
-    # confirm we have a config
+    try:
+        store = LocalDirectoryStore("outputs")
+        notify.data_engineering("Sanity check 3 passed: We can access the extracted data via a LocalDirectoryStore")
+    except Exception as err:
+        notify.data_engineering("XXX Failed to create local directory store from extracted files. Go poke glue logs. XXX")
 
-    # if we dont have a config - make one? (tbd)
-
-    # use config schema to confirm that config is valid
-
-    # use the config info to select and run the appropriate pipeline,
-    # there should literally by a field in the pipeline-config telling
-    # us which pipeline from ./pipeline/* to call.
+    try:
+        files = store.get_file_names()
+        files_as_text_list = "\n".join(files)
+        notify.data_engineering(f"""
+            All sanity checks passed.
+                                
+            We have unpacked the s3 tar from the create event to a local directory store.
+                                
+            Files received are:
+                                
+            {files_as_text_list}
+                                """)
+    except Exception as err:
+        notify.data_engineering("XXX Failed to create local directory store from extracted files. Go poke glue logs. XXX")
