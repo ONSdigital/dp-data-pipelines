@@ -9,6 +9,9 @@ def dataset_ingress_v1(files_dir: str) -> None:
     """
     Version one of the dataset ingress pipeline.
 
+    files_dir: Path to the directory where the input
+    files for this pipeline are located.
+
     Args:
         files_dir (str): Path to the directory where the input files for this pipeline are located.
 
