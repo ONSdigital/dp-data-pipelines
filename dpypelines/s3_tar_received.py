@@ -19,16 +19,15 @@ def start(s3_object_name: str):
         # BLOCKS AND WILL NOTIFY RELEVANT PARTIES IN EVENT OF FAILURE
 
         # decompress tar file to workspace
-        files_path = Path("./")
-        decompress_s3_tar(s3_object_name, files_path)
-        localStore = LocalDirectoryStore(files_path)
+        decompress_s3_tar(s3_object_name, "input")
+        localStore = LocalDirectoryStore("input")
     except Exception as error:
         notify.data_engineering("ERROR MESSAGE")
         raise error
 
         # confirm we have a config
     try:
-        if not localStore.has_lone_file_matching("config.json"):
+        if not localStore.has_lone_file_matching("pipeline-config.json"):
             notify.data_engineering("ERROR MESSAGE")
             raise ValueError("Missing Config file!")
     except Exception as error:
@@ -39,7 +38,7 @@ def start(s3_object_name: str):
 
         # use config schema to confirm that config is valid
     try:
-        config_dict = localStore.get_lone_matching_json_as_dict("path_to_config_file")
+        config_dict = localStore.get_lone_matching_json_as_dict("pipeline-config.json")
         path_to_schema = get_config_schema_path(config_dict)
         validation.validate_json_schema(schema_path=path_to_schema, data_dict=config_dict)
     except Exception as error:
