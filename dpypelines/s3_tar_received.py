@@ -2,7 +2,6 @@ import os
 
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpypelines.pipeline.shared import notification as notify
-from dpypelines.pipeline.shared.pipelineconfig import matching
 from dpypelines.pipeline.functions.schemas import get_config_schema_path
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.validation.json import validation
@@ -21,7 +20,7 @@ def start(s3_object_name: str):
         # decompress tar file to workspace
         decompress_s3_tar(s3_object_name, "input")
     except Exception as error:
-        notify.data_engineering("ERROR MESSAGE")
+        notify.data_engineering( "ERROR MESSAGE")
         raise error
     
         # Identify the child directory we've just decompressed to within /inputs
@@ -64,7 +63,7 @@ def start(s3_object_name: str):
     except Exception as error:
         notify.data_engineering("ERROR MESSAGE")
         raise error
-        
+
     try:    
         validation.validate_json_schema(schema_path=path_to_schema, data_dict=config_dict)
     except Exception as error:
