@@ -2,7 +2,7 @@
 
 **am putting some details in here beyond the config to put it in context, things will be more clearly seprated once this is finalised and documented for real. It's still quite early days on putting this all together.**
 
-happy to take questions/convos - mike.
+happy to take questions/convos - mike/martyn.
 
 # pipeline-config.json
 
@@ -70,6 +70,6 @@ The config is what provides this information. Along with other necessities (like
 
 * The $id is provided as fully qualified url for ease of use but said schema is part of the codebase inside the pipeline and is just serving as a namespace, it is **never** called remotely as this would make the pipelines dependant on third party site (github) uptime.
 
-**Important - I haven't document this yet for a reason, there are things still being worked out but I see tha value in starting a conversation about leftward requiremnts, just bear in mind we're a week or two of polish ahead of where I'd ideall want to be sharing this.**. For what it's worth I doubt it will be quite this, there's some messiness remaining.
+**Important - I haven't document this yet for a reason, there are things still being worked out but I see tha value in starting a conversation about leftward requirements, just bear in mind we're a week or two of polish ahead of where we'd ideally want to be sharing this.**. For what it's worth I doubt it will be quite this, there's some messiness remaining.
 
 This is also quite likely to actuall be `transform-pipeline-config.json` or similar , or the config schema should be, given it's linked to a principle use case, again, need to think on it.
