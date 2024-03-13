@@ -31,12 +31,12 @@ def start(s3_object_name: str):
     try:
         directories = [d for d in os.listdir("inputs") if os.path.isdir(os.path.join("inputs", d))]
         assert len(directories) == 1, (
-            "Aborting, input directory has more than one directory within it"
+            f"Aborting, input directory has more than one directory within it. Got {directories}"
         )
         decompressed_directory = directories[0]
         notify.data_engineering(f'Files decompressed to: "/inputs/{decompressed_directory}"')
     except Exception as err:
-        notify.data_engineering("MESSAGE")
+        notify.data_engineering(message.unexpected_error("Issue encountered findinng decompressed child directory", err))
         raise err
 
     # Create a local directory store using our new files
@@ -45,7 +45,7 @@ def start(s3_object_name: str):
         notify.data_engineering(f'LocalDirectoryStore created using: {store.get_current_source_pathlike()}')
         notify.data_engineering(f'LocalDirectoryStore contains files: {store.get_file_names()}')
     except Exception as err:
-        notify.data_engineering("MESSAGE")
+        notify.data_engineering(f"Unable to create directory store from: inputs/{decompressed_directory}")
         raise err
 
     # Load the pipeline configuration as a dictionary
