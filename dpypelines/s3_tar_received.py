@@ -1,9 +1,12 @@
 import os
+import json
 
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
+from dpytools.validation.json.validation import validate_json_schema
 
 from dpypelines.pipeline.shared import notification as notify
+from dpypelines.pipeline.shared.schemas import get_config_schema_path
 from dpypelines.pipeline.shared import message
 
 def start(s3_object_name: str):
@@ -44,3 +47,22 @@ def start(s3_object_name: str):
     except Exception as err:
         notify.data_engineering("MESSAGE")
         raise err
+
+    # Load the pipeline configuration as a dictionary
+    try:
+        pipeline_config: dict = store.get_lone_matching_json_as_dict("pipeline-config.json")
+        notify.data_engineering(f'Got pipeline config of {json.dumps(pipeline_config, indent=2)}')
+    except Exception as err:
+        notify.data_engineering(message.unexpected_error("Failed to get pipeline config", err))
+        raise
+
+    # Use the schema for the config
+    try:
+        path_to_config_scheam = get_config_schema_path(pipeline_config)
+        notify.data_engineering(f"Got config schema as {path_to_config_scheam}")
+    except Exception as err:
+        notify.data_engineering(
+            message.unexpected_error(f"Unable to get config schema from {json.dumps(pipeline_config, indent=2)}", err)
+            )
+        raise err
+    
