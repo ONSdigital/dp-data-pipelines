@@ -3,6 +3,7 @@ from pathlib import Path
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpypelines.pipeline.shared import notification as notify
 from dpypelines.pipeline.shared.pipelineconfig import matching
+from dpypelines.pipeline.shared.config import get_pipeline_identifier_from_config
 from pipelines.pipeline.shared import message
 
 
@@ -24,9 +25,9 @@ def dataset_ingress_v1(files_dir: str) -> None:
     # Attempt to access the local data store
     try:
         local_store = LocalDirectoryStore(files_dir)
-    except Exception as general_error:
+    except Exception as err:
         notify.data_engineering(
-            message.unexpected_error("Failed to access local data", general_error)
+            message.unexpected_error(f"Failed to access local data at {files_dir}", err)
         )
         raise
 
@@ -35,35 +36,17 @@ def dataset_ingress_v1(files_dir: str) -> None:
         pipeline_config: dict = local_store.get_lone_matching_json_as_dict(
             "pipeline-config.json"
         )
-    except Exception as general_error:
+    except Exception as err:
         notify.data_engineering(
-            message.unexpected_error("Failed to get pipeline config", general_error)
-        )
-        raise
-
-    # Validate that pipeline_config is a dictionary
-    try:
-        if not isinstance(pipeline_config, dict):
-            raise ValueError("pipeline_config must be a dictionary")
-    except Exception as general_error:
-        notify.data_engineering(
-            message.cant_find_schema(pipeline_config, general_error)
-        )
-        raise
-
-    # Validate that pipeline is a string
-    try:
-        if not isinstance(pipeline, str):
-            raise ValueError("pipeline must be a string")
-    except Exception as general_error:
-        notify.data_engineering(
-            message.cant_find_schema(pipeline_config, general_error)
+            message.pipeline_input_exception(
+                {"pipeline-config.json": "expected"}, local_store, err
+            )
         )
         raise
 
     # Make sure pipeline_config contains a "pipeline" key
     try:
-        pipeline = pipeline_config["pipeline"]
+        pipeline = get_pipeline_identifier_from_config(pipeline_config)
     except KeyError:
         notify.data_engineering(
             message.expected_config_key_missing(
@@ -75,13 +58,6 @@ def dataset_ingress_v1(files_dir: str) -> None:
                 "Pipeline key not found in config", "pipeline", "dataset_ingress_v1"
             )
         )
-    except Exception as general_error:
-        notify.data_engineering(
-            message.unexpected_error(
-                f"Failed to get pipeline from config", general_error
-            )
-        )
-        raise
 
     # Check for the existence of a pipeline configuration file
     try:
@@ -100,33 +76,18 @@ def dataset_ingress_v1(files_dir: str) -> None:
                     "dataset_ingress_v1",
                 )
             )
-    except Exception as general_error:
+    except Exception as err:
         notify.data_engineering(
-            message.unexpected_error(
-                "Failed to check for pipeline config", general_error
-            )
+            message.unexpected_error("Failed to check for pipeline config", err)
         )
         raise
 
     # Extract the patterns for required files from the pipeline configuration
     try:
         required_file_patterns = matching.get_required_files_patterns(pipeline_config)
-    except Exception as general_error:
+    except Exception as err:
         notify.data_engineering(
-            message.cant_find_schema(pipeline_config, general_error)
-        )
-        raise
-
-    # Validate that required_file_patterns is a list of strings
-    try:
-        required_file_patterns = matching.get_required_files_patterns(pipeline_config)
-        if not isinstance(required_file_patterns, list) or not all(
-            isinstance(pattern, str) for pattern in required_file_patterns
-        ):
-            raise ValueError("required_file_patterns must be a list of strings")
-    except Exception as general_error:
-        notify.data_engineering(
-            message.cant_find_schema(pipeline_config, general_error)
+            message.unexpected_error("Failed to get required files patterns", err)
         )
         raise
 
@@ -148,42 +109,23 @@ def dataset_ingress_v1(files_dir: str) -> None:
                         "dataset_ingress_v1",
                     )
                 )
-        except Exception as general_error:
+        except Exception as err:
             notify.data_engineering(
                 message.unexpected_error(
-                    f"Failed to check for required file {required_file}", general_error
+                    f"Failed to check for required file {required_file}", err
                 )
             )
             raise
-
-    # Validate that supplementary_distribution_patterns is a list of strings
-    try:
-        supplementary_distribution_patterns = (
-            matching.get_supplementary_distribution_patterns(pipeline_config)
-        )
-        if not isinstance(supplementary_distribution_patterns, list) or not all(
-            isinstance(pattern, str) for pattern in supplementary_distribution_patterns
-        ):
-            raise ValueError(
-                "supplementary_distribution_patterns must be a list of strings"
-            )
-    except Exception as general_error:
-        notify.data_engineering(
-            message.unexpected_error(
-                f"Failed to get supplementary distribution patterns", general_error
-            )
-        )
-        raise
 
     # Extract the patterns for supplementary distributions from the pipeline configuration
     try:
         supplementary_distribution_patterns = (
             matching.get_supplementary_distribution_patterns(pipeline_config)
         )
-    except Exception as general_error:
+    except Exception as err:
         notify.data_engineering(
             message.unexpected_error(
-                f"Failed to get supplementary distribution patterns", general_error
+                f"Failed to get supplementary distribution patterns", err
             )
         )
         raise
@@ -206,11 +148,11 @@ def dataset_ingress_v1(files_dir: str) -> None:
                         "dataset_ingress_v1",
                     )
                 )
-        except Exception as general_error:
+        except Exception as err:
             notify.data_engineering(
                 message.unexpected_error(
                     f"Failed to check for supplementary distribution {supplementary_distribution}",
-                    general_error,
+                    err,
                 )
             )
             raise
