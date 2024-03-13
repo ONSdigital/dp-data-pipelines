@@ -31,7 +31,7 @@ def start(s3_object_name: str):
     try:
         directories = [d for d in os.listdir("inputs") if os.path.isdir(os.path.join("inputs", d))]
         assert len(directories) == 1, (
-            f"Aborting, input directory has more than one directory within it. Got {directories}"
+            f"Aborting, input directory does not have exactly one directory within it. Got {os.listdir("inputs")}"
         )
         decompressed_directory = directories[0]
         notify.data_engineering(f'Files decompressed to: "/inputs/{decompressed_directory}"')
@@ -54,7 +54,7 @@ def start(s3_object_name: str):
         notify.data_engineering(f'Got pipeline config of {json.dumps(pipeline_config, indent=2)}')
     except Exception as err:
         notify.data_engineering(message.unexpected_error("Failed to get pipeline config", err))
-        raise
+        raise err
 
     # Use the schema for the config
     try:
