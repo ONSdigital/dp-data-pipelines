@@ -59,7 +59,7 @@ explanations of fields follows:
 | supplementary_distributions | regex patterns and counts for supplementary distributions that should be submitted alongside this config. For example: an sdmx file to be uploaded alongside the csv data derived from it. | Yes (but can be an empty list) | No |
 | priority | Future proofing, currently unused | No | No |
 | pipeline | The seconday pipeline to be called when we move from generic to specific handling | Yes | No |
-| options -> pipeline_details | An identifier used to specify which data transformation function is ran against the source in question. Please see [../pipeline/shared/details.py](../pipeline/shared/details.py) | Yes | No |
+| options -> pipeline_details | An identifier used to specify which data transformation function is ran against the source in question. Please see [../pipeline/shared/details.py](https://github.com/ONSdigital/dp-data-pipelines/blob/sandbox/dpypelines/pipeline/shared/details.py)) | Yes | No |
 
 The general idea here is that the "pipeline" remains the same, the changing parts are:
 
