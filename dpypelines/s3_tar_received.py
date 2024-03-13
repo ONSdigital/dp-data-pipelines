@@ -31,8 +31,12 @@ def start(s3_object_name: str):
     try:
         directories = [d for d in os.listdir("inputs") if os.path.isdir(os.path.join("inputs", d))]
         assert len(directories) == 1, (
-            f"Aborting, input directory does not have exactly one directory within it. Got {os.listdir("inputs")}"
-        )
+            f"""
+            Aborting, input directory does not have exactly one directory within it.
+            Contents of ./inputs:
+            
+            {os.listdir('inputs')}""")
+        
         decompressed_directory = directories[0]
         notify.data_engineering(f'Files decompressed to: "/inputs/{decompressed_directory}"')
     except Exception as err:
