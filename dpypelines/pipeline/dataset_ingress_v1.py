@@ -6,7 +6,7 @@ from dpypelines.pipeline.shared.pipelineconfig import matching
 from dpypelines.pipeline.functions.config import get_pipeline_identifier_from_config
 from pipelines.pipeline.shared import message
 
-def dataset_ingress_v1(files_dir: str) -> None:
+def dataset_ingress_v1(files_dir: str):
     """
     Version one of the dataset ingress pipeline.
 
@@ -40,14 +40,16 @@ def dataset_ingress_v1(files_dir: str) -> None:
     try:
         pipeline = get_pipeline_identifier_from_config(pipeline_config)
     except KeyError:
-        notify.data_engineering(message.expected_config_key_missing("Pipeline key not found in config", "pipeline", "dataset_ingress_v1"))
-        raise ValueError(message.expected_config_key_missing("Pipeline key not found in config", "pipeline", "dataset_ingress_v1")) from err
+        msg  = message.expected_config_key_missing("Pipeline key not found in config", "pipeline", "dataset_ingress_v1")
+        notify.data_engineering(msg)
+        raise ValueError(msg) from err
     
     # Check for the existence of a pipeline configuration file
     try:
         if not local_store.has_lone_file_matching("pipeline-config.json"):
-            notify.data_engineering(message.expected_local_file_missing("Pipeline config not found", "pipeline-config.json", "dataset_ingress_v1"))
-            raise ValueError(message.expected_local_file_missing("Pipeline config not found", "pipeline-config.json", "dataset_ingress_v1"))
+            msg = message.expected_local_file_missing("Pipeline config not found", "pipeline-config.json", "dataset_ingress_v1")
+            notify.data_engineering(msg)
+            raise ValueError(msg)
     except Exception as err:
         notify.data_engineering(message.unexpected_error("Failed to check for pipeline config", err))
         raise err
@@ -63,8 +65,9 @@ def dataset_ingress_v1(files_dir: str) -> None:
     for required_file in required_file_patterns:
         try:
             if not local_store.has_lone_file_matching(required_file):
-                notify.data_engineering(message.expected_local_file_missing(f"Required file {required_file} not found", required_file, "dataset_ingress_v1"))
-                raise ValueError(message.expected_local_file_missing(f"Required file {required_file} not found", required_file, "dataset_ingress_v1"))
+                msg = message.expected_local_file_missing(f"Required file {required_file} not found", required_file, "dataset_ingress_v1")
+                notify.data_engineering(msg)
+                raise ValueError(msg)
         except Exception as err:
             notify.data_engineering(message.unexpected_error(f"Error while looking for required file {required_file}", err))
             raise err
@@ -80,8 +83,9 @@ def dataset_ingress_v1(files_dir: str) -> None:
     for supplementary_distribution in supplementary_distribution_patterns:
         try:
             if not local_store.has_lone_file_matching(supplementary_distribution):
-                notify.data_engineering(message.expected_local_file_missing(f"Supplementary distribution {supplementary_distribution} not found", supplementary_distribution, "dataset_ingress_v1"))
-                raise ValueError(message.expected_local_file_missing(f"Supplementary distribution {supplementary_distribution} not found", supplementary_distribution, "dataset_ingress_v1"))
+                msg = message.expected_local_file_missing(f"Supplementary distribution {supplementary_distribution} not found", supplementary_distribution, "dataset_ingress_v1")   
+                notify.data_engineering(msg)
+                raise ValueError(msg)
         except Exception as err:
             notify.data_engineering(message.unexpected_error(f"Error while looging for supplementary distribution {supplementary_distribution}", err))
             raise err
