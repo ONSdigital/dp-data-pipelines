@@ -29,7 +29,7 @@ def dataset_ingress_v1(files_dir: str) -> None:
         notify.data_engineering(
             message.unexpected_error(f"Failed to access local data at {files_dir}", err)
         )
-        raise
+        raise err
 
     # Load the pipeline configuration as a dictionary
     try:
@@ -38,11 +38,9 @@ def dataset_ingress_v1(files_dir: str) -> None:
         )
     except Exception as err:
         notify.data_engineering(
-            message.pipeline_input_exception(
-                {"pipeline-config.json": "expected"}, local_store, err
-            )
+            message.unexpected_error("Failed to get pipeline-config.json", err)
         )
-        raise
+        raise err
 
     # Make sure pipeline_config contains a "pipeline" key
     try:
@@ -57,7 +55,7 @@ def dataset_ingress_v1(files_dir: str) -> None:
             message.expected_config_key_missing(
                 "Pipeline key not found in config", "pipeline", "dataset_ingress_v1"
             )
-        )
+        ) from err
 
     # Check for the existence of a pipeline configuration file
     try:
@@ -80,7 +78,7 @@ def dataset_ingress_v1(files_dir: str) -> None:
         notify.data_engineering(
             message.unexpected_error("Failed to check for pipeline config", err)
         )
-        raise
+        raise err
 
     # Extract the patterns for required files from the pipeline configuration
     try:
@@ -89,7 +87,7 @@ def dataset_ingress_v1(files_dir: str) -> None:
         notify.data_engineering(
             message.unexpected_error("Failed to get required files patterns", err)
         )
-        raise
+        raise err
 
     # Check for the existence of each required file
     for required_file in required_file_patterns:
@@ -112,10 +110,10 @@ def dataset_ingress_v1(files_dir: str) -> None:
         except Exception as err:
             notify.data_engineering(
                 message.unexpected_error(
-                    f"Failed to check for required file {required_file}", err
+                    f"Error while looking for required file {required_file}", err
                 )
             )
-            raise
+            raise err
 
     # Extract the patterns for supplementary distributions from the pipeline configuration
     try:
@@ -128,7 +126,7 @@ def dataset_ingress_v1(files_dir: str) -> None:
                 f"Failed to get supplementary distribution patterns", err
             )
         )
-        raise
+        raise err
 
     # Check for the existence of each supplementary distribution
     for supplementary_distribution in supplementary_distribution_patterns:
@@ -151,11 +149,11 @@ def dataset_ingress_v1(files_dir: str) -> None:
         except Exception as err:
             notify.data_engineering(
                 message.unexpected_error(
-                    f"Failed to check for supplementary distribution {supplementary_distribution}",
+                    f"Error while looging for supplementary distribution {supplementary_distribution}",
                     err,
                 )
             )
-            raise
+            raise err
 
     # run transform to create csv+json from sdmx (or whatever source)
 
