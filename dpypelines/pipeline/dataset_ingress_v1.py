@@ -26,14 +26,14 @@ def dataset_ingress_v1(files_dir: str) -> None:
         local_store = LocalDirectoryStore(files_dir)
     except Exception as err:
         notify.data_engineering(message.unexpected_error(f"Failed to access local data at {files_dir}", err))
-        raise
+        raise err
 
     # Load the pipeline configuration as a dictionary
     try:
         pipeline_config: dict = local_store.get_lone_matching_json_as_dict("pipeline-config.json")
     except Exception as err:
-        notify.data_engineering(message.pipeline_input_exception({"pipeline-config.json": "expected"}, local_store, err))
-        raise
+        notify.data_engineering(message.unexpected_error("Failed to get pipeline-config.json", err))
+        raise err
 
     
     # Make sure pipeline_config contains a "pipeline" key
@@ -41,7 +41,7 @@ def dataset_ingress_v1(files_dir: str) -> None:
         pipeline = get_pipeline_identifier_from_config(pipeline_config)
     except KeyError:
         notify.data_engineering(message.expected_config_key_missing("Pipeline key not found in config", "pipeline", "dataset_ingress_v1"))
-        raise ValueError(message.expected_config_key_missing("Pipeline key not found in config", "pipeline", "dataset_ingress_v1"))
+        raise ValueError(message.expected_config_key_missing("Pipeline key not found in config", "pipeline", "dataset_ingress_v1")) from err
     
     # Check for the existence of a pipeline configuration file
     try:
@@ -50,14 +50,14 @@ def dataset_ingress_v1(files_dir: str) -> None:
             raise ValueError(message.expected_local_file_missing("Pipeline config not found", "pipeline-config.json", "dataset_ingress_v1"))
     except Exception as err:
         notify.data_engineering(message.unexpected_error("Failed to check for pipeline config", err))
-        raise
+        raise err
 
     # Extract the patterns for required files from the pipeline configuration
     try:
         required_file_patterns = matching.get_required_files_patterns(pipeline_config)
     except Exception as err:
         notify.data_engineering(message.unexpected_error("Failed to get required files patterns", err))
-        raise
+        raise err
 
     # Check for the existence of each required file
     for required_file in required_file_patterns:
@@ -66,15 +66,15 @@ def dataset_ingress_v1(files_dir: str) -> None:
                 notify.data_engineering(message.expected_local_file_missing(f"Required file {required_file} not found", required_file, "dataset_ingress_v1"))
                 raise ValueError(message.expected_local_file_missing(f"Required file {required_file} not found", required_file, "dataset_ingress_v1"))
         except Exception as err:
-            notify.data_engineering(message.unexpected_error(f"Failed to check for required file {required_file}", err))
-            raise
+            notify.data_engineering(message.unexpected_error(f"Error while looking for required file {required_file}", err))
+            raise err
 
     # Extract the patterns for supplementary distributions from the pipeline configuration
     try:
         supplementary_distribution_patterns = matching.get_supplementary_distribution_patterns(pipeline_config)
     except Exception as err:
         notify.data_engineering(message.unexpected_error(f"Failed to get supplementary distribution patterns", err))
-        raise
+        raise err
 
     # Check for the existence of each supplementary distribution
     for supplementary_distribution in supplementary_distribution_patterns:
@@ -83,8 +83,8 @@ def dataset_ingress_v1(files_dir: str) -> None:
                 notify.data_engineering(message.expected_local_file_missing(f"Supplementary distribution {supplementary_distribution} not found", supplementary_distribution, "dataset_ingress_v1"))
                 raise ValueError(message.expected_local_file_missing(f"Supplementary distribution {supplementary_distribution} not found", supplementary_distribution, "dataset_ingress_v1"))
         except Exception as err:
-            notify.data_engineering(message.unexpected_error(f"Failed to check for supplementary distribution {supplementary_distribution}", err))
-            raise
+            notify.data_engineering(message.unexpected_error(f"Error while looging for supplementary distribution {supplementary_distribution}", err))
+            raise err
         
 
 
