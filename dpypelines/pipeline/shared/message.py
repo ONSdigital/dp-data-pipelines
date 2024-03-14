@@ -131,7 +131,7 @@ def error_in_transform(pipeline_dict, store: BaseWritableSingleDirectoryStore, e
     error_type = error.__class__.__name__
     formatted_pipeline_dict = json.dumps(pipeline_dict, indent=2)
     message = f"""
-        An error occured during the transformation process for pipeline input with store: {store.local_path}x
+        An error occured during the transformation process for pipeline input with store: {store.local_path}
         Error type: {error_type}
         Error: {error}
         Pipeline details dictionary: {formatted_pipeline_dict}
