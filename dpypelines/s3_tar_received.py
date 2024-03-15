@@ -38,8 +38,7 @@ def start(s3_object_name: str):
     # Check for the existence of a configuration file
     try:
         if not localStore.has_lone_file_matching("pipeline-config.json"):
-            msg = message.expected_local_file_missing("Missing pipeline-config.json", "pipeline-config.json", "start")
-            notify.data_engineering(msg)   
+            notify.data_engineering(message.unexpected_error("Missing pipeline-config.json")) 
     except Exception as err:
         notify.data_engineering(message.unexpected_error("Error while checking for pipeline-config.json", err))
         raise err
@@ -48,7 +47,7 @@ def start(s3_object_name: str):
     try:
         config_dict = localStore.get_lone_matching_json_as_dict("pipeline-config.json")
     except Exception as err:
-        notify.data_engineering(message.pipeline_input_exception({"pipeline-config.json": "expected"}, localStore, err))
+        notify.data_engineering(message.unexpected_error("Error while getting pipeline-config.json", err))
         raise err
     
     # Retrieve the path to the schema for the configuration
@@ -66,10 +65,3 @@ def start(s3_object_name: str):
         raise err
 
     # if we dont have a config - make one? (tbd)
-
-    # Run the dataset_ingress_v1 pipeline
-    try:
-        files_dir = localStore.get_directory_path()
-        dataset_ingress_v1(files_dir)
-    except Exception as err:
-        notify.data_engineering(message.unexpected_error(f"Error while running dataset_ingress_v1 on {files_dir}", err))
