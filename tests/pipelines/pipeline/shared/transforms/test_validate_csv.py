@@ -8,7 +8,7 @@ from pipelines.pipeline.shared.transforms.validate_csv import (
     _correct_columns_exist,
     _dataframe_has_no_blanks,
     _dataframe_has_no_duplicates,
-    dataframing_slicing,
+    generated_dataframe_slices,
 )
 
 test_dir = Path(__file__).parents[4]
@@ -49,6 +49,24 @@ def test_correct_columns_exist_different_column_name():
         _correct_columns_exist(fixture_file, columns)
         
     assert f"Expect column {incorrect_column} not found in csv file" in str(err.value)
+
+def test_dataframe_has_no_blanks_optional_columns_not_a_list():
+    optional_columns = 'col1'
+    df = pd.DataFrame({'col1': ['1', '2'], 'col2': ['3', '4']})
+
+    with pytest.raises(AssertionError) as err:
+        _dataframe_has_no_blanks(df, check_specific_columns=optional_columns)
+
+    assert "check_specific_columns kwarg must be a list" in str(err.value)
+
+def test_dataframe_has_no_blanks_optional_columns_incorrect():
+    optional_columns = ['col3']
+    df = pd.DataFrame({'col1': ['1', '2'], 'col2': ['3', '4']})
+
+    with pytest.raises(AssertionError) as err:
+        _dataframe_has_no_blanks(df, check_specific_columns=optional_columns)
+
+    assert f"{optional_columns[0]} in check_specific_columns not found in dataframe" in str(err.value)
     
 def test_dataframe_has_no_blanks_whitespace_entry():
     blank_value = '     '
@@ -58,7 +76,7 @@ def test_dataframe_has_no_blanks_whitespace_entry():
     with pytest.raises(ValueError) as err:
         _dataframe_has_no_blanks(df)
         
-    assert str(err.value) == f"{column} has blank entries - '{blank_value}' found"
+    assert str(err.value) == f"{column} has blank entries"
 
 def test_dataframe_has_no_blanks_none_entry():
     blank_value = None
@@ -68,7 +86,7 @@ def test_dataframe_has_no_blanks_none_entry():
     with pytest.raises(ValueError) as err:
         _dataframe_has_no_blanks(df)
         
-    assert str(err.value) == f"{column} has blank entries - '{blank_value}' found"
+    assert str(err.value) == f"{column} has blank entries"
 
 def test_dataframe_has_no_duplicates():
     df = pd.DataFrame({'col1': ['1', '2', '1'], 'col2': ['3', '4', '3']}) # rows 1 & 3 the same
@@ -78,14 +96,11 @@ def test_dataframe_has_no_duplicates():
         
     assert "Found duplicate rows in the dataframe, failed validation" in str(err.value)
 
-def test_dataframing_slicing():
+def test_generated_dataframe_slices():
     fixture_file = Path(fixtures_files_dir / 'test_validate_csv_data.csv')
-    
+
     try:
-        dataframe_list = dataframing_slicing(fixture_file)
+        for df in generated_dataframe_slices(fixture_file, chunk_size=2):
+            assert type(df) == pd.DataFrame, "generated_dataframe_slices not returning a pd.DataFrame"
     except:
         raise Exception('Unexpected error')
-        
-    assert type(dataframe_list) == list
-    assert type(dataframe_list[0]) == pd.core.frame.DataFrame
-    
