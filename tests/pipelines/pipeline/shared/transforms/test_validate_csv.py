@@ -98,9 +98,24 @@ def test_dataframe_has_no_duplicates():
 
 def test_generated_dataframe_slices():
     fixture_file = Path(fixtures_files_dir / 'test_validate_csv_data.csv')
-
+    expected_columns_from_fixture_file = ['ID', 'TIME_PERIOD', 'OBS_VALUE', 'OBS_STATUS', 'CONF_STATUS']
+    chunk_size = 3
+    len_fixture_file = 10 # has 10 rows of data
+    len_final_slice = len_fixture_file % chunk_size # returns 1
+    total_number_of_slices = len_fixture_file // chunk_size # returns 3, will be counting using zero indexing
+    count = 0 # used to find final slice
+    
     try:
-        for df in generated_dataframe_slices(fixture_file, chunk_size=2):
+        for df in generated_dataframe_slices(fixture_file, chunk_size=chunk_size):
             assert type(df) == pd.DataFrame, "generated_dataframe_slices not returning a pd.DataFrame"
+            assert list(df.columns) == expected_columns_from_fixture_file, "df returing incorrect column headers"
+            if count == total_number_of_slices: 
+                # if count is 3 then length should be final slice length (1 in this case)
+                assert len(df) == len_final_slice, f"final df should have length {len_final_slice} but found {len(df)}"
+            else:
+                assert len(df) == chunk_size, f"df should have length {chunk_size} but has {len(df)}"
+
+            count += 1
+      
     except:
         raise Exception('Unexpected error')
