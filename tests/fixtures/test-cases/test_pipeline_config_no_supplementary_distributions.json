@@ -8,5 +8,8 @@
         }
     ],
     "priority": "1",
-    "pipeline": "sdmx.default"
+    "pipeline": "dataset_ingress_v1",
+    "options": {
+        "transform_identifier": "sdmx.prototype.1"
+    }
 }

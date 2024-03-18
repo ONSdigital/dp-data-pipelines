@@ -1,10 +1,11 @@
-from pathlib import Path
+import json
 
 from dpytools.stores.directory.local import LocalDirectoryStore
+from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared import notification as notify
+from dpypelines.pipeline.shared.config import get_transform_identifier_from_config
 from dpypelines.pipeline.shared.pipelineconfig import matching
-from dpypelines.pipeline.shared.config import get_pipeline_identifier_from_config
-from pipelines.pipeline.shared import message
+from dpypelines.pipeline.shared.details import all_transform_details
 
 
 def dataset_ingress_v1(files_dir: str):
@@ -41,16 +42,6 @@ def dataset_ingress_v1(files_dir: str):
             message.unexpected_error("Failed to get pipeline-config.json", err)
         )
         raise err
-
-    # Make sure pipeline_config contains a "pipeline" key
-    try:
-        pipeline = get_pipeline_identifier_from_config(pipeline_config)
-    except KeyError:
-        msg = message.expected_config_key_missing(
-            "Pipeline key not found in config", "pipeline", "dataset_ingress_v1"
-        )
-        notify.data_engineering(msg)
-        raise ValueError(msg) from err
 
     # Check for the existence of a pipeline configuration file
     try:
@@ -104,7 +95,7 @@ def dataset_ingress_v1(files_dir: str):
     except Exception as err:
         notify.data_engineering(
             message.unexpected_error(
-                f"Failed to get supplementary distribution patterns", err
+                "Failed to get supplementary distribution patterns", err
             )
         )
         raise err
@@ -129,7 +120,31 @@ def dataset_ingress_v1(files_dir: str):
             )
             raise err
 
+    # Get transform identifier from the config
+    try:
+        transform_identifier = get_transform_identifier_from_config(pipeline_config)
+    except Exception as err:
+        notify.data_engineering(
+            message.unexpected_error(
+                f"""
+            Failed to get tranform details.", 
+            
+            transform_identifier: {transform_identifier}
+            transform_details" {json.dumps(all_transform_details, indent=2, default=lambda x: str(x))}
+            """,
+                err,
+            )
+        )
+
+    # Use the identifier to get the transform details
+    if transform_identifier not in all_transform_details.keys():
+        msg = message.unknown_transform(transform_identifier, all_transform_details)
+        notify.data_engineering(msg)
+        raise ValueError(msg)
+    transform_details = all_transform_details[transform_identifier]
+
     # run transform to create csv+json from sdmx (or whatever source)
+    # all the details you will need will be in transform_details
 
     # validate the metadata against the schema for dp-dataset-api v2
 

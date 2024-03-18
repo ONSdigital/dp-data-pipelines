@@ -53,7 +53,18 @@
         },
         "pipeline": {
             "type": "string"
-        }
+          },
+        "options": {
+            "type": "object",
+            "properties": {
+              "transform_identifier": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "transform_identifier"
+            ]
+          }
     },
     "required": [
         "$schema",
