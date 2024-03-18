@@ -92,15 +92,8 @@ def xmlToCsvSDMX2_0(input_path, output_path):
 
     # the following is just tidying up the column headers so theyre not filled with @ and such, pretty sure there's an easier way to do this but hey ho
 
-    #headerReplace = [s.replace('@', '') for s in full_table.columns]
-    header_replace = { x: x.replace('@', '') for x in full_table.columns }
-    headerNorm = {}
-    for key in full_table.columns:
-        for value in header_replace:
-            headerNorm[key] = value
-            header_replace.pop(value)
-            break
-    full_table.rename(columns=headerNorm, inplace=True)
+    header_replace = { x: str(x).replace('@', '') for x in full_table.columns }
+    full_table.rename(columns=header_replace, inplace=True)
 
     full_table.to_csv(output_path, encoding='utf-8', index=False)
 
