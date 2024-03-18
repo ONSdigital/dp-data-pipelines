@@ -30,14 +30,14 @@ def start(s3_object_name: str):
     
     # Create a local directory store using the decompressed files
     try:
-        localStore = LocalDirectoryStore(f"inputs")
+        local_store = LocalDirectoryStore(f"inputs")
     except Exception as err:
         notify.data_engineering(message.unexpected_error(f"Failed to create local directory store at inputs", err))
         raise err
 
     # Check for the existence of a configuration file
     try:
-        if not localStore.has_lone_file_matching("pipeline-config.json"):
+        if not local_store.has_lone_file_matching("pipeline-config.json"):
             notify.data_engineering(message.unexpected_error("Missing pipeline-config.json")) 
     except Exception as err:
         notify.data_engineering(message.unexpected_error("Error while checking for pipeline-config.json", err))
@@ -45,7 +45,7 @@ def start(s3_object_name: str):
 
     # Load the configuration file and validate it against a schema
     try:
-        config_dict = localStore.get_lone_matching_json_as_dict("pipeline-config.json")
+        config_dict = local_store.get_lone_matching_json_as_dict("pipeline-config.json")
     except Exception as err:
         notify.data_engineering(message.unexpected_error("Error while getting pipeline-config.json", err))
         raise err
@@ -65,6 +65,6 @@ def start(s3_object_name: str):
         raise err
 
     # Get the path to the directory
-    files_dir = localStore.local_path
+    files_dir = local_store.get_current_source_pathlike
     # Call the dataset_ingress_v1 function with the directory path
     dataset_ingress_v1(files_dir)
