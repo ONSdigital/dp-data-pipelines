@@ -1,10 +1,10 @@
-
 """
 Functions to create nicely formatted and informative messages.
 """
+
+import json
 from os import pipe
 from pathlib import Path
-import json
 from typing import Dict
 
 from dpytools.stores.directory.base import BaseWritableSingleDirectoryStore
@@ -65,18 +65,17 @@ def invalid_config(config_dict, error: Exception) -> str:
     return message
 
 
-def unknown_pipeline(pipeline_name: str, pipeline_options: dict) -> str:
+def unknown_transform(transform_identifier: str, all_transform_details: dict) -> str:
     """
-    We've been given a pipeline identifier that we don't recnognise. Use the name of
-    the runing pipeline and the pipeline configuration to create a meaningful message
-    explaining the problem.
+    We've been given a transform identifier that we don't recnognise. Create a
+    meaningful message explaining the problem.
     """
-    formatted_pipeline_options = json.dumps(pipeline_options, indent=2)
+    formatted_transform_options = json.dumps(all_transform_details, indent=2, default=lambda x: str(x))
     message = f"""
-        Pipeline name is missing from the pipeline configurations.
+        Pipeline name is missing from the pipeline transform configurations.
         
-        Pipeline: {pipeline_name}
-        Pipeline Configurations: {formatted_pipeline_options}
+        Pipeline: {transform_identifier}
+        Pipeline Configurations: {formatted_transform_options}
     """
     return message
 
@@ -109,7 +108,9 @@ def expected_local_file_missing(msg: str, file_path: Path, pipeline_name: str) -
     return message
 
 
-def pipeline_input_exception(pipeline_dict: Dict, store: BaseWritableSingleDirectoryStore, error: Exception):
+def pipeline_input_exception(
+    pipeline_dict: Dict, store: BaseWritableSingleDirectoryStore, error: Exception
+):
     """
     Some pipeline details specifiy a file but there was an issue getting it out of the store.
     """
@@ -124,7 +125,9 @@ def pipeline_input_exception(pipeline_dict: Dict, store: BaseWritableSingleDirec
     return message
 
 
-def error_in_transform(pipeline_dict, store: BaseWritableSingleDirectoryStore, error: Exception) -> str:
+def error_in_transform(
+    pipeline_dict, store: BaseWritableSingleDirectoryStore, error: Exception
+) -> str:
     """
     An exception was raised during the transform process.
     """
@@ -138,8 +141,10 @@ def error_in_transform(pipeline_dict, store: BaseWritableSingleDirectoryStore, e
     """
     return message
 
-    
-def pipeline_input_sanity_check_exception(pipeline_dict, store: BaseWritableSingleDirectoryStore, error: Exception) -> str:
+
+def pipeline_input_sanity_check_exception(
+    pipeline_dict, store: BaseWritableSingleDirectoryStore, error: Exception
+) -> str:
     """
     An exception was raised during the sanity checking process.
     """
