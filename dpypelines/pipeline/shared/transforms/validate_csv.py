@@ -88,7 +88,7 @@ def generated_dataframe_slices(csv_path: Path, chunk_size: Optional[int] = 5000)
     df_headers = list(pd.read_csv(csv_path, nrows=0).columns)
     
     # creating the row numbers for the start of each slice
-    row_number = 0
+    row_number = 1 # when passing 'names' kwarg pandas treats the columns as first row of data
     iterable_row_numbers = []
     while row_number <= len_of_data:
         iterable_row_numbers.append(row_number)
@@ -96,12 +96,7 @@ def generated_dataframe_slices(csv_path: Path, chunk_size: Optional[int] = 5000)
     
     # creating the generator
     for skip_row_number in iterable_row_numbers:
-        if skip_row_number == 0:
-            # pandas will read in column names correctly
-            df_slice = pd.read_csv(csv_path, nrows=chunk_size)
-        else:
-            # pandas does not read in column names when using skiprows
-            df_slice = pd.read_csv(csv_path, nrows=chunk_size, skiprows=skip_row_number, names=df_headers)
+        df_slice = pd.read_csv(csv_path, nrows=chunk_size, skiprows=skip_row_number, names=df_headers)
         yield df_slice
     
 
