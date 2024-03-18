@@ -32,7 +32,7 @@ def start(s3_object_name: str):
 
     # Create a local directory store using the decompressed files
     try:
-        local_store = LocalDirectoryStore(f"inputs")
+        local_store = LocalDirectoryStore(f"input")
     except Exception as err:
         notify.data_engineering(
             message.unexpected_error(
