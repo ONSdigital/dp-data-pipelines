@@ -65,6 +65,6 @@ def start(s3_object_name: str):
         raise err
 
     # Get the path to the directory
-    files_dir = local_store.get_current_source_pathlike
+    files_dir = local_store.get_current_source_pathlike()
     # Call the dataset_ingress_v1 function with the directory path
     dataset_ingress_v1(files_dir)
