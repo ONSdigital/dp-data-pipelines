@@ -20,7 +20,7 @@ def start(s3_object_name: str):
         Example: 'my-bucket/my-data.tar'
 
     """
-
+    
     # Decompress the tar file to the workspace
     try:
         decompress_s3_tar(s3_object_name, "input")
@@ -64,4 +64,7 @@ def start(s3_object_name: str):
         notify.data_engineering(message.invalid_config(config_dict, err))
         raise err
 
-    # if we dont have a config - make one? (tbd)
+    # Get the path to the directory
+    files_dir = localStore.local_path
+    # Call the dataset_ingress_v1 function with the directory path
+    dataset_ingress_v1(files_dir)
