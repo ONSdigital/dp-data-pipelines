@@ -3,7 +3,7 @@ import pytest
 from pathlib import Path
 import pandas as pd
 
-from pipelines.pipeline.shared.transforms.validate_csv import (
+from dpypelines.pipeline.shared.transforms.validate_csv import (
     _read_in_csv_check,
     _correct_columns_exist,
     _dataframe_has_no_blanks,
