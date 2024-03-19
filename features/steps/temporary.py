@@ -62,14 +62,14 @@ def step_impl(context):
     context.request_headers = headers
 
 
-@Given('I send the request to the upload service at "{upload_service_endpoint_url}"')
-def step_impl(context, upload_service_endpoint_url):
+@Given('I send the request to the upload service at "{service_endpoint}"')
+def step_impl(context, service_endpoint):
     """
     Submit a GET request to the specified endpoint.
     """
-    context.request_path = upload_service_endpoint_url
+    context.request_path = service_endpoint
     context.response = context.session.get(
-        f"http://127.0.0.1:5001{upload_service_endpoint_url}",
+        f"http://127.0.0.1:5001{service_endpoint}",
         headers=context.request_headers,
         json=context.json,
     )
@@ -78,8 +78,8 @@ def step_impl(context, upload_service_endpoint_url):
     )
 
 
-@Then('the backend receives a request to "{upload_service_endpoint}"')
-def step_impl(context, upload_service_endpoint):
+@Then('the backend receives a request to "{service_endpoint}"')
+def step_impl(context, service_endpoint):
     """
     Check that the path in question appears in the logs
     of the receiving service.
@@ -87,9 +87,9 @@ def step_impl(context, upload_service_endpoint):
     destination_url = _parse_destination_url_from_log(context.receiving_service_log)
 
     assert (
-        upload_service_endpoint in destination_url
+        service_endpoint in destination_url
     ), f"""
-        Cannot find path "{upload_service_endpoint}" in destination url: {destination_url}.
+        Cannot find path "{service_endpoint}" in destination url: {destination_url}.
         """
 
 

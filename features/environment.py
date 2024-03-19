@@ -69,4 +69,3 @@ def after_all(context):
     """
     context.backend_container.stop()
     context.backend_container.remove()
-    ...
