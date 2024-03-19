@@ -1,22 +1,90 @@
+from dpytools.s3.basic import decompress_s3_tar
+from dpytools.stores.directory.local import LocalDirectoryStore
+from dpytools.validation.json import validation
+
+from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
+from dpypelines.pipeline.shared import message
+from dpypelines.pipeline.shared import notification as notify
+from dpypelines.pipeline.shared.schemas import get_config_schema_path
+
+
 def start(s3_object_name: str):
     """
     Handles the required behaviour when recieving a tar file indicated
     by an s3 object name.
 
-    Example s3_object_name: my-bucket/my-data.tar
+    Args:
+        s3_object_name (str): The S3 object name of the tar file to be processed.
+        Example: 'my-bucket/my-data.tar'
+
     """
 
-    # IN ALL CASES, the FOLLOWING STEPS WILL BE IN TRY CATCH
-    # BLOCKS AND WILL NOTIFY RELEVANT PARTIES IN EVENT OF FAILURE
+    # Decompress the tar file to the workspace
+    try:
+        decompress_s3_tar(s3_object_name, "input")
+    except Exception as err:
+        notify.data_engineering(
+            message.unexpected_error(
+                f"Failed to decompress tar file {s3_object_name}", err
+            )
+        )
+        raise err
 
-    # decompress tar file to workspace
+    # Create a local directory store using the decompressed files
+    try:
+        local_store = LocalDirectoryStore(f"input")
+    except Exception as err:
+        notify.data_engineering(
+            message.unexpected_error(
+                f"Failed to create local directory store at inputs", err
+            )
+        )
+        raise err
 
-    # confirm we have a config
+    # Check for the existence of a configuration file
+    try:
+        if not local_store.has_lone_file_matching(r"^pipeline-config.json$"):
+            err = FileNotFoundError(f"Cannot find pipeline-config.json, from {local_store.get_file_names()}")
+            notify.data_engineering(
+                message.unexpected_error("Cannot find pipeline config", err)
+            )
+    except Exception as err:
+        notify.data_engineering(
+            message.unexpected_error(
+                "Error while checking for pipeline-config.json", err
+            )
+        )
+        raise err
 
-    # if we dont have a config - make one? (tbd)
+    # Load the configuration file and validate it against a schema
+    try:
+        config_dict = local_store.get_lone_matching_json_as_dict(r"^pipeline-config.json$")
+    except Exception as err:
+        notify.data_engineering(
+            message.unexpected_error("Error while getting pipeline-config.json", err)
+        )
+        raise err
 
-    # use config schema to confirm that config is valid
+    # Retrieve the path to the schema for the configuration
+    try:
+        path_to_schema = get_config_schema_path(config_dict)
+    except Exception as err:
+        notify.data_engineering(message.cant_find_schema(config_dict, err))
+        raise err
 
-    # use the config info to select and run the appropriate pipeline,
-    # there should literally by a field in the pipeline-config telling
-    # us which pipeline from ./pipeline/* to call.
+    # Validate the configuration against the retrieved schema
+    try:
+        validation.validate_json_schema(
+            schema_path=path_to_schema,
+            data_dict=config_dict,
+            error_msg="Validating pipeline-config.json",
+            indent=2,
+        )
+    except Exception as err:
+        notify.data_engineering(message.invalid_config(config_dict, err))
+        raise err
+
+    # Get the path to the directory
+    files_dir = local_store.get_current_source_pathlike()
+    # Call the dataset_ingress_v1 function with the directory path
+    dataset_ingress_v1(files_dir)

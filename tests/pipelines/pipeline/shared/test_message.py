@@ -1,10 +1,10 @@
 from dpytools.stores.directory.local import LocalDirectoryStore
 import pytest
-from pipelines.pipeline.shared.message import (
+from dpypelines.pipeline.shared.message import (
     unexpected_error, 
     cant_find_schema,
     invalid_config,
-    unknown_pipeline,
+    unknown_transform,
     metadata_validation_error,
     expected_local_file_missing,
     pipeline_input_exception,
@@ -60,16 +60,16 @@ def test_invalid_config():
     assert type(human_readable_output) == str
 
 
-def test_unknown_pipeline():
+def test_unknown_transform():
     
-    pipeline_name = "sdmx.default"
-    pipeline_options = {
+    transform_name = "sdmx.default"
+    all_transform_options = {
         "pipeline idemtifier": "pipeline123"
     }
 
-    human_readable_output = unknown_pipeline(pipeline_name, pipeline_options)
+    human_readable_output = unknown_transform(transform_name, all_transform_options)
 
-    assert 'Pipeline name is missing from the pipeline configurations.' in human_readable_output
+    assert 'Pipeline name is missing from the pipeline transform configurations.' in human_readable_output
     assert 'Pipeline: sdmx.default' in human_readable_output
     assert 'Pipeline Configurations:' in human_readable_output
     assert '"pipeline idemtifier": "pipeline123"' in human_readable_output
