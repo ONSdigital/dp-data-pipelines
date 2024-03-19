@@ -1,0 +1,11 @@
+{
+    "id": "this is an id",
+    "stuff": [
+        "this is some stuff",
+        "this is some other stuff"
+    ],
+    "number": {
+        "42": 42,
+        "3.14": 3.14
+    }
+}
