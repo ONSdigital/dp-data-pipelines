@@ -35,7 +35,7 @@ def dataset_ingress_v1(files_dir: str):
     # Load the pipeline configuration as a dictionary
     try:
         pipeline_config: dict = local_store.get_lone_matching_json_as_dict(
-            "pipeline-config.json"
+            r"^pipeline-config.json$"
         )
     except Exception as err:
         notify.data_engineering(
@@ -45,7 +45,7 @@ def dataset_ingress_v1(files_dir: str):
 
     # Check for the existence of a pipeline configuration file
     try:
-        if not local_store.has_lone_file_matching("pipeline-config.json"):
+        if not local_store.has_lone_file_matching(r"^pipeline-config.json$"):
             msg = message.expected_local_file_missing(
                 "Pipeline config not found",
                 "pipeline-config.json",
@@ -142,6 +142,19 @@ def dataset_ingress_v1(files_dir: str):
         notify.data_engineering(msg)
         raise ValueError(msg)
     transform_details = all_transform_details[transform_identifier]
+
+    # NOTE!!
+    # remove the below once we add the next block of logic
+    notify.data_engineering(
+        f"""
+                            
+            RAN TO CURRENT COMPLETED STAGE!
+                            
+            transform details are:
+                            
+            {json.dumps(transform_details, indent=2, default=lambda x: str(x))}
+                            """
+    )
 
     # run transform to create csv+json from sdmx (or whatever source)
     # all the details you will need will be in transform_details
