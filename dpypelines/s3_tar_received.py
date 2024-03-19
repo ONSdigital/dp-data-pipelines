@@ -43,9 +43,10 @@ def start(s3_object_name: str):
 
     # Check for the existence of a configuration file
     try:
-        if not local_store.has_lone_file_matching("pipeline-config.json"):
+        if not local_store.has_lone_file_matching(r"^pipeline-config.json$"):
+            err = FileNotFoundError(f"Cannot fine pipeline-config.json, from {local_store.get_file_names()}")
             notify.data_engineering(
-                message.unexpected_error("Missing pipeline-config.json")
+                message.unexpected_error("Cannot fine pipeline config", err)
             )
     except Exception as err:
         notify.data_engineering(
@@ -57,7 +58,7 @@ def start(s3_object_name: str):
 
     # Load the configuration file and validate it against a schema
     try:
-        config_dict = local_store.get_lone_matching_json_as_dict("pipeline-config.json")
+        config_dict = local_store.get_lone_matching_json_as_dict(r"^pipeline-config.json$")
     except Exception as err:
         notify.data_engineering(
             message.unexpected_error("Error while getting pipeline-config.json", err)
