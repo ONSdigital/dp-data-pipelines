@@ -90,24 +90,17 @@ def xmlToCsvSDMX2_0(input_path, output_path):
 
     full_table = pd.concat(output) # merge all the series blocks together
 
-    # the following is just tidying up the column headers so theyre not filled with @ and such, pretty sure there's an easier way to do this but hey ho
+    # the following is just tidying up the column headers so theyre not filled with @ and such
 
-    #headerReplace = [s.replace('@', '') for s in full_table.columns]
-    header_replace = { x: x.replace('@', '') for x in full_table.columns }
-    headerNorm = {}
-    for key in full_table.columns:
-        for value in header_replace:
-            headerNorm[key] = value
-            header_replace.pop(value)
-            break
-    full_table.rename(columns=headerNorm, inplace=True)
+    header_replace = { x: str(x).replace('@', '') for x in full_table.columns }
+    full_table.rename(columns=header_replace, inplace=True)
 
     full_table.to_csv(output_path, encoding='utf-8', index=False)
 
 
-def generate_editions_metadata(transformedCSV, structureXML, outputPath, metadataTemplate, config = False):
+def generate_versions_metadata(transformedCSV, structureXML, outputPath, metadataTemplate, config = False):
 
-    # Read in Structure XML and tidyCSV 
+    # Read in Structure XML provided with the SDMX and tidyCSV we created earlier in the transform 
     with open(structureXML, 'r') as file:
             xml_content = file.read()
             data = xmltodict.parse(xml_content)
@@ -115,7 +108,11 @@ def generate_editions_metadata(transformedCSV, structureXML, outputPath, metadat
     tidyCSV = pd.read_csv(transformedCSV)
 
     # Pull out the dataset title which we'll use later
-    dataset_title = tidyCSV['TITLE'].iloc[0]
+    # I'm having to put in this try except cause there's an issue causing some of the code in the sdmx transform to be flagged as unreachable, ideally it should never need the except 
+    try:
+        dataset_title = tidyCSV['TITLE'].iloc[0]
+    except:
+        dataset_title = tidyCSV['@TITLE'].iloc[0]
 
     # Get a list of the concepts and key families from the structure XML which contain info on the data dimensions, at the moment we're basically just using this for the datatype and dimension name where possible
     # this then gets thrown into a dictionary with an entry for each possible dimension header
@@ -157,55 +154,74 @@ def generate_editions_metadata(transformedCSV, structureXML, outputPath, metadat
     # Read in our metadata template
 
     with open(metadataTemplate) as json_data:
-            editions_template = json.load(json_data)
+            versions_template = json.load(json_data)
 
     # now a very terrible and hardcoded implementation of applying what little metadata we have to as many fields as possible
 
-    editions_template['@id'] = 'https://staging.idpd.uk/datasets/' + pathify(dataset_title) + '/editions'
-    editions_template['title'] = dataset_title
-
-    current_edition = editions_template['editions'][0] # This will get the first entry in the editions list to use as a template (TODO: include editions list length to check if this will be the first edition or an addition and create addendum)
-        
-    current_edition['@id'] = 'https://staging.idpd.uk/datasets/' + pathify(dataset_title) + '/editions/' + str(datetime.now().strftime("%Y-%m"))
-    current_edition['in_series'] = 'https://staging.idpd.uk/datasets/' + pathify(dataset_title)
-    current_edition['identifier'] = str(datetime.now().strftime("%Y-%m"))
-    current_edition['title'] = dataset_title
-    current_edition['summary'] = "" # Doesnt appear to have any summary or description in the supporting XML which isnt surprising but means we have nothing for these 2 fields at entry
-    current_edition['description'] = ""
-    current_edition['publisher'] = "" # not sure whether the sender/reciever covers publisher/creator so will leave this blank for now
-    current_edition['creator'] = ""
-    current_edition['contact_point'] = {'name': "", 'email' : ""} # Take from config file
-    current_edition['topics'] = "" # could we infer this from the structure file?
-    current_edition['frequency'] = "" # is this something we should include in the config file?
-    current_edition['keywords'] = ["", ""] # anyway some of this could be infered?
-    current_edition['issued'] = data["mes:Structure"]['mes:Header']['mes:Prepared'].split('.')[0] + 'Z' # Not sure whether there is a better way to get issued date as it seems to just take the date it was extracted
-    current_edition['modified'] = tidyCSV['Extracted'].iloc[0].split('+')[0] + 'Z' # This is working off the assumption that every extraction date is a new modification of the data
-    current_edition['spatial_resolution'] = list(tidyCSV.COUNTERPART_AREA.unique()) # this is certainly not gonna be correct in the long run but we can replace it later or remove it 
-    current_edition['spatial_coverage'] = list(tidyCSV.REF_AREA.unique()) # this is certainly not gonna be correct in the long run but we can replace it later or remove it 
-    current_edition['temporal_resolution'] = list(tidyCSV.TIME_FORMAT.unique())
-    current_edition['temporal_coverage'] = {'start' : min(tidyCSV.TIME_PERIOD), 'end' : max(tidyCSV.TIME_PERIOD)} # This will need a lot of formatting/conditions to end up as datetime from what could be varying format of input
-    current_edition['versions_url'] = 'https://staging.idpd.uk/datasets/' + pathify(dataset_title) + '/editions/' + str(datetime.now().strftime("%Y-%m")) + '/versions'
-    current_edition['versions'] = {'@id': 'https://staging.idpd.uk/datasets/' + pathify(dataset_title) + '/editions/' + str(datetime.now().strftime("%Y-%m")) + '/versions/1',
-                                'issued': data["mes:Structure"]['mes:Header']['mes:Prepared'].split('.')[0] + 'Z'}
-    current_edition['next_release'] = "" # could we infer this from issued date and frequency if we include that in the config?
+    versions_template['description'] = ""
+    versions_template['identifier'] = 'https://staging.idpd.uk/datasets/' + pathify(dataset_title) + '/editions'
+    versions_template['issued'] = data["mes:Structure"]['mes:Header']['mes:Prepared'].split('.')[0] + 'Z'
+    versions_template['modified'] = tidyCSV['Extracted'].iloc[0].split('+')[0] + 'Z' # This is working off the assumption that every extraction date is a new modification of the data
+    versions_template['next_release'] = "" # could we infer this from issued date and release frequency if we include that in the config?
+    versions_template['publisher']  = {'email': "", 
+                                       'name' : "",
+                                       'telephone' : ""} # config file?
+    versions_template['frequency'] = "" # config file?
+    versions_template['spatial coverage'] = list(tidyCSV.REF_AREA.unique())[0] # this will need investigation into whether this is accurate to what we need for this field
+    versions_template['spatial_resolution'] = list(tidyCSV.COUNTERPART_AREA.unique()) # this will need investigation into whether this is accurate to what we need for this field
+    versions_template['temporal_coverage'] = 'start: ' + str(min(tidyCSV.TIME_PERIOD)) + ', end: ' + str(max(tidyCSV.TIME_PERIOD)) # I'll need to input on the formatting of this field cause the previous iteration was a dictionry but the spec has it now as a string
+    versions_template['temporal_resolution'] = list(tidyCSV.TIME_FORMAT.unique())[0] # this will need investigation into whether this is accurate to what we need for this field
+    versions_template['title'] = dataset_title
+    versions_template['contact_point']  = { 'email': "", 
+                                            'name' : "",
+                                            'telephone' : ""} # config file?
+    versions_template['keywords'] = ["", ""] 
+    versions_template['themes'] = ["", ""] 
 
     columns = []
     for i in full_dimensions_list:
         column = {}
-        column['name'] = i[0]
+        column['component_type'] = "" 
         column['datatype'] = i[3]
+        column['name'] = i[0]        
         column['titles'] = i[1]
-        column['description'] = i[2]
+        column['property_url'] =  "" 
+        column['value_url'] =  "" 
+        column['codelist_url'] =  "" 
+        column['sub_property_of'] =  "" 
         columns.append(column)
-    current_edition['table_schema'] = {'columns' : columns}
-    editions_template['editions'][0] = current_edition # just a reminder this is currently for a first edition of a dataset so it will put itself as the only entry
 
-    editions_template['count'] = len(editions_template['editions'])
-    editions_template['offset'] = 0 # not sure what this is tbh
+    table_schema = {}
+    table_schema['about_url'] = ""
+    table_schema['column'] = columns
+
+    distributions = []
+
+    distribution = { "checksum": "",
+                     "@id": "",
+                     "byte_size": "",
+                     "media_type": "",
+                     "download_url": "",
+                     "described_by": "", 
+                     "table_schema": table_schema}
+    
+    distributions.append(distribution) # at some point we'll need to pull in any previous existing distributions but im assuming a lot of this script will change when we get that far
+    
+    versions_template['distributions'] = distributions
+    versions_template['version_notes'] = [""]
+    versions_template['@context'] = ""
+    versions_template['@id'] = "" # Is this the same as the initial identifier?
+    versions_template['@type'] = "dcat:dataset"
+    versions_template['etag'] = "" # ?
+    versions_template['is_based_on'] = {"id" : "", "type" : ""} # ?
+    #versions_template["_embedded"] = []
+    versions_template['type'] = "" # ?
+    versions_template['state'] = "" # ?
 
     # dump out metadata file
 
     with open(outputPath + pathify(dataset_title) + "_" + str(datetime.now().strftime("%Y-%m")) + "-metadata.json", "w") as outfile:
-        json.dump(editions_template, outfile, ensure_ascii=False, indent=4)
+        json.dump(versions_template, outfile, ensure_ascii=False, indent=4)
 
+    return versions_template
 
