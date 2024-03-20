@@ -23,4 +23,4 @@ def test_enrich_decorator(monkeypatch):
     monkeypatch.setenv("ENRICH_OUTGOING_MESSAGES", "boo")
      
      # env var is set
-    assert _foo_func() == "fooboo"
+    assert _foo_func() == "foo" + "/nboo"
