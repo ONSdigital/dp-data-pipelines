@@ -8,7 +8,7 @@ def enrich_online(message_creating_function):
         enrich_message = os.environ.get('ENRICH_OUTGOING_MESSAGES', None)
         #If there is a value stored add (enrich) message otherwise return original message
         if enrich_message is not None:
-            return msg + enrich_message + "\n notification-source: ENRICH_OUTGOING_MESSAGES"
+            return msg + enrich_message
         else:
              return msg
         
