@@ -20,7 +20,7 @@ def test_get_supplementary_distribution_patterns_single_match(config_valid_id):
     results = get_supplementary_distribution_patterns(config_valid_id)
 
     assert len(results) == 1
-    assert set(results) == {"*.sdmx"}
+    assert set(results) == {"^data.sdmx$"}
 
 
 def test_no_supplementary_distributions(config_no_supplementary_distributions):
@@ -66,7 +66,7 @@ def test_get_required_files_patterns_single_match(config_valid_id):
     results = get_required_files_patterns(config_valid_id)
 
     assert len(results) == 1
-    assert set(results) == {"*.sdmx"}
+    assert set(results) == {"^data.sdmx$"}
 
 
 def test_no_required_files(config_no_required_files):

@@ -32,6 +32,6 @@
     "priority": "1",
     "pipeline": "dataset_ingress_v1",
     "options": {
-        "transform_identifier": "sdmx.prototype.1"
+        "transform_identifier": "sdmx.compact.v2.0.prototype.1"
     }
 }

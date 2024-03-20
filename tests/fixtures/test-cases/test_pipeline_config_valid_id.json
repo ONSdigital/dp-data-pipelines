@@ -3,19 +3,19 @@
     "$id": "https://raw.githubusercontent.com/ONSdigital/dp-data-pipelines/sandbox/schemas/dataset-ingress/config/v1.json",
     "required_files": [
         {
-            "matches": "*.sdmx",
+            "matches": "^data.sdmx$",
             "count": "1"
         }
     ],
     "supplementary_distributions": [
         {
-            "matches": "*.sdmx",
+            "matches": "^data.sdmx$",
             "count": "1"
         }
     ],
     "priority": "1",
     "pipeline": "dataset_ingress_v1",
     "options": {
-        "transform_identifier": "sdmx.prototype.1"
+        "transform_identifier": "sdmx.compact.v2.0.prototype.1"
     }
 }
