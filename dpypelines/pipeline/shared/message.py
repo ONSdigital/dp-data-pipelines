@@ -8,8 +8,10 @@ from pathlib import Path
 from typing import Dict
 
 from dpytools.stores.directory.base import BaseWritableSingleDirectoryStore
+from dpypelines.pipeline.shared.utility import enrich_online
 
 
+@enrich_online
 def unexpected_error(msg: str, error: Exception) -> str:
     """
     We've caught an unexpected error. Make a sensible message explaining
@@ -26,6 +28,7 @@ def unexpected_error(msg: str, error: Exception) -> str:
     return message
 
 
+@enrich_online
 def cant_find_schema(config_dict, error: Exception) -> str:
     """
     We got an error when trying to identify the schema for the pipeline-conifg.json using the
@@ -46,6 +49,7 @@ def cant_find_schema(config_dict, error: Exception) -> str:
     return message
 
 
+@enrich_online
 def invalid_config(config_dict, error: Exception) -> str:
     """
     The pipeline config that was provided is failing to validate.
@@ -65,12 +69,15 @@ def invalid_config(config_dict, error: Exception) -> str:
     return message
 
 
+@enrich_online
 def unknown_transform(transform_identifier: str, all_transform_details: dict) -> str:
     """
     We've been given a transform identifier that we don't recnognise. Create a
     meaningful message explaining the problem.
     """
-    formatted_transform_options = json.dumps(all_transform_details, indent=2, default=lambda x: str(x))
+    formatted_transform_options = json.dumps(
+        all_transform_details, indent=2, default=lambda x: str(x)
+    )
     message = f"""
         Pipeline name is missing from the pipeline transform configurations.
         
@@ -80,6 +87,7 @@ def unknown_transform(transform_identifier: str, all_transform_details: dict) ->
     return message
 
 
+@enrich_online
 def metadata_validation_error(metadata_path, error: Exception) -> str:
     """
     The metadata has generated as validation error. Use the metadata and the error to create a
@@ -94,23 +102,22 @@ def metadata_validation_error(metadata_path, error: Exception) -> str:
     return message
 
 
-def expected_local_file_missing(msg: str, file_path: Path, pipeline_name: str, store: BaseWritableSingleDirectoryStore) -> str:
+@enrich_online
+def expected_local_file_missing(msg: str, file_path: Path, pipeline_name: str) -> str:
     """
     We're looking for a file on the local machine/runner and cannot find it.
     """
-    files_found = "\n".join(store.get_file_names())
     message = f"""
         A pipeline has encountered an issue finding a local file.
         
         Pipeline's name: {pipeline_name}
         File: {file_path}
         Message: {msg}
-        Files in directory store:
-        {files_found}
     """
     return message
 
 
+@enrich_online
 def pipeline_input_exception(
     pipeline_dict: Dict, store: BaseWritableSingleDirectoryStore, error: Exception
 ):
@@ -128,6 +135,7 @@ def pipeline_input_exception(
     return message
 
 
+@enrich_online
 def error_in_transform(
     pipeline_dict, store: BaseWritableSingleDirectoryStore, error: Exception
 ) -> str:
@@ -145,6 +153,7 @@ def error_in_transform(
     return message
 
 
+@enrich_online
 def pipeline_input_sanity_check_exception(
     pipeline_dict, store: BaseWritableSingleDirectoryStore, error: Exception
 ) -> str:
