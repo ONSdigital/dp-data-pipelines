@@ -16,3 +16,6 @@ lint: install ## Run the ruff python linter (auto triggered on pre-commit)
 
 test: install ## Run pytest and check test coverage (auto triggered on pre-push)
 	poetry run pytest --cov-report term-missing --cov=dpypelines
+
+feature: install
+	poetry run behave

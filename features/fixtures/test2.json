@@ -1,0 +1,11 @@
+{
+    "name": "Sarah",
+    "stuff": [
+        "this is more stuff",
+        "this is additional more stuff"
+    ],
+    "things": {
+        "thing1": 1,
+        "thing2": 2
+    }
+}
