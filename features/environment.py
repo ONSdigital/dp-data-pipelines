@@ -21,8 +21,8 @@ def before_all(context):
     Also checks if the fixtures unzipped data path exists, 
     and if it doesn't, extracts the fixtures zipfile to it.
     """
-    fixture_destination_path = Path("fixtures/data")
-    zip_path = Path("fixtures/data-fixtures.zip")
+    fixture_destination_path = Path("features/fixtures/data")
+    zip_path = Path("features/fixtures/data-fixtures.zip")
 
     if not fixture_destination_path.exists():
         os.mkdir(fixture_destination_path)
