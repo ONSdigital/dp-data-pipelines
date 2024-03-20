@@ -15,7 +15,19 @@ def before_all(context):
     the details of requests received - this is enough for us
     to confirm that a request is routing as required via the feature
     files.
+
+    Also checks if the fixtures unzipped data path exists,
+    and if it doesn't, extracts the fixtures zipfile to it.
     """
+    fixture_destination_path = Path("features/fixtures/data")
+    zip_path = Path("features/fixtures/data-fixtures.zip")
+
+    if not fixture_destination_path.exists():
+        os.mkdir(fixture_destination_path)
+
+        with ZipFile(zip_path, "r") as fixtures_zip:
+            fixtures_zip.extractall(path=fixture_destination_path)
+
     docker_client: DockerClient = docker.from_env()
     repo_root = "/".join(str(Path(__file__).absolute()).split("/")[:-2])
 
