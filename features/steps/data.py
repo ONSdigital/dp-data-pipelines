@@ -14,9 +14,6 @@ def step_impl(context):
     temporary_dir = Path("features/temporary_fixture_dir")
     temporary_dir.mkdir()
 
-    #temporary_dir = TemporaryDirectory()
-    #temporary_dir_path = Path(temporary_dir.name)
-
     try:
         
         for row in context.table:
