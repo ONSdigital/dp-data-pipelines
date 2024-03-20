@@ -1,11 +1,13 @@
 import json
+from pathlib import Path
 
 from dpytools.stores.directory.local import LocalDirectoryStore
+
 from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared import notification as notify
 from dpypelines.pipeline.shared.config import get_transform_identifier_from_config
-from dpypelines.pipeline.shared.pipelineconfig import matching
 from dpypelines.pipeline.shared.details import all_transform_details
+from dpypelines.pipeline.shared.pipelineconfig import matching
 
 
 def dataset_ingress_v1(files_dir: str):
@@ -124,47 +126,97 @@ def dataset_ingress_v1(files_dir: str):
     try:
         transform_identifier = get_transform_identifier_from_config(pipeline_config)
     except Exception as err:
-        notify.data_engineering(message.unexpected_error(
-            f"""
+        notify.data_engineering(
+            message.unexpected_error(
+                f"""
             Failed to get tranform details.", 
             
             transform_identifier: {transform_identifier}
             transform_details" {json.dumps(all_transform_details, indent=2, default=lambda x: str(x))}
-            """, err
-        ))
-
-    # Use the identifier to get the transform details  
-    if transform_identifier not in all_transform_details.keys():
-        msg = message.unknown_transform(
-            transform_identifier, all_transform_details
+            """,
+                err,
+            )
         )
+
+    # Use the identifier to get the transform details
+    if transform_identifier not in all_transform_details.keys():
+        msg = message.unknown_transform(transform_identifier, all_transform_details)
         notify.data_engineering(msg)
         raise ValueError(msg)
-    transform_details = all_transform_details[transform_identifier]
+    transform_details: dict = all_transform_details[transform_identifier]
 
-    # NOTE!!
-    # remove the below once we add the next block of logic
-    notify.data_engineering(f"""
+    # Get the positional arguments (the inputs) from the transform_details
+    # dict and run the specified sanity checker for it
+    args = []
+    for match, sanity_checker in transform_details["transform_inputs"].items():
+        try:
+            input_file_path: Path = local_store.save_lone_file_matching(match)
+        except Exception as err:
+            printable_transform_details = json.dumps(
+                transform_details, indent=2, default=lambda x: str(x)
+            )
+            notify.data_engineering(
+                message.pipeline_input_exception(
+                    printable_transform_details, local_store, err
+                )
+            )
+            raise err
+
+        try:
+            sanity_checker(input_file_path)
+        except Exception as err:
+            notify.data_engineering(
+                message.pipeline_input_sanity_check_exception(
+                    transform_details, local_store, err
+                )
+            )
+            raise err
+
+        args.append(input_file_path)
+
+    # Get the transform function and keyword arguments from the transform_details
+    transform_function = transform_details["transform"]
+    kwargs = transform_details["transform_kwargs"]
+
+    try:
+        csv_path, metadata_path = transform_function(*args, **kwargs)
+    except Exception as err:
+        printable_transform_details = json.dumps(
+            transform_details, indent=2, default=lambda x: str(x)
+        )
+        notify.data_engineering(
+            message.error_in_transform(printable_transform_details, local_store, err)
+        )
+        raise err
+
+    # TODO - validate the metadata once we have a schema for it.
+
+    # TODO - validate the csv once we know what we're validating
+
+    # ---------------------------------
+    # TODO - delete me at a later point
+    # just an everything is ok alarm for
+    # now so we know the right things happen
+    # ---------------------------------
+
+    with open(metadata_path) as f:
+        metadata = json.load(f)
+
+    import pandas as pd
+
+    notify.data_engineering(
+        f"""
+
+Tranform ran to completion.
                             
-            RAN TO CURRENT COMPLETED STAGE!
-                            
-            transform details are:
-                            
-            {json.dumps(transform_details, indent=2, default=lambda x: str(x))}
-                            """)
-    
+Data Snippet:
+```
+{pd.read_csv(csv_path)[:5]}
+```
 
-    # run transform to create csv+json from sdmx (or whatever source)
-    # all the details you will need will be in transform_details
-
-    # validate the metadata against the schema for dp-dataset-api v2
-
-    # validate the csv using csv validation functions
-
-    # upload the csv to dp-upload-service
-
-    # upload any supplementary distributions to dp-upload-service
-
-    # upload metadata to dp-dataset-api
-
-    # notify PST that a dataset resource is ready for use by the CMS.
+Metadata:
+```
+{json.dumps(metadata, indent=2)}
+```
+        """
+    )
