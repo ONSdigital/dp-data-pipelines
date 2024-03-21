@@ -1,8 +1,8 @@
 import os
 
 def enrich_online(message_creating_function):
-    def wrapper(**kwargs):
-        msg: str = message_creating_function(**kwargs)
+    def wrapper(*args, **kwargs):
+        msg: str = message_creating_function(*args, **kwargs)
         
         #Get the enviormentl variable
         enrich_message = os.environ.get('ENRICH_OUTGOING_MESSAGES', None)
