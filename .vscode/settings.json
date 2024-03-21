@@ -4,4 +4,7 @@
     "python.testing.pytestArgs": [
         "tests"
     ],
+    "python.analysis.extraPaths": [
+        "./dpypelines/pipeline/shared/transforms/sdmx/sdmx_2_0"
+    ],
 }
