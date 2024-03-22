@@ -1,3 +1,7 @@
+import shutil
+from behave import fixture
+from zipfile import ZipFile
+import os
 from pathlib import Path
 import uuid
 import time
@@ -19,14 +23,14 @@ def before_all(context):
     Also checks if the fixtures unzipped data path exists,
     and if it doesn't, extracts the fixtures zipfile to it.
     """
-    fixture_destination_path = Path("features/fixtures/data")
+    context.fixture_destination_path = Path("features/fixtures/data")
     zip_path = Path("features/fixtures/data-fixtures.zip")
 
-    if not fixture_destination_path.exists():
-        os.mkdir(fixture_destination_path)
+    if not context.fixture_destination_path.exists():
+        os.mkdir(context.fixture_destination_path)
 
         with ZipFile(zip_path, "r") as fixtures_zip:
-            fixtures_zip.extractall(path=fixture_destination_path)
+            fixtures_zip.extractall(path=context.fixture_destination_path)
 
     docker_client: DockerClient = docker.from_env()
     repo_root = "/".join(str(Path(__file__).absolute()).split("/")[:-2])
@@ -56,6 +60,8 @@ def before_scenario(context, scenario):
     """
     Test setup that runs at the start of each individual scenario.
     """
+    # Set temporary_directory on context (value populated in relevant step definition)
+    context.temporary_directory = None
 
     # Stick a uuid in the docker logs for all services,
     # so we can demarcate (split) the docker logs later
@@ -75,9 +81,18 @@ def before_scenario(context, scenario):
     context.session.headers = {}
 
 
+def after_scenario(context, scenario):
+    # Remove temporary directory and any files within it
+    if context.temporary_directory is not None:
+        shutil.rmtree(context.temporary_directory)
+
+
 def after_all(context):
     """
     Stop and remove the docker container after all tests have finished running.
     """
     context.backend_container.stop()
     context.backend_container.remove()
+
+    if context.fixture_destination_path is not None:
+        shutil.rmtree(context.fixture_destination_path)

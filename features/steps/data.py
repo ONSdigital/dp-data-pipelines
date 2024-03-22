@@ -11,8 +11,8 @@ def step_impl(context):
     files_to_retrieve = {}
 
     # Create a temporary directory to use for the test.
-    temporary_dir = Path("features/temporary_fixture_dir")
-    temporary_dir.mkdir()
+    context.temporary_directory = Path("features/temporary_fixture_dir")
+    context.temporary_directory.mkdir()
 
     try:
 
@@ -26,7 +26,7 @@ def step_impl(context):
 
         fixtures_path = Path("features/fixtures/data")
 
-        for root, dirs, files in os.walk(fixtures_path):
+        for _, _, files in os.walk(fixtures_path):
             for file in files:
                 if file in files_to_retrieve.keys():
                     fixture_path_data = fixtures_path / file
@@ -34,22 +34,16 @@ def step_impl(context):
                     with open(fixture_path_data) as f:
                         file_data = f.read()
 
-                    save_path = temporary_dir / files_to_retrieve[file]
+                    save_path = context.temporary_directory / files_to_retrieve[file]
                     with open(save_path, "w") as f:
                         f.write(file_data)
-
-        context.temporary_dir = temporary_dir
-
-    # If anything goes wrong, make sure the temporary directory gets removed.
-    except Exception:
-        shutil.rmtree(temporary_dir)
+    except Exception as exc:
+        context.exception = exc
 
 
 @given("v1_data_ingress starts using the temporary source directory")
 def step_impl(context):
-
     try:
-        dataset_ingress_v1(context.temporary_dir)
-        shutil.rmtree(context.temporary_dir)
-    except Exception:
-        shutil.rmtree(context.temporary_dir)
+        dataset_ingress_v1(context.temporary_directory)
+    except Exception as exc:
+        context.exception = exc
