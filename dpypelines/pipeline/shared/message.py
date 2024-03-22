@@ -94,16 +94,19 @@ def metadata_validation_error(metadata_path, error: Exception) -> str:
     return message
 
 
-def expected_local_file_missing(msg: str, file_path: Path, pipeline_name: str) -> str:
+def expected_local_file_missing(msg: str, file_path: Path, pipeline_name: str, store: BaseWritableSingleDirectoryStore) -> str:
     """
     We're looking for a file on the local machine/runner and cannot find it.
     """
+    files_found = "\n".join(store.get_file_names())
     message = f"""
         A pipeline has encountered an issue finding a local file.
         
         Pipeline's name: {pipeline_name}
         File: {file_path}
         Message: {msg}
+        Files in directory store:
+        {files_found}
     """
     return message
 
