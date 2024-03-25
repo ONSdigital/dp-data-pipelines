@@ -7,6 +7,7 @@ def get_config_schema_path(config: dict) -> Path:
     """
     Returns the local path to a schema from the `$id` specified in a pipeline config dictionary
     """
+    
     # Getting the absolute path to the 'dpypelines/' directory
     dpypelines_absolute_path = Path(__file__).parent.parent.parent.absolute()
 
