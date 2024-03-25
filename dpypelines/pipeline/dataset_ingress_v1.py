@@ -140,12 +140,6 @@ def dataset_ingress_v1(files_dir: str):
         ))
         raise err
 
-    # Use the identifier to get the transform details  
-    if transform_identifier not in all_transform_details.keys():
-        msg = message.unknown_transform(
-            transform_identifier, all_transform_details
-        )
-
     # Use the identifier to get the transform details
     if transform_identifier not in all_transform_details.keys():
         msg = message.unknown_transform(transform_identifier, all_transform_details)
