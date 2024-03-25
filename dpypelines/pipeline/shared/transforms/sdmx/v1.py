@@ -7,7 +7,7 @@
 
 import json
 from pathlib import Path
-from dpypelines.pipeline.shared.transforms.sdmx.compact.v20.prototype.p1 import xmlToCsvSDMX2_0, generate_versions_metadata
+from dpypelines.pipeline.shared.transforms.sdmx.compact.v20.prototype.v1 import xmlToCsvSDMX2_0, generate_versions_metadata
 
 import pandas as pd
 
@@ -20,7 +20,7 @@ def sdmx_compact_2_0_prototype_1(input_file):
     xmlToCsvSDMX2_0(input_file, csv_out)
     generate_versions_metadata(csv_out, metadata_out)
 
-    return csv_out, metdata_out
+    return csv_out, metadata_out
     
 
 def stub_smdx_default_v1():
