@@ -2,7 +2,7 @@ import json
 import xmltodict
 import pandas as pd
 from datetime import datetime, date
-from utils import pathify
+from dpypelines.pipeline.shared.transforms.sdmx.utils import pathify
 
 def set_key(dictionary, key, value):
      if key not in dictionary:
@@ -12,10 +12,8 @@ def set_key(dictionary, key, value):
      else:
          dictionary[key] = [dictionary[key], value]
          
-
+         
 def xmlToCsvSDMX2_0(input_path, output_path):
-    global table_df
-    global full_table
 
     # Here we're turning the XML file into a giant dictionary we can pull apart
     with open(input_path, 'r') as file:
@@ -93,6 +91,7 @@ def xmlToCsvSDMX2_0(input_path, output_path):
     full_table = pd.concat(output) # merge all the series blocks together
 
     # the following is just tidying up the column headers so theyre not filled with @ and such
+
     header_replace = { x: str(x).replace('@', '') for x in full_table.columns }
     full_table.rename(columns=header_replace, inplace=True)
 
@@ -226,8 +225,3 @@ def generate_versions_metadata(transformedCSV, structureXML, outputPath, metadat
         json.dump(versions_template, outfile, ensure_ascii=False, indent=4)
 
     return versions_template
-
-# if '__name__' == '__main__':
-input_path = 'SUT T1500 - NATP.ESA10.SU_SDMX Output_BlueBook_25_Jan_2024 (SDMX 2.0)edited.xml'
-output_path = 'tidy.csv'
-xmlToCsvSDMX2_0(input_path, output_path)
