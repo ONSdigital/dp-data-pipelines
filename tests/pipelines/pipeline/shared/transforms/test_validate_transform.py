@@ -1,5 +1,6 @@
 import pytest
 
+from pathlib import Path
 import pandas as pd
 
 from dpypelines.pipeline.shared.transforms.validate_transform import (
@@ -10,14 +11,27 @@ from dpypelines.pipeline.shared.transforms.validate_transform import (
     check_xml_type,
 )
 
+test_dir = Path(__file__).parents[4]
+fixtures_files_dir = Path(test_dir / "fixtures/test-cases")
+
 def test_number_of_obs_from_xml_file_check_no_obs_found():
-    # TODO - create fixture with no 'na_:Obs'
-    pass
+    fixture_file = Path(fixtures_files_dir / 'test_validate_transform_incorrect_obs.xml')
+    df_length = 24
 
+    with pytest.raises(AssertionError) as err:
+        number_of_obs_from_xml_file_check(fixture_file, df_length)
+
+    assert "could not count any observations, likely due to incorrect xml format" in str(err.value)
+    
 def test_number_of_obs_from_xml_file_check_obs_numbers_not_matching():
-    # TODO - create correct fixture but pass different df_length
-    pass
+    fixture_file = Path(fixtures_files_dir / 'test_validate_transform.xml')
+    incorrec_df_length = 10
 
+    with pytest.raises(AssertionError) as err:
+        number_of_obs_from_xml_file_check(fixture_file, incorrec_df_length)
+
+    assert "transform error - expected length of data does not match tidy data" in str(err.value)
+    
 def test_check_header_info_incorrect_input():
     headers = ['testHeader']
     

@@ -4,8 +4,8 @@ def number_of_obs_from_xml_file_check(file, df_length):
     # uses 'na_:Obs' as an identifier that a line has an observation
     with open(file) as f:
         number_of_obs = sum(1 for line in f if 'na_:Obs' in line)
-    assert number_of_obs != 0, f"could not count any observations, likely due to incorrect xml format"
-    assert number_of_obs == df_length, f"transform error - expected length of data does not match tidy data"
+    assert number_of_obs != 0, "could not count any observations, likely due to incorrect xml format"
+    assert number_of_obs == df_length, "transform error - expected length of data does not match tidy data"
     
 # TODO - check other xml files
 def check_header_info(header):
