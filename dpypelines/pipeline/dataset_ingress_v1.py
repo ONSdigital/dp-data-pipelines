@@ -52,6 +52,7 @@ def dataset_ingress_v1(files_dir: str):
                 "Pipeline config not found",
                 "pipeline-config.json",
                 "dataset_ingress_v1",
+                local_store
             )
             notify.data_engineering(msg)
             raise ValueError(msg)
@@ -78,6 +79,7 @@ def dataset_ingress_v1(files_dir: str):
                     f"Required file {required_file} not found",
                     required_file,
                     "dataset_ingress_v1",
+                    local_store
                 )
                 notify.data_engineering(msg)
                 raise ValueError(msg)
@@ -110,6 +112,7 @@ def dataset_ingress_v1(files_dir: str):
                     f"Supplementary distribution {supplementary_distribution} not found",
                     supplementary_distribution,
                     "dataset_ingress_v1",
+                    local_store
                 )
                 notify.data_engineering(msg)
                 raise ValueError(msg)
@@ -133,9 +136,14 @@ def dataset_ingress_v1(files_dir: str):
             
             transform_identifier: {transform_identifier}
             transform_details" {json.dumps(all_transform_details, indent=2, default=lambda x: str(x))}
-            """,
-                err,
-            )
+            """, err
+        ))
+        raise err
+
+    # Use the identifier to get the transform details  
+    if transform_identifier not in all_transform_details.keys():
+        msg = message.unknown_transform(
+            transform_identifier, all_transform_details
         )
 
     # Use the identifier to get the transform details
