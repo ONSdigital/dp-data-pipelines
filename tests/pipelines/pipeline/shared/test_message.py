@@ -90,13 +90,18 @@ def test_metadata_validation_error():
 
 
 def test_expected_local_file_missing():
-    human_readable_output = expected_local_file_missing("Something went wrong", "/some_parent_dir/some_dir/some_json.json", "Pipeline123")
+    store_path = "tests/fixtures/test-cases/message_test_directory"
+    test_input_store = LocalDirectoryStore(store_path)
+    
+    human_readable_output = expected_local_file_missing("Something went wrong", "/some_parent_dir/some_dir/some_json.json", "Pipeline123", test_input_store)
     expected_output = """
         A pipeline has encountered an issue finding a local file.
         
         Pipeline's name: Pipeline123
         File: /some_parent_dir/some_dir/some_json.json
         Message: Something went wrong
+        Files in directory store:
+        test_local_file.json
     """
     assert human_readable_output == expected_output
     assert type(human_readable_output) == str
