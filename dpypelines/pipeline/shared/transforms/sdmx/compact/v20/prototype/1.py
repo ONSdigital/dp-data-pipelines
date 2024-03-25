@@ -88,3 +88,9 @@ def xmlToCsvSDMX2_0(input_path, output_path):
 
     full_table.to_csv(output_path, encoding='utf-8', index=False)
     return full_table
+
+def generate_versions_metadata(transformedCSV, structureXML, outputPath, metadataTemplate, config = False):
+        output = {}
+
+        #this is just a placeholder before the metadata transform is approved
+        return output
