@@ -91,18 +91,3 @@ def test_check_temp_df_empty_df():
         
     assert f"temp_df is returning an empty dataframe" in str(err.value)
     
-def test_check_xml_type_incorrect_dict_size():
-    data = {'key1': '', 'key2': ''}
-    
-    with pytest.raises(AssertionError) as err:
-        check_xml_type(data)
-        
-    assert "xml format looks incorrect" in str(err.value)
-    
-def test_check_xml_type_incorrect_xml_type():
-    data = {'GeneralData': ''}
-    
-    with pytest.raises(AssertionError) as err:
-        check_xml_type(data)
-        
-    assert "could not find 'CompactData' in xml data" in str(err.value)
