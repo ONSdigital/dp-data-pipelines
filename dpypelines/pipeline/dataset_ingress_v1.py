@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 from dpytools.stores.directory.local import LocalDirectoryStore
@@ -9,7 +10,7 @@ from dpypelines.pipeline.shared.config import get_transform_identifier_from_conf
 from dpypelines.pipeline.shared.details import all_transform_details
 from dpypelines.pipeline.shared.pipelineconfig import matching
 
-de_messenger = notification.DEMessenger()
+de_messenger = notification.PipelineMessenger(os.environ.get("DE_SLACK_WEBHOOK", None))
 
 
 def dataset_ingress_v1(files_dir: str):
