@@ -26,11 +26,12 @@ class DEMessenger(SlackMessenger):
         ), "Unable to find required environment variable DE_SLACK_WEBHOOK"
         super().__init__(self.webhook_url)
 
-    @enrich_online
     def failure(self):
-        self.msg_str("Failure")
+        enrich_message = os.environ.get('ENRICH_OUTGOING_MESSAGES', None)
+        if enrich_message is not None:
+            self.msg_str(f":boom: {enrich_message}")
+        self.msg_str(":boom:")
 
-    @enrich_online
     def success(self):
         self.msg_str("Success")
 
