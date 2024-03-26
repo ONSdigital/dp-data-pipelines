@@ -1,3 +1,4 @@
+import os
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.validation.json import validation
@@ -7,7 +8,7 @@ from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared import notification
 from dpypelines.pipeline.shared.schemas import get_config_schema_path
 
-de_messenger = notification.DEMessenger()
+de_messenger = notification.PipelineMessenger(os.environ.get("DE_SLACK_WEBHOOK", None))
 
 
 def start(s3_object_name: str):
