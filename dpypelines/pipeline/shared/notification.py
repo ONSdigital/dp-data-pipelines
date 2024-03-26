@@ -1,7 +1,7 @@
 import os
 
 from dpytools.slack.slack import SlackMessenger
-
+from dpypelines.pipeline.shared.utility import enrich_online
 
 class PSMessenger(SlackMessenger):
     def __init__(self):
@@ -26,9 +26,11 @@ class DEMessenger(SlackMessenger):
         ), "Unable to find required environment variable DE_SLACK_WEBHOOK"
         super().__init__(self.webhook_url)
 
+    @enrich_online
     def failure(self):
         self.msg_str("Failure")
 
+    @enrich_online
     def success(self):
         self.msg_str("Success")
 
