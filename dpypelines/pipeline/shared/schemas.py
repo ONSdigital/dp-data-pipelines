@@ -2,7 +2,6 @@ import json
 import os
 from pathlib import Path
 
-
 def get_config_schema_path(config: dict) -> Path:
     """
     Returns the local path to a schema from the `$id` specified in a pipeline config dictionary
@@ -12,7 +11,7 @@ def get_config_schema_path(config: dict) -> Path:
     dpypelines_absolute_path = Path(__file__).parent.parent.parent.absolute()
 
     # Set the base path for the schemas
-    schema_base_path = Path("schemas/dataset-ingress/config")
+    schema_base_path = dpypelines_absolute_path / "schemas/dataset-ingress/config"
 
     # Check `$id` is in the config dictionary keys
     if "$id" not in config.keys():
@@ -27,7 +26,7 @@ def get_config_schema_path(config: dict) -> Path:
     config_schema_version = config_id_path.name
 
     # Get the local path to the schema and check it exists
-    local_schema_path = dpypelines_absolute_path / schema_base_path / config_schema_version
+    local_schema_path = schema_base_path / config_schema_version
     if not local_schema_path.exists():
         all_schema_paths = [
             os.path.join(schema_base_path, file)
