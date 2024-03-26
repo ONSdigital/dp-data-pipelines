@@ -4,8 +4,10 @@ from dpytools.validation.json import validation
 
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared import message
-from dpypelines.pipeline.shared import notification as notify
+from dpypelines.pipeline.shared import notification
 from dpypelines.pipeline.shared.schemas import get_config_schema_path
+
+de_messenger = notification.DEMessenger()
 
 
 def start(s3_object_name: str):
@@ -23,40 +25,42 @@ def start(s3_object_name: str):
     try:
         decompress_s3_tar(s3_object_name, "input")
     except Exception as err:
-        notify.data_engineering(
+        de_messenger.failure()
+        raise Exception(
             message.unexpected_error(
                 f"Failed to decompress tar file {s3_object_name}", err
             )
-        )
-        raise err
+        ) from err
 
     # Create a local directory store using the decompressed files
     try:
         local_store = LocalDirectoryStore("input")
     except Exception as err:
-        notify.data_engineering(
+        de_messenger.failure()
+        raise Exception(
             message.unexpected_error(
                 "Failed to create local directory store at inputs", err
             )
-        )
-        raise err
+        ) from err
 
     # Check for the existence of a configuration file
     try:
         if not local_store.has_lone_file_matching(r"^pipeline-config.json$"):
-            err = FileNotFoundError(
-                f"Cannot find pipeline-config.json, from {local_store.get_file_names()}"
+            de_messenger.failure()
+            msg = message.expected_local_file_missing(
+                "Pipeline config not found",
+                "pipeline-config.json",
+                "dataset_ingress_v1",
+                local_store,
             )
-            notify.data_engineering(
-                message.unexpected_error("Cannot find pipeline config", err)
-            )
+            raise ValueError(msg)
     except Exception as err:
-        notify.data_engineering(
+        de_messenger.failure()
+        raise Exception(
             message.unexpected_error(
                 "Error while checking for pipeline-config.json", err
             )
-        )
-        raise err
+        ) from err
 
     # Load the configuration file and validate it against a schema
     try:
@@ -64,17 +68,17 @@ def start(s3_object_name: str):
             r"^pipeline-config.json$"
         )
     except Exception as err:
-        notify.data_engineering(
+        de_messenger.failure()
+        raise Exception(
             message.unexpected_error("Error while getting pipeline-config.json", err)
-        )
-        raise err
+        ) from err
 
     # Retrieve the path to the schema for the configuration
     try:
         path_to_schema = get_config_schema_path(config_dict)
     except Exception as err:
-        notify.data_engineering(message.cant_find_schema(config_dict, err))
-        raise err
+        de_messenger.failure()
+        raise Exception(message.cant_find_schema(config_dict, err)) from err
 
     # Validate the configuration against the retrieved schema
     try:
@@ -85,8 +89,8 @@ def start(s3_object_name: str):
             indent=2,
         )
     except Exception as err:
-        notify.data_engineering(message.invalid_config(config_dict, err))
-        raise err
+        de_messenger.failure()
+        raise Exception(message.invalid_config(config_dict, err)) from err
 
     # Get the path to the directory
     files_dir = local_store.get_current_source_pathlike()
