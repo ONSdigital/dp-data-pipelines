@@ -11,7 +11,7 @@ Feature: Data Ingress v1
     Given a temporary source directory of files
         | file                   |  fixture                           |
         | pipeline-config.json   |  pipeline_config_basic_valid.json  |
-        | data.sdmx              |  data_sdmx_valid_1.sdmx            |
+        | data.xml               |  data_sdmx_valid_1.sdmx            |
     And v1_data_ingress starts using the temporary source directory
     Then the pipeline should generate no errors
 
@@ -19,6 +19,6 @@ Feature: Data Ingress v1
     Given a temporary source directory of files
         | file                            |  fixture                           |
         | incorrectly-named-config.json   |  pipeline_config_basic_valid.json  |
-        | data.sdmx                       |  data_sdmx_valid_1.sdmx            |
+        | data.xml                        |  data_sdmx_valid_1.sdmx            |
     And v1_data_ingress starts using the temporary source directory
     Then the pipeline should generate an error with a message containing "issue finding a local file"
