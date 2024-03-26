@@ -139,14 +139,13 @@ def dataset_ingress_v1(files_dir: str):
         raise Exception(
             message.unexpected_error(
                 f"""
-            Failed to get tranform details.", 
-
-            transform_identifier: {transform_identifier}
-            transform_details" {json.dumps(all_transform_details, indent=2, default=lambda x: str(x))}
+            Failed to get transform identifier from transform details", 
+            {json.dumps(all_transform_details, indent=2, default=lambda x: str(x))}
             """,
                 err,
             )
-        ) from err
+        )
+        raise err
 
     # Use the identifier to get the transform details
     if transform_identifier not in all_transform_details.keys():
