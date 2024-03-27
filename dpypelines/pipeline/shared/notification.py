@@ -11,7 +11,6 @@ class PipelineMessenger(SlackMessenger):
         ), "Unable to find required environment variable to populate webhook_url argument"
         super().__init__(self.webhook_url)
 
-
     def failure(self):
         enrich_message = os.environ.get("ENRICH_OUTGOING_MESSAGES", None)
         if enrich_message is not None:
@@ -23,4 +22,3 @@ class PipelineMessenger(SlackMessenger):
         if enrich_message is not None:
             self.msg_str(f":white_check_mark: {enrich_message}")
         self.msg_str(":white_check_mark:")
-
