@@ -3,7 +3,7 @@ import pytest
 from pathlib import Path
 import pandas as pd
 
-from dpypelines.pipeline.shared.transforms.validate_transform import (
+from dpypelines.pipeline.shared.transforms.validate_transform_sdmx_v20_v1 import (
     number_of_obs_from_xml_file_check,
     check_header_info,
     check_header_unpacked,

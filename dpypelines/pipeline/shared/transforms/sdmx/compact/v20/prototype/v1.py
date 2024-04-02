@@ -3,17 +3,25 @@ import xmltodict
 import pandas as pd
 from datetime import datetime, date
 from dpypelines.pipeline.shared.transforms.utils import set_key, pathify
+from dpypelines.pipeline.shared.transforms.validate_transform_sdmx_v20_v1 import (
+    number_of_obs_from_xml_file_check, check_header_info, check_header_unpacked, check_tables_list, check_temp_df,
+    check_xml_type, check_read_in_sdmx, check_tidy_data_columns, check_table_headers_are_consistent
+    )
         
 def xmlToCsvSDMX2_0(input_path, output_path):
+    check_read_in_sdmx(input_path) # transform validation
 
     # Here we're turning the XML file into a giant dictionary we can pull apart
     with open(input_path, 'r') as file:
         xml_content = file.read()
         data = xmltodict.parse(xml_content)
 
+    check_xml_type(data) # transform validation
+
     # I hate everything about how I've got the header info here but it works with multiple types of SDMX
     
     header = data["CompactData"]['Header']
+    check_header_info(header) # transform validation
 
     header_dict = {}
 
@@ -35,21 +43,29 @@ def xmlToCsvSDMX2_0(input_path, output_path):
                             for m, n in l.items():
                                 header_dict[str(header +  ' ' + i +  ' ' + k +  ' ' + m).replace('message:', '').replace('common:', '')] = n
 
+    check_header_unpacked(header_dict) # transform validation
     header_frame = pd.DataFrame([header_dict])
 
     # each set of observations that has the same column variables is contained to blocks with series' tags inside a big Dataset tag so we can grab all the data here to then break it down
 
     tables = data["CompactData"]['na_:DataSet']['na_:Series']
     table_header = data["CompactData"]['na_:DataSet']
+    check_tables_list(input_path, tables) # transform validation
 
     # here we're building a list of the headers for the dataset using the info inside the series tag. All of the data is in the obs tag so we can ignore that one
 
-    headers = []
-
-    for item in table_header.values():
-        for i in item[0].items():
-            if i[0]!='na_:Obs':
-                headers.append(i[0])
+    headers = []          
+    for count, item in enumerate(tables):
+        if count == 0:
+            for key in item:
+                if key!='na_:Obs':
+                    headers.append(key) 
+        else:
+            temp_headers = []
+            for key in item:
+                if key!='na_:Obs':
+                    temp_headers.append(key)
+            check_table_headers_are_consistent(headers, temp_headers) # transform validation
 
     output = []
 
@@ -73,6 +89,7 @@ def xmlToCsvSDMX2_0(input_path, output_path):
                         temp = []
                         temp.append(obs[1])
                         temp_df[obs[0]] = temp
+                        check_temp_df(temp_df) # transform validation
                     obs_df = pd.concat([obs_df,temp_df])
             
         table_df = pd.concat([headers_df, obs_df], axis = 1) # merge the headers to each observation
@@ -85,6 +102,8 @@ def xmlToCsvSDMX2_0(input_path, output_path):
 
     header_replace = { x: str(x).replace('@', '') for x in full_table.columns }
     full_table.rename(columns=header_replace, inplace=True)
+    check_tidy_data_columns(full_table.columns) # transform validation
+    number_of_obs_from_xml_file_check(input_path, len(full_table)) # transform validation
 
     full_table.to_csv(output_path, encoding='utf-8', index=False)
     return full_table
