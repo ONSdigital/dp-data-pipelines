@@ -1,4 +1,3 @@
-
 def number_of_obs_from_xml_file_check(file, df_length):   
     # counts number of obs from .xml file
     # uses 'na_:Obs' as an identifier that a line has an observation
@@ -7,7 +6,6 @@ def number_of_obs_from_xml_file_check(file, df_length):
     assert number_of_obs != 0, "could not count any observations, likely due to incorrect xml format"
     assert number_of_obs == df_length, "transform error - expected length of data does not match tidy data"
     
-# TODO - check other xml files
 def check_header_info(header):
     # could check that this header dict follows a specific schema
     # but is this always the same
@@ -16,6 +14,12 @@ def check_header_info(header):
     assert len(expected_keys) == len(header), f"length of header ({len(header)}) does not match expected length ({len(expected_keys)})"
     for key in header.keys():
         assert key in expected_keys, f"{key} is not expected"
+
+def check_header_unpacked(header_dict):
+    # checks that the headers have been unpacked correctly
+    assert isinstance(header_dict, dict), "function was expecting a dict"
+    for key in header_dict:
+        assert isinstance(header_dict[key], str), "unpacked header_dict is not fully unpacked"
     
 def check_tables_list(file, tables_list):
     # check the tables list is a list of dicts
@@ -59,4 +63,12 @@ def check_tidy_data_columns(df_columns):
     for col in df_columns:
         assert "@" not in col, "@ found in tidy data column name"
         assert "na:" not in col, "na: found in tidy data column name"
+
+def check_table_headers_are_consistent(expected_headers, found_headers):
+    # checks if expected headers & found headers match
+    # if they do not then at least one table has an extra or missing headers
+    assert len(expected_headers) == len(found_headers), "length of expected_headers and found_headers do not match"
+    for item in found_headers:
+        assert item in expected_headers, f"{item}  header is not expected in table headers"
+    
     

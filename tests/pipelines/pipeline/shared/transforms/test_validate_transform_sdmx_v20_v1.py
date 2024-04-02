@@ -6,12 +6,14 @@ import pandas as pd
 from dpypelines.pipeline.shared.transforms.validate_transform import (
     number_of_obs_from_xml_file_check,
     check_header_info,
+    check_header_unpacked,
     check_tables_list,
     check_temp_df,
     check_xml_type,
     check_read_in_sdmx,
     get_number_of_series,
-    check_tidy_data_columns
+    check_tidy_data_columns,
+    check_table_headers_are_consistent,
 )
 
 test_dir = Path(__file__).parents[4]
@@ -60,6 +62,14 @@ def test_check_header_info_incorrect_header():
         check_header_info(headers)
         
     assert f"{incorrect_header} is not expected" in str(err.value)
+
+def test_check_header_unpacked_not_fully_unpacked():
+    not_fully_unpacked_dict = {'Name': {'key1': 'value1'}}
+
+    with pytest.raises(AssertionError) as err:
+        check_header_unpacked(not_fully_unpacked_dict)
+
+    assert "unpacked header_dict is not fully unpacked" in str(err.value)
     
 def test_check_tables_list_incorrect_input():
     fixture_file = Path(fixtures_files_dir / 'test_validate_transform.xml')
@@ -160,4 +170,23 @@ def test_check_tidy_data_columns_incorrect_columns():
         check_tidy_data_columns(df_columns)
         
     assert "@ found in tidy data column name" in str(err.value)
+
+def test_check_table_headers_are_consistent_different_lengths():
+    first_headers = ['a', 'b', 'c']
+    second_headers = ['a', 'b']
+
+    with pytest.raises(AssertionError) as err:
+        check_table_headers_are_consistent(first_headers, second_headers)
+        
+    assert "length of expected_headers and found_headers do not match" in str(err.value)
+
+def test_check_table_headers_are_consistent_different_headers():
+    incorrect_header = 'd'
+    first_headers = ['a', 'b', 'c']
+    second_headers = ['a', 'b', incorrect_header]
+
+    with pytest.raises(AssertionError) as err:
+        check_table_headers_are_consistent(first_headers, second_headers)
+        
+    assert f"{incorrect_header}  header is not expected in table headers" in str(err.value)
     
