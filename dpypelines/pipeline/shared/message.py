@@ -3,7 +3,6 @@ Functions to create nicely formatted and informative messages.
 """
 
 import json
-from os import pipe
 from pathlib import Path
 from typing import Dict
 
@@ -72,7 +71,9 @@ def unknown_transform(transform_identifier: str, all_transform_details: dict) ->
     We've been given a transform identifier that we don't recnognise. Create a
     meaningful message explaining the problem.
     """
-    formatted_transform_options = json.dumps(all_transform_details, indent=2, default=lambda x: str(x))
+    formatted_transform_options = json.dumps(
+        all_transform_details, indent=2, default=lambda x: str(x)
+    )
     message = f"""
         Pipeline name is missing from the pipeline transform configurations.
         
