@@ -2,9 +2,10 @@ import json
 import xmltodict
 import pandas as pd
 from datetime import datetime, date
+
 from dpypelines.pipeline.shared.transforms.utils import set_key, pathify
-from dpypelines.pipeline.shared.transforms.validate_transform_sdmx_v20_v1 import (
-    number_of_obs_from_xml_file_check, check_header_info, check_header_unpacked, check_tables_list, check_temp_df,
+from dpypelines.pipeline.shared.transforms.validate_transform import (
+    check_number_of_obs_from_xml_file, check_header_info, check_header_unpacked, check_tables_list, check_temp_df,
     check_xml_type, check_read_in_sdmx, check_tidy_data_columns, check_table_headers_are_consistent
     )
         
@@ -103,7 +104,7 @@ def xmlToCsvSDMX2_0(input_path, output_path):
     header_replace = { x: str(x).replace('@', '') for x in full_table.columns }
     full_table.rename(columns=header_replace, inplace=True)
     check_tidy_data_columns(full_table.columns) # transform validation
-    number_of_obs_from_xml_file_check(input_path, len(full_table)) # transform validation
+    check_number_of_obs_from_xml_file(input_path, len(full_table)) # transform validation
 
     full_table.to_csv(output_path, encoding='utf-8', index=False)
     return full_table

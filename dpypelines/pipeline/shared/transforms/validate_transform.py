@@ -3,7 +3,13 @@ from typing import List
 
 import pandas as pd
 
-def number_of_obs_from_xml_file_check(xml_file: Path, df_length: int):   
+"""
+Transform validation functions to be used by dpypelines.pipeline.shared.transforms.sdmx.compact.v20.prototype.v1
+ie - version 2_0 of compact sdmx data
+file may need renaming when further transforms for different sdmx's are created
+"""
+
+def check_number_of_obs_from_xml_file(xml_file: Path, df_length: int):   
     # counts number of obs from .xml file
     # uses 'na_:Obs' as an identifier that a line has an observation
     with open(xml_file) as f:

@@ -3,8 +3,8 @@ import pytest
 from pathlib import Path
 import pandas as pd
 
-from dpypelines.pipeline.shared.transforms.validate_transform_sdmx_v20_v1 import (
-    number_of_obs_from_xml_file_check,
+from dpypelines.pipeline.shared.transforms.validate_transform import (
+    check_number_of_obs_from_xml_file,
     check_header_info,
     check_header_unpacked,
     check_tables_list,
@@ -24,7 +24,7 @@ def test_number_of_obs_from_xml_file_check_no_obs_found():
     df_length = 24
 
     with pytest.raises(AssertionError) as err:
-        number_of_obs_from_xml_file_check(fixture_file, df_length)
+        check_number_of_obs_from_xml_file(fixture_file, df_length)
 
     assert "could not count any observations, likely due to incorrect xml format" in str(err.value)
     
@@ -33,7 +33,7 @@ def test_number_of_obs_from_xml_file_check_obs_numbers_not_matching():
     incorrec_df_length = 10
 
     with pytest.raises(AssertionError) as err:
-        number_of_obs_from_xml_file_check(fixture_file, incorrec_df_length)
+        check_number_of_obs_from_xml_file(fixture_file, incorrec_df_length)
 
     assert "transform error - expected length of data does not match tidy data" in str(err.value)
     
