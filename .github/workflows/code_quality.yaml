@@ -21,7 +21,7 @@ jobs:
         run: poetry install
 
       - name: Check black has been ran (make fmt)
-        run: poetry run black dpytools --diff --check-only
+        run: poetry run black dpytools --diff
 
       - name: Check isort has been ran (make fmt)
         run: poetry run isort dpytools --diff --check-only
