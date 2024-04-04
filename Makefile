@@ -12,7 +12,7 @@ fmt: install ## (Format) - runs black and isort against the codebase (auto trigg
 	poetry run isort ./dpypelines/*
 
 lint: install ## Run the ruff python linter (auto triggered on pre-commit)
-	poetry run ruff ./dpypelines/*
+	poetry run ruff check ./dpypelines/*
 
 test: install ## Run pytest and check test coverage (auto triggered on pre-push)
 	poetry run pytest --cov-report term-missing --cov=dpypelines
