@@ -30,4 +30,4 @@ jobs:
         run: poetry run isort dpytools --diff --check-only
 
       - name: Check ruff has been ran (make lint)
-        run: poetry run ruff check ./dpypelines/* --diff
+        run: poetry run ruff check ./dpypelines/*
