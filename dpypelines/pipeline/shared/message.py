@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict
 
 from dpytools.stores.directory.base import BaseWritableSingleDirectoryStore
+
 from dpypelines.pipeline.shared.utility import enrich_online
 
 
@@ -102,7 +103,12 @@ def metadata_validation_error(metadata_path, error: Exception) -> str:
 
 
 @enrich_online
-def expected_local_file_missing(msg: str, file_path: Path, pipeline_name: str) -> str:
+def expected_local_file_missing(
+    msg: str,
+    file_path: Path,
+    pipeline_name: str,
+    store: BaseWritableSingleDirectoryStore,
+) -> str:
     """
     We're looking for a file on the local machine/runner and cannot find it.
     """

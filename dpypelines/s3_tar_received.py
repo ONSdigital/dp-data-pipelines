@@ -1,11 +1,13 @@
-import os
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.validation.json import validation
 
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared import message
-from dpypelines.pipeline.shared.notification import BasePipelineNotifier, notifier_from_env_var_webhook
+from dpypelines.pipeline.shared.notification import (
+    BasePipelineNotifier,
+    notifier_from_env_var_webhook,
+)
 from dpypelines.pipeline.shared.schemas import get_config_schema_path
 
 de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook("DE_SLACK_WEBHOOK")

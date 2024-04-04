@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 import os
+from abc import ABC, abstractmethod
 
 from dpytools.slack.slack import SlackMessenger
+
 from dpypelines.pipeline.shared.utility import str_to_bool
 
 
 class BasePipelineNotifier(ABC):
     """
     Base pipeline messenger to ensure all variations of this
-    implement the required methods. 
+    implement the required methods.
     """
 
     @abstractmethod
@@ -29,8 +30,8 @@ class BasePipelineNotifier(ABC):
 
     # TODO - remove me later
     # only present while we're using the temporary "everything worked" message
-    def msg_str(self, msg: str):
-        ...
+    def msg_str(self, msg: str): ...
+
 
 # see: https://www.techtarget.com/whatis/definition/no-op-no-operation
 class NopNotifier(BasePipelineNotifier):
@@ -39,11 +40,9 @@ class NopNotifier(BasePipelineNotifier):
     i.e methods exist but do nothing when called.
     """
 
-    def failure(self):
-        ...
+    def failure(self): ...
 
-    def success(self):
-        ...
+    def success(self): ...
 
 
 class PipelineNotifier(BasePipelineNotifier):
@@ -72,13 +71,16 @@ def notifier_from_env_var_webhook(env_var: str) -> BasePipelineNotifier:
     """
 
     notifications_disabled = os.environ.get("DISABLE_NOTIFICATIONS", None)
-    notifications_disabled = False if notifications_disabled is None else str_to_bool(notifications_disabled)
+    notifications_disabled = (
+        False if notifications_disabled is None else str_to_bool(notifications_disabled)
+    )
 
     if notifications_disabled is True:
         return NopNotifier()
 
     web_hook = os.environ.get(env_var, None)
-    assert web_hook is not None, f"The specified env var {env_var} is not present on this system."
+    assert (
+        web_hook is not None
+    ), f"The specified env var {env_var} is not present on this system."
 
     return PipelineNotifier(web_hook)
-
