@@ -1,6 +1,6 @@
 from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
+    sdmx_compact_2_0_prototype_1,
     sdmx_sanity_check_v1,
-    sdmx_compact_2_0_prototype_1
 )
 
 # Dev note: pointing at the default stub (does nothing) tranform for now

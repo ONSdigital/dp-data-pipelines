@@ -18,9 +18,9 @@ def test_notification_constructor():
     mp.setenv("DISABLE_NOTIFICATIONS", "False")
     mp.setenv("SOME_ENV_VAR", fake_web_hook)
 
-    client = notifier_from_env_var_webhook("SOME_ENV_VAR")
-    assert isinstance(client, PipelineNotifier)
-    assert client.webhook_url == fake_web_hook
+    norifier = notifier_from_env_var_webhook("SOME_ENV_VAR")
+    assert isinstance(norifier, PipelineNotifier)
+    assert norifier.client.webhook_url == fake_web_hook
 
 
 def test_notification_constructor_with_disabled_notifications():
@@ -32,8 +32,8 @@ def test_notification_constructor_with_disabled_notifications():
     mp = MonkeyPatch()
     mp.setenv("DISABLE_NOTIFICATIONS", "True")
 
-    client = notifier_from_env_var_webhook("DOES_NOT_MATTER")
-    assert isinstance(client, NopNotifier)
+    norifier = notifier_from_env_var_webhook("DOES_NOT_MATTER")
+    assert isinstance(norifier, NopNotifier)
 
 
 def test_notification_raises_for_missing_webhook():

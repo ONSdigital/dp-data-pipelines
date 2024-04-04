@@ -1,13 +1,15 @@
 import json
-import os
 from pathlib import Path
 
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.shared import message
-from dpypelines.pipeline.shared.notification import notifier_from_env_var_webhook, BasePipelineNotifier
 from dpypelines.pipeline.shared.config import get_transform_identifier_from_config
 from dpypelines.pipeline.shared.details import all_transform_details
+from dpypelines.pipeline.shared.notification import (
+    BasePipelineNotifier,
+    notifier_from_env_var_webhook,
+)
 from dpypelines.pipeline.shared.pipelineconfig import matching
 
 de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook("DE_SLACK_WEBHOOK")
