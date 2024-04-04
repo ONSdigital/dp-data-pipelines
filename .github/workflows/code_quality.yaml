@@ -21,10 +21,10 @@ jobs:
         run: poetry install
 
       - name: Check black has been ran (make fmt)
-        run: poetry run black dpytools --diff
+        run: poetry run black dpypelines --diff
 
       - name: Check isort has been ran (make fmt)
-        run: poetry run isort dpytools --diff --check-only
+        run: poetry run isort dpypelines --diff --check-only
 
       - name: Check ruff has been ran (make lint)
         run: poetry run ruff check ./dpypelines/*
