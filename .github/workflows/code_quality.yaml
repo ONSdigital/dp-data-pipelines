@@ -1,4 +1,4 @@
-name: Python Unit Tests
+name: Checking Code Quality
 
 on: [push]
 
@@ -19,9 +19,6 @@ jobs:
 
       - name: Install test dependencies
         run: poetry install
-
-      - name: Pytest (make test)
-        run: poetry run pytest
 
       - name: Check black has been ran (make fmt)
         run: poetry run black dpytools --diff --check-only
