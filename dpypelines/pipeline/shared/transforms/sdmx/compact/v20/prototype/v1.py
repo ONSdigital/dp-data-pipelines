@@ -32,15 +32,15 @@ def xmlToCsvSDMX2_0(input_path, output_path):
                         .replace("common", "")
                     ] = j
                 else:
-                    for k, l in j.items():
-                        if "{" not in str(l):
+                    for k, sub_value in j.items():
+                        if "{" not in str(sub_value):
                             header_dict[
                                 str(header + " " + i + " " + k)
                                 .replace("message:", "")
                                 .replace("common:", "")
-                            ] = l
+                            ] = sub_value
                         else:
-                            for m, n in l.items():
+                            for m, n in sub_value.items():
                                 header_dict[
                                     str(header + " " + i + " " + k + " " + m)
                                     .replace("message:", "")

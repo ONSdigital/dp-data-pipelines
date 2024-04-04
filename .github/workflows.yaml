@@ -1,0 +1,33 @@
+name: Python Unit Tests
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install pipenv
+        run: pip install poetry
+
+      - name: Install test dependencies
+        run: poetry install
+
+      - name: Pytest (make test)
+        run: poetry run pytest
+
+      - name: Check black has been ran (make fmt)
+        run: poetry run black dpytools --diff --check-only
+
+      - name: Check isort has been ran (make fmt)
+        run: poetry run isort dpytools --diff --check-only
+
+      - name: Check ruff has been ran (make lint)
+        run: poetry run ruff check ./dpypelines/* --diff
