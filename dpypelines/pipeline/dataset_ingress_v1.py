@@ -228,3 +228,5 @@ Metadata:
 ```
         """
     )
+
+    print("Worked. I ran to completion.")

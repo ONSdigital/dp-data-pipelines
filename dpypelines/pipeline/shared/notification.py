@@ -45,38 +45,36 @@ class NopNotifier(BasePipelineNotifier):
     def success(self):
         ...
 
-    # TODO - remove me later
-    # only present while we're using the temporary "everything worked" message
-    def msg_str(self, _):
-        ...
 
-
-class PipelineNotifier(BasePipelineNotifier, SlackMessenger):
+class PipelineNotifier(BasePipelineNotifier):
     def __init__(self, webhook_url):
-        self.webhook_url = webhook_url
         assert (
-            self.webhook_url is not None
+            webhook_url is not None
         ), "Unable to find required environment variable to populate webhook_url argument"
-        super().__init__(self.webhook_url)
+        self.client = SlackMessenger(webhook_url)
 
     def failure(self):
-        self.msg_str(":boom:")
+        self.client.msg_str(":boom:")
 
     def success(self):
-        self.msg_str(":white_check_mark:")
+        self.client.msg_str(":white_check_mark:")
+
+    # TODO - remove me later
+    # only present while we're using the temporary "everything worked" message
+    def msg_str(self, msg: str):
+        self.client.msg_str(msg)
 
 
 def notifier_from_env_var_webhook(env_var: str) -> BasePipelineNotifier:
     """
-    Create a variant of BAsePipelineMessenger by passing in the name
+    Create a variant of BasePipelineMessenger by passing in the name
     of an envionrment variable that will hold the required webhook.
     """
 
-    notifications_disabled = os.environ.get("DISABLE_NOTIFICATIONS", False)
-    if notifications_disabled is not False:
-        notifications_disabled = str_to_bool(notifications_disabled)
+    notifications_disabled = os.environ.get("DISABLE_NOTIFICATIONS", None)
+    notifications_disabled = False if notifications_disabled is None else str_to_bool(notifications_disabled)
 
-    if notifications_disabled:
+    if notifications_disabled is True:
         return NopNotifier()
 
     web_hook = os.environ.get(env_var, None)
