@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 from abc import ABC, abstractmethod
 
@@ -10,7 +8,7 @@ from dpypelines.pipeline.shared.utility import str_to_bool
 
 class BasePipelineNotifier(ABC):
     """
-    Base pipeline messenger to ensure all variations of this
+    Base pipeline notifier to ensure all variations of notifiers
     implement the required methods.
     """
 
@@ -36,7 +34,7 @@ class BasePipelineNotifier(ABC):
 # see: https://www.techtarget.com/whatis/definition/no-op-no-operation
 class NopNotifier(BasePipelineNotifier):
     """
-    A no operation messenger so we can toggle off notifications locally,
+    A no operation notifier so we can toggle off notifications locally,
     i.e methods exist but do nothing when called.
     """
 
