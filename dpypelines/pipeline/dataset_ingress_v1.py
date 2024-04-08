@@ -145,6 +145,7 @@ def dataset_ingress_v1(files_dir: str):
             )
         ) from err
 
+    output_dir = TemporaryDirectory()
     # Use the identifier to get the transform details
     if transform_identifier not in all_transform_details.keys():
         de_messenger.failure()
@@ -157,7 +158,7 @@ def dataset_ingress_v1(files_dir: str):
     args = []
     for match, sanity_checker in transform_details["transform_inputs"].items():
         try:
-            input_file_path: Path = local_store.save_lone_file_matching(match)
+            input_file_path: Path = local_store.save_lone_file_matching(match, destination = output_dir.name)
         except Exception as err:
             de_messenger.failure()
             printable_transform_details = json.dumps(

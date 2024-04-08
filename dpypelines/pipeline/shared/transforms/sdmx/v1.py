@@ -12,7 +12,7 @@ from dpypelines.pipeline.shared.transforms.sdmx.compact.v20.prototype.v1 import 
 import pandas as pd
 
 
-def sdmx_compact_2_0_prototype_1(input_file):
+def sdmx_compact_2_0_prototype_1(input_file: Path):
 
     csv_out = Path("data.csv")
     metadata_out = Path("metadata.json")
