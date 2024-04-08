@@ -30,6 +30,11 @@ def before_all(context):
 
         with ZipFile(zip_path, "r") as fixtures_zip:
             fixtures_zip.extractall(path=context.fixture_destination_path)
+        
+    # Change directory to a temporary directory to accomodate any test files being dumped to the "current directory"
+    context.temp_test_dir = Path("temporary_test_output/")
+    os.mkdir(context.temp_test_dir)
+    os.chdir(context.temp_test_dir)
 
     docker_client: DockerClient = docker.from_env()
     repo_root = "/".join(str(Path(__file__).absolute()).split("/")[:-2])
@@ -89,9 +94,10 @@ def after_scenario(context, scenario):
 def after_all(context):
     """
     Stop and remove the docker container after all tests have finished running.
+    Also remove the temporary directories for test output files.
     """
     context.backend_container.stop()
     context.backend_container.remove()
 
     if context.fixture_destination_path is not None:
-        shutil.rmtree(context.fixture_destination_path)
+        shutil.rmtree(context.fixture_destination_path.absolute())

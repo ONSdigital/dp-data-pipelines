@@ -36,7 +36,7 @@ def step_impl(context):
 @given("v1_data_ingress starts using the temporary source directory")
 def step_impl(context):
     try:
-        dataset_ingress_v1(context.temporary_directory)
+        dataset_ingress_v1(context.temporary_directory.absolute())
         context.exception = None
     except Exception as exc:
         context.exception = exc
