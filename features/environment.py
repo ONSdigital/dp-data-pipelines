@@ -22,7 +22,10 @@ def before_all(context):
     Also checks if the fixtures unzipped data path exists,
     and if it doesn't, extracts the fixtures zipfile to it.
     """
-    context.fixture_destination_path = Path("features/fixtures/data")
+    context.features_directory = Path(__file__).parent
+
+    context.fixture_destination_path = Path(context.features_directory / "fixtures/data")
+
     zip_path = Path("features/fixtures/data-fixtures.zip")
 
     if not context.fixture_destination_path.exists():
@@ -31,10 +34,10 @@ def before_all(context):
         with ZipFile(zip_path, "r") as fixtures_zip:
             fixtures_zip.extractall(path=context.fixture_destination_path)
         
-    # Change directory to a temporary directory to accomodate any test files being dumped to the "current directory"
-    context.temp_test_dir = Path("temporary_test_output/")
-    os.mkdir(context.temp_test_dir)
-    os.chdir(context.temp_test_dir)
+    # # Change directory to a temporary directory to accomodate any test files being dumped to the "current directory"
+    # context.temp_test_dir = Path("temporary_test_output/")
+    # os.mkdir(context.temp_test_dir)
+    # os.chdir(context.temp_test_dir)
 
     docker_client: DockerClient = docker.from_env()
     repo_root = "/".join(str(Path(__file__).absolute()).split("/")[:-2])
@@ -64,6 +67,13 @@ def before_scenario(context, scenario):
     """
     Test setup that runs at the start of each individual scenario.
     """
+
+    # Change directory to a temporary directory to accomodate any test files being dumped to the "current directory"
+    # This allows us to safely delete them later.
+    context.temp_test_dir = Path("temporary_test_output/")
+    os.mkdir(context.temp_test_dir)
+    os.chdir(context.temp_test_dir)
+
     # Set temporary_directory on context (value populated in relevant step definition)
     context.temporary_directory = None
 
@@ -89,6 +99,9 @@ def after_scenario(context, scenario):
     # Remove temporary directory and any files within it
     if context.temporary_directory is not None:
         shutil.rmtree(context.temporary_directory)
+
+    os.chdir("..")
+    shutil.rmtree(context.temp_test_dir)
 
 
 def after_all(context):
