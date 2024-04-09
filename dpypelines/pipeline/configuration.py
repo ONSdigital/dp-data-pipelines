@@ -1,7 +1,7 @@
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
-    sdmx_sanity_check_v1,
     sdmx_compact_2_0_prototype_1,
+    sdmx_sanity_check_v1,
 )
 
 # Set a regex pattern matching the `dataset_id` as `CONFIGURATION` dictionary key
