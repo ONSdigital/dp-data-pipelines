@@ -1,0 +1,30 @@
+name: Checking Code Quality
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install poetry
+        run: pip install poetry
+
+      - name: Install test dependencies
+        run: poetry install
+
+      - name: Check black has been ran (make fmt)
+        run: poetry run black dpypelines --diff
+
+      - name: Check isort has been ran (make fmt)
+        run: poetry run isort dpypelines --diff --check-only
+
+      - name: Check ruff has been ran (make lint)
+        run: poetry run ruff check ./dpypelines/*
