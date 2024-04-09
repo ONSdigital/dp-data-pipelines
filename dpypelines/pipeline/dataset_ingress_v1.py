@@ -1,16 +1,18 @@
 import json
-import os
 from pathlib import Path
 
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.shared import message
-from dpypelines.pipeline.shared import notification
 from dpypelines.pipeline.shared.config import get_transform_identifier_from_config
 from dpypelines.pipeline.shared.details import all_transform_details
+from dpypelines.pipeline.shared.notification import (
+    BasePipelineNotifier,
+    notifier_from_env_var_webhook,
+)
 from dpypelines.pipeline.shared.pipelineconfig import matching
 
-de_messenger = notification.PipelineMessenger(os.environ.get("DE_SLACK_WEBHOOK", None))
+de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook("DE_SLACK_WEBHOOK")
 
 
 def dataset_ingress_v1(files_dir: str):
@@ -32,7 +34,7 @@ def dataset_ingress_v1(files_dir: str):
     try:
         local_store = LocalDirectoryStore(files_dir)
     except Exception as err:
-        de_messenger.failure()
+        de_notifier.failure()
         raise Exception(
             message.unexpected_error(f"Failed to access local data at {files_dir}", err)
         ) from err
@@ -43,7 +45,7 @@ def dataset_ingress_v1(files_dir: str):
             r"^pipeline-config.json$"
         )
     except Exception as err:
-        de_messenger.failure()
+        de_notifier.failure()
         raise Exception(
             message.unexpected_error("Failed to get pipeline-config.json", err)
         ) from err
@@ -51,7 +53,7 @@ def dataset_ingress_v1(files_dir: str):
     # Check for the existence of a pipeline configuration file
     try:
         if not local_store.has_lone_file_matching(r"^pipeline-config.json$"):
-            de_messenger.failure()
+            de_notifier.failure()
             msg = message.expected_local_file_missing(
                 "Pipeline config not found",
                 "pipeline-config.json",
@@ -60,7 +62,7 @@ def dataset_ingress_v1(files_dir: str):
             )
             raise ValueError(msg)
     except Exception as err:
-        de_messenger.failure()
+        de_notifier.failure()
         raise Exception(
             message.unexpected_error(
                 "Error while checking for pipeline-config.json", err
@@ -71,7 +73,7 @@ def dataset_ingress_v1(files_dir: str):
     try:
         required_file_patterns = matching.get_required_files_patterns(pipeline_config)
     except Exception as err:
-        de_messenger.failure()
+        de_notifier.failure()
         raise Exception(
             message.unexpected_error("Failed to get required files patterns", err)
         ) from err
@@ -80,7 +82,7 @@ def dataset_ingress_v1(files_dir: str):
     for required_file in required_file_patterns:
         try:
             if not local_store.has_lone_file_matching(required_file):
-                de_messenger.failure()
+                de_notifier.failure()
                 msg = message.expected_local_file_missing(
                     f"Required file {required_file} not found",
                     required_file,
@@ -89,7 +91,7 @@ def dataset_ingress_v1(files_dir: str):
                 )
                 raise ValueError(msg)
         except Exception as err:
-            de_messenger.failure()
+            de_notifier.failure()
             raise Exception(
                 message.unexpected_error(
                     f"Error while looking for required file {required_file}", err
@@ -102,7 +104,7 @@ def dataset_ingress_v1(files_dir: str):
             matching.get_supplementary_distribution_patterns(pipeline_config)
         )
     except Exception as err:
-        de_messenger.failure()
+        de_notifier.failure()
         raise Exception(
             message.unexpected_error(
                 "Failed to get supplementary distribution patterns", err
@@ -113,7 +115,7 @@ def dataset_ingress_v1(files_dir: str):
     for supplementary_distribution in supplementary_distribution_patterns:
         try:
             if not local_store.has_lone_file_matching(supplementary_distribution):
-                de_messenger.failure()
+                de_notifier.failure()
                 msg = message.expected_local_file_missing(
                     f"Supplementary distribution {supplementary_distribution} not found",
                     supplementary_distribution,
@@ -122,7 +124,7 @@ def dataset_ingress_v1(files_dir: str):
                 )
                 raise ValueError(msg)
         except Exception as err:
-            de_messenger.failure()
+            de_notifier.failure()
             raise Exception(
                 message.unexpected_error(
                     f"Error while looking for supplementary distribution {supplementary_distribution}",
@@ -134,7 +136,7 @@ def dataset_ingress_v1(files_dir: str):
     try:
         transform_identifier = get_transform_identifier_from_config(pipeline_config)
     except Exception as err:
-        de_messenger.failure()
+        de_notifier.failure()
         raise Exception(
             message.unexpected_error(
                 f"""
@@ -147,7 +149,7 @@ def dataset_ingress_v1(files_dir: str):
 
     # Use the identifier to get the transform details
     if transform_identifier not in all_transform_details.keys():
-        de_messenger.failure()
+        de_notifier.failure()
         msg = message.unknown_transform(transform_identifier, all_transform_details)
         raise ValueError(msg)
     transform_details: dict = all_transform_details[transform_identifier]
@@ -159,7 +161,7 @@ def dataset_ingress_v1(files_dir: str):
         try:
             input_file_path: Path = local_store.save_lone_file_matching(match)
         except Exception as err:
-            de_messenger.failure()
+            de_notifier.failure()
             printable_transform_details = json.dumps(
                 transform_details, indent=2, default=lambda x: str(x)
             )
@@ -172,7 +174,7 @@ def dataset_ingress_v1(files_dir: str):
         try:
             sanity_checker(input_file_path)
         except Exception as err:
-            de_messenger.failure()
+            de_notifier.failure()
             raise Exception(
                 message.pipeline_input_sanity_check_exception(
                     transform_details, local_store, err
@@ -188,7 +190,7 @@ def dataset_ingress_v1(files_dir: str):
     try:
         csv_path, metadata_path = transform_function(*args, **kwargs)
     except Exception as err:
-        de_messenger.failure()
+        de_notifier.failure()
         printable_transform_details = json.dumps(
             transform_details, indent=2, default=lambda x: str(x)
         )
@@ -211,8 +213,8 @@ def dataset_ingress_v1(files_dir: str):
 
     import pandas as pd
 
-    de_messenger.success()
-    de_messenger.msg_str(
+    de_notifier.success()
+    de_notifier.msg_str(
         f"""
 
 Tranform ran to completion.
@@ -228,3 +230,5 @@ Metadata:
 ```
         """
     )
+
+    print("Worked. I ran to completion.")
