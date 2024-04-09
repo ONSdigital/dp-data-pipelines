@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from behave import Given, Then
 
 
@@ -45,7 +46,11 @@ def step_impl(context, request_json_payload):
     """
     Load a JSON payload file to submit as part of the request.
     """
-    with open(request_json_payload, "r") as f:
+    relative_features_path = Path(__file__).parent.parent
+
+    request_json_payload_path = relative_features_path / request_json_payload
+
+    with open(request_json_payload_path, "r") as f:
         context.json = json.load(f)
 
 
@@ -99,7 +104,11 @@ def step_impl(context, request_json_payload):
     Ensure that the request body contains the JSON data specified in the test file.
     """
     request_body = context.response.request.body.decode("utf-8")
-    with open(request_json_payload, "r") as f:
+    relative_features_path = Path(__file__).parent.parent
+
+    request_json_payload_path = relative_features_path / request_json_payload
+
+    with open(request_json_payload_path, "r") as f:
         data = json.load(f)
     assert data == json.loads(request_body)
 

@@ -47,48 +47,48 @@ def step_impl(context):
     if context.exception is not None:
         raise context.exception
 
-@given("I read the csv output 'data.csv'")
-def step_impl(context):
-    try:
-        csv_output_path = context.temporary_directory / "data.csv"
 
-        context.csv_output = pd.read_csv(csv_output_path)
+@then("I read the csv output '{csv_output}'")
+def step_impl(context, csv_output):
+    try:
+        context.csv_output = pd.read_csv(csv_output)
 
     except Exception as exc:
         raise exc
 
 
-@given("the csv output should have '{number}' rows")
+@then("the csv output should have '{number}' rows")
 def step_impl(context, number):
     num_rows = len(context.csv_output.index)
 
-    assert num_rows == number
+    assert num_rows == int(number)
 
 
-@given("the csv output has the columns")
+@then("the csv output has the columns")
 def step_impl(context):
 
     for column in context.table:
         assert column in context.csv_output.columns
 
     
-@given("I read the metadata output '/outputs/metadata.json'")
-def step_impl(context):
+@then("I read the metadata output '{metadata_output}'")
+def step_impl(context, metadata_output):
     try:
-        json_output_path = context.temporary_directory / "metadata.json"
+        json_output_path = Path(metadata_output)
 
-        context.json_output = json.load(json_output_path)
+        metadata_file = open(json_output_path)
+
+        context.json_output = json.load(metadata_file)
 
     except Exception as exc:
         raise exc
 
 
-@given("the metadata should match 'cpih-metadata-correct.json'")
+@then("the metadata should match 'cpih-metadata-correct.json'")
 def step_impl(context):
-    #correct_metadata = json.load()
+    expected_metadata = {"to": "do"}
 
-    #assert context.json_output == correct_metadata
-    pass
+    assert context.json_output == expected_metadata
 
 @then('the pipeline should generate an error with a message containing "{err_msg}"')
 def step_impl(context, err_msg):

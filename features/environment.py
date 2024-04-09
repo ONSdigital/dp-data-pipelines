@@ -33,11 +33,7 @@ def before_all(context):
 
         with ZipFile(zip_path, "r") as fixtures_zip:
             fixtures_zip.extractall(path=context.fixture_destination_path)
-        
-    # # Change directory to a temporary directory to accomodate any test files being dumped to the "current directory"
-    # context.temp_test_dir = Path("temporary_test_output/")
-    # os.mkdir(context.temp_test_dir)
-    # os.chdir(context.temp_test_dir)
+
 
     docker_client: DockerClient = docker.from_env()
     repo_root = "/".join(str(Path(__file__).absolute()).split("/")[:-2])
@@ -100,6 +96,7 @@ def after_scenario(context, scenario):
     if context.temporary_directory is not None:
         shutil.rmtree(context.temporary_directory)
 
+    # Change out of temporary directory and delete its contents from finished scenario
     os.chdir("..")
     shutil.rmtree(context.temp_test_dir)
 
