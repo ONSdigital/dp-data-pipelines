@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-from typing  import Optional
 from unittest.mock import MagicMock
 
 import pytest
