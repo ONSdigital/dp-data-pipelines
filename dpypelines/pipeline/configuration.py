@@ -4,7 +4,8 @@ from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
     sdmx_compact_2_0_prototype_1,
 )
 
-# `dataset_id` regex pattern as `CONFIGURATION` dictionary key
+# Set a regex pattern matching the `dataset_id` as `CONFIGURATION` dictionary key
+# All fields are required in order for a pipeline transform to run successfully
 CONFIGURATION = {
     # Default configuration (regex pattern matches any string of characters of length >= 0)
     "^.*$": {
