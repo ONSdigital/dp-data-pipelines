@@ -1,3 +1,7 @@
+from dataclasses import dataclass
+from typing  import Optional
+from unittest.mock import MagicMock
+
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
@@ -52,3 +56,39 @@ def test_notification_raises_for_missing_webhook():
         "Unable to find required environment variable to populate webhook_url argument"
         in str(e.value)
     )
+
+
+def test_notification_custom_postfix_success():
+    """
+    Test that we can add a custom postfix to the notification message
+    for a success.
+    """
+    postfix_str = "i-might-be-a-url"
+
+    mp = MonkeyPatch()
+    mp.setenv("DISABLE_NOTIFICATIONS", "False")
+    mp.setenv("NOTIFICATION_POSTFIX", postfix_str)
+
+    notifier = PipelineNotifier("_")
+    notifier.client = MagicMock()
+    notifier.success()
+
+    notifier.client.msg_str.assert_called_once_with(f":white_check_mark: {postfix_str}")
+
+
+def test_notification_custom_postfix_success():
+    """
+    Test that we can add a custom postfix to the notification message
+    for a failure.
+    """
+    postfix_str = "i-might-be-a-url"
+
+    mp = MonkeyPatch()
+    mp.setenv("DISABLE_NOTIFICATIONS", "False")
+    mp.setenv("NOTIFICATION_POSTFIX", postfix_str)
+
+    notifier = PipelineNotifier("_")
+    notifier.client = MagicMock()
+    notifier.failure()
+
+    notifier.client.msg_str.assert_called_once_with(f":boom: {postfix_str}")
