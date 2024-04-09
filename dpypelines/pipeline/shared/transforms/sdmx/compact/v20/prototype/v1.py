@@ -21,7 +21,7 @@ def xmlToCsvSDMX2_0(input_path, output_path):
 
     # Attributes are name–value pair that exist within a start-tag or empty-element tag. An XML attribute can only have a single value and each attribute can appear at most once on each element.
 
-    # The element tag is retrieved as .tab on Python ElementTree package. 
+    # The element tag is retrieved as .tab on Python ElementTree package.
     # The name-value pair attributes are retrieved as .attrib on Python ElementTree package.
 
     # Each block of observations tagged "Obs" within the same column headers is contained within a parent block tagged "Series". The respective tuples of dictionary are converted into 'flat' dictionaries and dropped into the series_dict and obs_dict.
@@ -46,8 +46,8 @@ def xmlToCsvSDMX2_0(input_path, output_path):
 
     # Here the records on the header dataframe are replicated to match the length of the series and observation dataframes.
     repl_rows = header_df.loc[0].copy()
-    header_frame = header_df._append(
-        [repl_rows] * (len(obs_frame) - 1), ignore_index=True
+    header_frame = pd.concat(
+        [header_df, pd.DataFrame([repl_rows] * (len(obs_frame) - 1))], ignore_index=True
     )
 
     full_table = pd.concat([header_frame, series_frame, obs_frame], axis=1)
