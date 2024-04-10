@@ -29,10 +29,3 @@ CONFIGURATION = {
         "secondary_function": dataset_ingress_v1,
     },
 }
-
-
-def get_dataset_id(s3_object_key: str) -> str:
-    """
-    Placeholder function to be updated when the dataset_id can reliably be extracted from the S3 object key
-    """
-    return "not-specified"
