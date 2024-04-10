@@ -50,45 +50,37 @@ def step_impl(context):
 
 @then("I read the csv output '{csv_output}'")
 def step_impl(context, csv_output):
-    try:
-        context.csv_output = pd.read_csv(csv_output)
-
-    except Exception as exc:
-        raise exc
+    context.csv_output = pd.read_csv(csv_output)
 
 
 @then("the csv output should have '{number}' rows")
 def step_impl(context, number):
     num_rows = len(context.csv_output.index)
 
-    assert num_rows == int(number)
+    assert num_rows == int(number), f"Csv should have {number} rows but has {num_rows}"
 
 
 @then("the csv output has the columns")
 def step_impl(context):
-
-    for column in context.table:
-        assert column in context.csv_output.columns
+    test_table_cols = context.table.headings
+    for column in test_table_cols:
+        assert column in context.csv_output.columns, f"Column {column} does not match any expected columns: {context.csv_output.columns}"
 
     
 @then("I read the metadata output '{metadata_output}'")
 def step_impl(context, metadata_output):
-    try:
-        json_output_path = Path(metadata_output)
+    json_output_path = Path(metadata_output)
 
-        metadata_file = open(json_output_path)
+    metadata_file = open(json_output_path)
 
-        context.json_output = json.load(metadata_file)
-
-    except Exception as exc:
-        raise exc
+    context.json_output = json.load(metadata_file)
 
 
-@then("the metadata should match 'cpih-metadata-correct.json'")
-def step_impl(context):
+@then("the metadata should match '{correct_metadata}'")
+def step_impl(context, correct_metadata):
     expected_metadata = {"to": "do"}
 
-    assert context.json_output == expected_metadata
+    assert context.json_output == expected_metadata, f"Metadata does not match expected metadata from {correct_metadata}."
 
 @then('the pipeline should generate an error with a message containing "{err_msg}"')
 def step_impl(context, err_msg):

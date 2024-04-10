@@ -17,9 +17,9 @@ Feature: Data Ingress v1
     And I read the csv output 'data.csv'
     And the csv output should have '9744' rows
     And the csv output has the columns
-          | Column 1 | Column 2 | Column 3 |
+          | ID | Test | Name xml:lang |
     And I read the metadata output 'metadata.json'
-    And the metadata should match 'cpih-metadata-correct.json'
+    And the metadata should match 'fixtures/correct_metadata.json'
 
   Scenario: Pipeline runs with an expected error
     Given a temporary source directory of files

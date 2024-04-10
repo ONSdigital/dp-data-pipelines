@@ -8,6 +8,7 @@ import time
 import requests
 import docker
 from docker import DockerClient
+from pytest import MonkeyPatch
 
 
 def before_all(context):
@@ -22,6 +23,10 @@ def before_all(context):
     Also checks if the fixtures unzipped data path exists,
     and if it doesn't, extracts the fixtures zipfile to it.
     """
+
+    mp = MonkeyPatch()
+    mp.setenv("DISABLE_NOTIFICATIONS", "true")
+
     context.features_directory = Path(__file__).parent
 
     context.fixture_destination_path = Path(context.features_directory / "fixtures/data")
@@ -66,7 +71,7 @@ def before_scenario(context, scenario):
 
     # Change directory to a temporary directory to accomodate any test files being dumped to the "current directory"
     # This allows us to safely delete them later.
-    context.temp_test_dir = Path("temporary_test_output/")
+    context.temp_test_dir = Path(Path(__file__).parent.parent / "temporary_output_directory")
     os.mkdir(context.temp_test_dir)
     os.chdir(context.temp_test_dir)
 
@@ -97,7 +102,8 @@ def after_scenario(context, scenario):
         shutil.rmtree(context.temporary_directory)
 
     # Change out of temporary directory and delete its contents from finished scenario
-    os.chdir("..")
+    dir_for_parent = context.temp_test_dir.parent.parent.absolute()
+    os.chdir(dir_for_parent.parent.absolute())
     shutil.rmtree(context.temp_test_dir)
 
 
