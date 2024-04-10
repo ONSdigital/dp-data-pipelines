@@ -27,7 +27,7 @@ def start(s3_object_name: str):
     # Decompress the tar file to the workspace
     try:
         #raise Exception("force an exception for testing")
-        raise ValueError("Force an error to appear")
+        #raise ValueError("Force an error to appear")
         decompress_s3_tar(s3_object_name, "input")
     except ValueError as err:
         de_messenger.failure()
