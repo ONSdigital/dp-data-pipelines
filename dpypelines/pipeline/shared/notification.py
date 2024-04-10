@@ -84,7 +84,7 @@ def notifier_from_env_var_webhook(env_var: str) -> BasePipelineNotifier:
     return PipelineNotifier(web_hook)
 
 
-"""class PipelineMessenger(SlackMessenger):
+class PipelineMessenger(SlackMessenger):
     def __init__(self, webhook_url):
         self.webhook_url = webhook_url
         assert (
@@ -96,4 +96,4 @@ def notifier_from_env_var_webhook(env_var: str) -> BasePipelineNotifier:
         self.msg_str(":boom:")
 
     def success(self):
-        self.msg_str(":white_check_mark:")"""
+        self.msg_str(":white_check_mark:")
