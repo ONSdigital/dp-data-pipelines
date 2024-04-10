@@ -15,15 +15,16 @@ def pathify(label):
 def set_key(dictionary, key, value):
     if key not in dictionary:
         dictionary[key] = value
-    elif type(dictionary[key]) == list:
+    elif isinstance(dictionary[key], list):
         dictionary[key].append(value)
     else:
         dictionary[key] = [dictionary[key], value]
 
+
 def flatten_dict(dd, separator=" ", prefix=""):
     """
-        Flattens a nested dictionary. dd is the input nested data dictionary.
-        The input values of seperator and prefix above are the default values.
+    Flattens a nested dictionary. dd is the input nested data dictionary.
+    The input values of seperator and prefix above are the default values.
     """
     return (
         {
@@ -39,10 +40,11 @@ def flatten_dict(dd, separator=" ", prefix=""):
         else {prefix: dd}
     )
 
+
 def convert(tup, di):
     """
-        Converts each record of tuple dictionary tup to a flat 'concatenated' dictionary di which 
-         can easily be converted to a dataframe. The function returns a concatenated dictionary di.
+    Converts each record of tuple dictionary tup to a flat 'concatenated' dictionary di which
+     can easily be converted to a dataframe. The function returns a concatenated dictionary di.
     """
     for k, v in tup.items():
         di.setdefault(k, []).append(v)

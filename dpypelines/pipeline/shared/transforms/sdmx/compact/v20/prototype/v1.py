@@ -1,11 +1,11 @@
 import json
+import xml.etree.ElementTree as ET
+
 import pandas as pd
 import xmltodict
-import xml.etree.ElementTree as ET
-from dpypelines.pipeline.shared.transforms.utils import (
-    flatten_dict,
-    convert
-)
+
+from dpypelines.pipeline.shared.transforms.utils import convert, flatten_dict
+
 
 def xmlToCsvSDMX2_0(input_path, output_path):
 
@@ -53,7 +53,7 @@ def xmlToCsvSDMX2_0(input_path, output_path):
     full_table = pd.concat([header_frame, series_frame, obs_frame], axis=1)
 
     # the following is just tidying up the column headers so they are not filled with @ and such
-    header_replace = { x: str(x).replace('@', '') for x in full_table.columns }
+    header_replace = {x: str(x).replace("@", "") for x in full_table.columns}
     full_table.rename(columns=header_replace, inplace=True)
 
     full_table.to_csv(output_path, encoding="utf-8", index=False)
