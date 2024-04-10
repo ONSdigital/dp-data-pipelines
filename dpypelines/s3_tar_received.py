@@ -1,16 +1,13 @@
-import re
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
-from dpytools.validation.json import validation
 
-from dpypelines.pipeline.configuration import CONFIGURATION, get_dataset_id
-from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
+from dpypelines.pipeline.config_utils import get_dataset_id, get_pipeline_config
+from dpypelines.pipeline.configuration import CONFIGURATION
 from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
 )
-from dpypelines.pipeline.shared.schemas import get_config_schema_path
 
 de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook("DE_SLACK_WEBHOOK")
 
@@ -49,14 +46,12 @@ def start(s3_object_name: str):
         ) from err
 
     # get_dataset_id() currently empty - returns "not-specified"
-    # To be updted once we know where the dataset_id can be extracted from
+    # To be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
     dataset_id = get_dataset_id(s3_object_name)
 
     # Get config details for the given dataset_id
     try:
-        for key in CONFIGURATION.keys():
-            if re.match(key, dataset_id):
-                pipeline_config = CONFIGURATION[key]
+        pipeline_config = get_pipeline_config(dataset_id, CONFIGURATION)
     except Exception as err:
         de_notifier.failure()
         raise Exception(
