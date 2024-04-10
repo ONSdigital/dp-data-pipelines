@@ -1,7 +1,9 @@
+import re
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.validation.json import validation
 
+from dpypelines.pipeline.configuration import CONFIGURATION, get_dataset_id
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.notification import (
@@ -46,56 +48,20 @@ def start(s3_object_name: str):
             )
         ) from err
 
-    # Check for the existence of a configuration file
-    try:
-        if not local_store.has_lone_file_matching(r"^pipeline-config.json$"):
-            de_notifier.failure()
-            msg = message.expected_local_file_missing(
-                "Pipeline config not found",
-                "pipeline-config.json",
-                "dataset_ingress_v1",
-                local_store,
-            )
-            raise ValueError(msg)
-    except Exception as err:
-        de_notifier.failure()
-        raise Exception(
-            message.unexpected_error(
-                "Error while checking for pipeline-config.json", err
-            )
-        ) from err
+    # get_dataset_id() currently empty - returns "not-specified"
+    dataset_id = get_dataset_id(s3_object_name)
 
-    # Load the configuration file and validate it against a schema
-    try:
-        config_dict = local_store.get_lone_matching_json_as_dict(
-            r"^pipeline-config.json$"
-        )
-    except Exception as err:
-        de_notifier.failure()
-        raise Exception(
-            message.unexpected_error("Error while getting pipeline-config.json", err)
-        ) from err
-
-    # Retrieve the path to the schema for the configuration
-    try:
-        path_to_schema = get_config_schema_path(config_dict)
-    except Exception as err:
-        de_notifier.failure()
-        raise Exception(message.cant_find_schema(config_dict, err)) from err
-
-    # Validate the configuration against the retrieved schema
-    try:
-        validation.validate_json_schema(
-            schema_path=path_to_schema,
-            data_dict=config_dict,
-            error_msg="Validating pipeline-config.json",
-            indent=2,
-        )
-    except Exception as err:
-        de_notifier.failure()
-        raise Exception(message.invalid_config(config_dict, err)) from err
+    # Get config details for the given dataset_id
+    for key in CONFIGURATION.keys():
+        if re.match(key, dataset_id):
+            pipeline_config = CONFIGURATION[key]
 
     # Get the path to the directory
     files_dir = local_store.get_current_source_pathlike()
-    # Call the dataset_ingress_v1 function with the directory path
-    dataset_ingress_v1(files_dir)
+
+    # Call the secondary_function specified in pipeline_config
+    secondary_function = pipeline_config["secondary_function"]
+
+    # Replace once `dataset_ingress_v1` arguments are updated to include pipeline_config
+    secondary_function(files_dir)
+    # secondary_function(files_dir, pipeline_config)
