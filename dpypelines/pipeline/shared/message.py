@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict
 
 from dpytools.stores.directory.base import BaseWritableSingleDirectoryStore
+
 from dpypelines.pipeline.shared.utility import enrich_online
 
 
@@ -25,6 +26,7 @@ def unexpected_error(msg: str, error: Exception) -> str:
     """
 
     return message
+
 
 @enrich_online
 def cant_find_schema(config_dict, error: Exception) -> str:
@@ -46,6 +48,7 @@ def cant_find_schema(config_dict, error: Exception) -> str:
     """
     return message
 
+
 @enrich_online
 def invalid_config(config_dict, error: Exception) -> str:
     """
@@ -65,6 +68,7 @@ def invalid_config(config_dict, error: Exception) -> str:
     """
     return message
 
+
 @enrich_online
 def unknown_transform(transform_identifier: str, all_transform_details: dict) -> str:
     """
@@ -82,6 +86,7 @@ def unknown_transform(transform_identifier: str, all_transform_details: dict) ->
     """
     return message
 
+
 @enrich_online
 def metadata_validation_error(metadata_path, error: Exception) -> str:
     """
@@ -96,8 +101,14 @@ def metadata_validation_error(metadata_path, error: Exception) -> str:
     """
     return message
 
+
 @enrich_online
-def expected_local_file_missing(msg: str, file_path: Path, pipeline_name: str, store: BaseWritableSingleDirectoryStore) -> str:
+def expected_local_file_missing(
+    msg: str,
+    file_path: Path,
+    pipeline_name: str,
+    store: BaseWritableSingleDirectoryStore,
+) -> str:
     """
     We're looking for a file on the local machine/runner and cannot find it.
     """
@@ -112,6 +123,7 @@ def expected_local_file_missing(msg: str, file_path: Path, pipeline_name: str, s
         {files_found}
     """
     return message
+
 
 @enrich_online
 def pipeline_input_exception(
@@ -130,6 +142,7 @@ def pipeline_input_exception(
     """
     return message
 
+
 @enrich_online
 def error_in_transform(
     pipeline_dict, store: BaseWritableSingleDirectoryStore, error: Exception
@@ -146,6 +159,7 @@ def error_in_transform(
         Pipeline details dictionary: {formatted_pipeline_dict}
     """
     return message
+
 
 @enrich_online
 def pipeline_input_sanity_check_exception(
