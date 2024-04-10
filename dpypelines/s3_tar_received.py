@@ -49,12 +49,21 @@ def start(s3_object_name: str):
         ) from err
 
     # get_dataset_id() currently empty - returns "not-specified"
+    # To be updted once we know where the dataset_id can be extracted from
     dataset_id = get_dataset_id(s3_object_name)
 
     # Get config details for the given dataset_id
-    for key in CONFIGURATION.keys():
-        if re.match(key, dataset_id):
-            pipeline_config = CONFIGURATION[key]
+    try:
+        for key in CONFIGURATION.keys():
+            if re.match(key, dataset_id):
+                pipeline_config = CONFIGURATION[key]
+    except Exception as err:
+        de_notifier.failure()
+        raise Exception(
+            message.unexpected_error(
+                "Failed to get pipeline configuration details", err
+            )
+        ) from err
 
     # Get the path to the directory
     files_dir = local_store.get_current_source_pathlike()
