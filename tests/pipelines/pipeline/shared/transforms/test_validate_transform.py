@@ -92,3 +92,57 @@ def test_check_tidy_data_columns_incorrect_columns():
         
     assert "@ found in tidy data column name" in str(err.value)
 
+def test_check_length_of_dict_is_expected_length_incorrect_length():
+    key = 'key2'
+    data = {'key1': [1,2,3,4,5,6,7,8,9,10], key: ['value1', 'value2']}
+    expected_size = 10
+
+    with pytest.raises(AssertionError) as err:
+        check_length_of_dict_is_expected_length(data, expected_size)
+        
+    assert f"expected length of {key} is not {expected_size}" in str(err.value)
+
+def test_check_length_of_dataframe_is_expected_length_incorrect_length():
+    data = {'key1': ['value1', 'value2'], 'key2': ['value1', 'value2']}
+    df = pd.DataFrame(data)
+    expected_size = 10
+
+    with pytest.raises(AssertionError) as err:
+        check_length_of_dataframe_is_expected_length(df, expected_size)
+        
+    assert f"expected length of dataframe is not {expected_size}" in str(err.value)
+
+def test_check_columns_of_dataframes_are_unique_not_unique_columns_1():
+    duplicated_column = 'column1'
+    series_columns = pd.Index([duplicated_column, 'series_column1'])
+    obs_columns = pd.Index([duplicated_column, 'obs_column1'])
+    header_columns = pd.Index(['header_column1', 'header_column2'])
+
+    with pytest.raises(AssertionError) as err:
+        check_columns_of_dataframes_are_unique(series_columns, obs_columns, header_columns)
+
+    assert f"{duplicated_column} is duplicated in series_frame and obs_frame" in str(err.value)
+
+def test_check_columns_of_dataframes_are_unique_not_unique_columns_2():
+    duplicated_column = 'column1'
+    series_columns = pd.Index([duplicated_column, 'series_column1'])
+    obs_columns = pd.Index(['obs_column1', 'obs_column2'])
+    header_columns = pd.Index([duplicated_column, 'header_column1'])
+
+    with pytest.raises(AssertionError) as err:
+        check_columns_of_dataframes_are_unique(series_columns, obs_columns, header_columns)
+
+    assert f"{duplicated_column} is duplicated in series_frame and header_frame" in str(err.value)
+
+def test_check_columns_of_dataframes_are_unique_not_unique_columns_3():
+    duplicated_column = 'column1'
+    series_columns = pd.Index(['series_column1', 'series_column2'])
+    obs_columns = pd.Index([duplicated_column, 'obs_column1'])
+    header_columns = pd.Index([duplicated_column, 'header_column1'])
+
+    with pytest.raises(AssertionError) as err:
+        check_columns_of_dataframes_are_unique(series_columns, obs_columns, header_columns)
+
+    assert f"{duplicated_column} is duplicated in obs_frame and header_frame" in str(err.value)
+
+
