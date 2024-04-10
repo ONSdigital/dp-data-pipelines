@@ -1,16 +1,16 @@
+import os
+
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.validation.json import validation
 
+
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared import message
-from dpypelines.pipeline.shared.notification import (
-    BasePipelineNotifier,
-    notifier_from_env_var_webhook,
-)
+from dpypelines.pipeline.shared import notification
 from dpypelines.pipeline.shared.schemas import get_config_schema_path
 
-de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook("DE_SLACK_WEBHOOK")
+de_messenger = notification.PipelineMessenger(os.environ.get("DE_SLACK_WEBHOOK", None))
 
 
 def start(s3_object_name: str):
@@ -26,9 +26,10 @@ def start(s3_object_name: str):
 
     # Decompress the tar file to the workspace
     try:
+        raise Exception("force an exception for testing")
         decompress_s3_tar(s3_object_name, "input")
     except Exception as err:
-        de_notifier.failure()
+        de_messenger.failure()
         raise Exception(
             message.unexpected_error(
                 f"Failed to decompress tar file {s3_object_name}", err
@@ -39,7 +40,7 @@ def start(s3_object_name: str):
     try:
         local_store = LocalDirectoryStore("input")
     except Exception as err:
-        de_notifier.failure()
+        de_messenger.failure()
         raise Exception(
             message.unexpected_error(
                 "Failed to create local directory store at inputs", err
@@ -49,7 +50,7 @@ def start(s3_object_name: str):
     # Check for the existence of a configuration file
     try:
         if not local_store.has_lone_file_matching(r"^pipeline-config.json$"):
-            de_notifier.failure()
+            de_messenger.failure()
             msg = message.expected_local_file_missing(
                 "Pipeline config not found",
                 "pipeline-config.json",
@@ -58,7 +59,7 @@ def start(s3_object_name: str):
             )
             raise ValueError(msg)
     except Exception as err:
-        de_notifier.failure()
+        de_messenger.failure()
         raise Exception(
             message.unexpected_error(
                 "Error while checking for pipeline-config.json", err
@@ -71,7 +72,7 @@ def start(s3_object_name: str):
             r"^pipeline-config.json$"
         )
     except Exception as err:
-        de_notifier.failure()
+        de_messenger.failure()
         raise Exception(
             message.unexpected_error("Error while getting pipeline-config.json", err)
         ) from err
@@ -80,7 +81,7 @@ def start(s3_object_name: str):
     try:
         path_to_schema = get_config_schema_path(config_dict)
     except Exception as err:
-        de_notifier.failure()
+        de_messenger.failure()
         raise Exception(message.cant_find_schema(config_dict, err)) from err
 
     # Validate the configuration against the retrieved schema
@@ -92,7 +93,7 @@ def start(s3_object_name: str):
             indent=2,
         )
     except Exception as err:
-        de_notifier.failure()
+        de_messenger.failure()
         raise Exception(message.invalid_config(config_dict, err)) from err
 
     # Get the path to the directory
