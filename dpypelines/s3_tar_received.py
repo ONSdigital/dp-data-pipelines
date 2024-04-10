@@ -27,11 +27,11 @@ def start(s3_object_name: str):
     # Decompress the tar file to the workspace
     try:
         #raise Exception("force an exception for testing")
-        #raise ValueError("Force an error to appear")
+        raise ValueError("Force an error to appear")
         decompress_s3_tar(s3_object_name, "input")
     except Exception as err:
         de_messenger.failure()
-        raise ValueError("Failed to decompress tar file",
+        raise Exception("Failed to decompress tar file",
             message.unexpected_error(
                 f"Failed to decompress tar file {s3_object_name}", err
             )
