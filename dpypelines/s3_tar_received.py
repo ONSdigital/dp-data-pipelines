@@ -31,11 +31,12 @@ def start(s3_object_name: str):
         decompress_s3_tar(s3_object_name, "input")
     except Exception as err:
         de_messenger.failure()
-        raise Exception("Failed to decompress tar file",
-            message.unexpected_error(
-                f"Failed to decompress tar file {s3_object_name}", err
-            )
-        ) from err
+        raise ValueError("Force an error to appear")
+        #raise Exception("Failed to decompress tar file",
+         #   message.unexpected_error(
+          #      f"Failed to decompress tar file {s3_object_name}", err
+           # )
+        #) from err
 
     # Create a local directory store using the decompressed files
     try:
