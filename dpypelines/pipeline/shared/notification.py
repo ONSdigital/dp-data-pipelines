@@ -49,12 +49,15 @@ class PipelineNotifier(BasePipelineNotifier):
             webhook_url is not None
         ), "Unable to find required environment variable to populate webhook_url argument"
         self.client = SlackMessenger(webhook_url)
+        self.notification_postfix = os.environ.get("NOTIFICATION_POSTFIX", "")
 
     def failure(self):
-        self.client.msg_str(":boom:")
+        msg = f":boom: {self.notification_postfix}".strip()
+        self.client.msg_str(msg)
 
     def success(self):
-        self.client.msg_str(":white_check_mark:")
+        msg = f":white_check_mark: {self.notification_postfix}".strip()
+        self.client.msg_str(msg)
 
     # TODO - remove me later
     # only present while we're using the temporary "everything worked" message
