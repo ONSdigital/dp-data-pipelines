@@ -1,15 +1,16 @@
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 
-from dpypelines.pipeline.config_utils import get_dataset_id, get_pipeline_config
-from dpypelines.pipeline.configuration import CONFIGURATION
+from dpypelines.pipeline.configuration import (
+    CONFIGURATION,
+    get_dataset_id,
+    get_pipeline_config,
+)
 from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
 )
-
-de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook("DE_SLACK_WEBHOOK")
 
 
 def start(s3_object_name: str):
@@ -22,6 +23,10 @@ def start(s3_object_name: str):
         Example: 'my-bucket/my-data.tar'
 
     """
+    # Create notifier from webhook env var
+    de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
+        "DE_SLACK_WEBHOOK"
+    )
 
     # Decompress the tar file to the workspace
     try:
