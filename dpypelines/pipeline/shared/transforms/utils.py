@@ -19,3 +19,33 @@ def set_key(dictionary, key, value):
         dictionary[key].append(value)
     else:
         dictionary[key] = [dictionary[key], value]
+
+
+def flatten_dict(dd, separator=" ", prefix=""):
+    """
+    Flattens a nested dictionary. dd is the input nested data dictionary.
+    The input values of seperator and prefix above are the default values.
+    """
+    return (
+        {
+            (
+                prefix + separator + k.replace("message:", "").replace("common:", "")
+                if prefix
+                else k.replace("message:", "")
+            ): v
+            for kk, vv in dd.items()
+            for k, v in flatten_dict(vv, separator, kk).items()
+        }
+        if isinstance(dd, dict)
+        else {prefix: dd}
+    )
+
+
+def convert(tup, di):
+    """
+    Converts each record of tuple dictionary tup to a flat 'concatenated' dictionary di which
+     can easily be converted to a dataframe. The function returns a concatenated dictionary di.
+    """
+    for k, v in tup.items():
+        di.setdefault(k, []).append(v)
+    return di

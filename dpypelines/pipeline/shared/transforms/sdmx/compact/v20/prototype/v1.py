@@ -1,112 +1,58 @@
 import json
+import xml.etree.ElementTree as ET
 
 import pandas as pd
 import xmltodict
 
+from dpypelines.pipeline.shared.transforms.utils import convert, flatten_dict
+
 
 def xmlToCsvSDMX2_0(input_path, output_path):
 
-    # Here we're turning the XML file into a giant dictionary we can pull apart
+    # Converting the XML file into a giant dictionary from which we can extract the nested header dictionary
     with open(input_path, "r") as file:
         xml_content = file.read()
         data = xmltodict.parse(xml_content)
 
-    # I hate everything about how I've got the header info here but it works with multiple types of SDMX
-
     header = data["CompactData"]["Header"]
 
-    header_dict = {}
+    # The largest, top-level element (or section) in an XML document is called the root, which contains all other elements - child elements, subelements and so on.
+    # Every part of the XML document tree (root included) has a tag that describes the element.
 
-    # The following loops go through the header and pull out as much info as possible, unfortunately due to the inconsistent depth tags there's a bunch of nested loops
-    # could optimise but only adding a nested loop when it see's a tag that you would expect to have another nested tag but then it would break if any tag breaks this expectation
+    # Attributes are name–value pair that exist within a start-tag or empty-element tag. An XML attribute can only have a single value and each attribute can appear at most once on each element.
 
-    for header, value in header.items():
-        if "{" not in str(value):
-            header_dict[header.replace("message:", "")] = value
-        else:
-            for i, j in value.items():
-                if "{" not in str(j):
-                    header_dict[
-                        str(header + " " + i)
-                        .replace("message:", "")
-                        .replace("common", "")
-                    ] = j
-                else:
-                    for k, sub_value in j.items():
-                        if "{" not in str(sub_value):
-                            header_dict[
-                                str(header + " " + i + " " + k)
-                                .replace("message:", "")
-                                .replace("common:", "")
-                            ] = sub_value
-                        else:
-                            for m, n in sub_value.items():
-                                header_dict[
-                                    str(header + " " + i + " " + k + " " + m)
-                                    .replace("message:", "")
-                                    .replace("common:", "")
-                                ] = n
+    # The element tag is retrieved as .tab on Python ElementTree package.
+    # The name-value pair attributes are retrieved as .attrib on Python ElementTree package.
 
-    header_frame = pd.DataFrame([header_dict])
+    # Each block of observations tagged "Obs" within the same column headers is contained within a parent block tagged "Series". The respective tuples of dictionary are converted into 'flat' dictionaries and dropped into the series_dict and obs_dict.
 
-    # each set of observations that has the same column variables is contained to blocks with series' tags inside a big Dataset tag so we can grab all the data here to then break it down
+    tree = ET.parse(input_path)
+    root = tree.getroot()
 
-    tables = data["CompactData"]["na_:DataSet"]["na_:Series"]
-    table_header = data["CompactData"]["na_:DataSet"]
+    series_dict = {}
+    obs_dict = {}
+    for series in root.iter():
+        if "Series" in series.tag:
+            for obs in series.iter():
+                if "Obs" in obs.tag:
+                    convert(series.attrib, series_dict)
+                    convert(obs.attrib, obs_dict)
 
-    # here we're building a list of the headers for the dataset using the info inside the series tag. All of the data is in the obs tag so we can ignore that one
+    series_frame = pd.DataFrame(series_dict)
+    obs_frame = pd.DataFrame(obs_dict)
 
-    headers = []
+    header_dict = flatten_dict(header)
+    header_df = pd.DataFrame([header_dict])
 
-    for item in table_header.values():
-        for i in item[0].items():
-            if i[0] != "na_:Obs":
-                headers.append(i[0])
+    # Here the records on the header dataframe are replicated to match the length of the series and observation dataframes.
+    repl_rows = header_df.loc[0].copy()
+    header_frame = pd.concat(
+        [header_df, pd.DataFrame([repl_rows] * (len(obs_frame) - 1))], ignore_index=True
+    )
 
-    output = []
+    full_table = pd.concat([header_frame, series_frame, obs_frame], axis=1)
 
-    # and this is the main loop which goes through each series block and pulls out the observational data and sticks in under the right header where it exists, then adding the new columns for the remaining variables inside the obs tags
-
-    for table_index in range(len(tables)):
-        list = tables[table_index]  # get a series block
-        headers_df = header_frame  # create an df of the headers we have so far
-        obs_df = (
-            pd.DataFrame()
-        )  # create an empty df for the headers remaining in the obs tag
-
-        for (
-            item
-        ) in (
-            list.items()
-        ):  # as we move through the series block we go through each value and see if it matches one of the headers we already have
-            if (
-                item[0] in headers
-            ):  # if the header matches we insert the value for this header
-                temp = []
-                temp.append(item[1])
-                headers_df[item[0]] = temp
-                # I think this is a point of performance loss, we should only have to check the headers once per series block rather than looping past it every time (TODO)
-            else:  # if not then its an observation so we crete a temporary mini df with the 4 values in the obs tag and then append it to a dataframe containing all the observations for this series block, then repeat for each obs tag
-                for entry in item[1]:
-                    temp_df = pd.DataFrame()
-                    for obs in entry.items():
-                        temp = []
-                        temp.append(obs[1])
-                        temp_df[obs[0]] = temp
-                    obs_df = pd.concat([obs_df, temp_df])
-
-        table_df = pd.concat(
-            [headers_df, obs_df], axis=1
-        )  # merge the headers to each observation
-
-        output.append(
-            table_df
-        )  # add to a list of all the series blocks that have been processed
-
-    full_table = pd.concat(output)  # merge all the series blocks together
-
-    # the following is just tidying up the column headers so theyre not filled with @ and such
-
+    # the following is just tidying up the column headers so they are not filled with @ and such
     header_replace = {x: str(x).replace("@", "") for x in full_table.columns}
     full_table.rename(columns=header_replace, inplace=True)
 
