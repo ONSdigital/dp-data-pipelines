@@ -12,8 +12,6 @@ from dpypelines.pipeline.shared.notification import (
 )
 from dpypelines.pipeline.shared.pipelineconfig import matching
 
-de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook("DE_SLACK_WEBHOOK")
-
 
 def dataset_ingress_v1(files_dir: str):
     """
@@ -29,6 +27,10 @@ def dataset_ingress_v1(files_dir: str):
         ValueError: If required files, supplementary distributions, or pipeline configuration are not found in the input directory.
         Exception: If any other unexpected error occurs.
     """
+    # Create notifier from webhook env var
+    de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
+        "DE_SLACK_WEBHOOK"
+    )
 
     # Attempt to access the local data store
     try:

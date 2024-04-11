@@ -1,4 +1,4 @@
-from dpypelines.pipeline.config_utils import get_pipeline_config
+from dpypelines.pipeline.configuration import get_pipeline_config
 
 
 def test_get_pipeline_config():

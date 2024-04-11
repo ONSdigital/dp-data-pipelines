@@ -14,11 +14,13 @@ sys.path.append(str(repo_root.absolute()))
 # not set. So unset them for the length of
 # tests in the event they are currently set.
 mp = MonkeyPatch()
+mp.setenv("DISABLE_NOTIFICATIONS", "True")
 for potential_env_var_name in [
     "PS_SLACK_WEBHOOK",
     "DS_SLACK_WEBHOOK",
     "SE_SLACK_WEBHOOK",
-    "DE_SLACK_WEBHOOK"]:
+    "DE_SLACK_WEBHOOK",
+]:
 
     env_var = os.environ.get(potential_env_var_name, None)
     if env_var is not None:
