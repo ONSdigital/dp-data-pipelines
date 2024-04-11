@@ -78,9 +78,13 @@ def step_impl(context, metadata_output):
 
 @then("the metadata should match '{correct_metadata}'")
 def step_impl(context, correct_metadata):
-    expected_metadata = {"to": "do"}
+    relative_features_path = Path(__file__).parent.parent
 
-    assert context.json_output == expected_metadata, f"Metadata does not match expected metadata from {correct_metadata}."
+    correct_metadata_path = Path(relative_features_path / correct_metadata)
+    correct_metadata_file = open(correct_metadata_path)
+    correct_metadata_json = json.load(correct_metadata_file)
+
+    assert context.json_output == correct_metadata_json, f"Metadata does not match expected metadata from {correct_metadata_json}."
 
 @then('the pipeline should generate an error with a message containing "{err_msg}"')
 def step_impl(context, err_msg):

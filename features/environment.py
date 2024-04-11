@@ -8,7 +8,6 @@ import time
 import requests
 import docker
 from docker import DockerClient
-from pytest import MonkeyPatch
 
 
 def before_all(context):
@@ -24,8 +23,9 @@ def before_all(context):
     and if it doesn't, extracts the fixtures zipfile to it.
     """
 
-    mp = MonkeyPatch()
-    mp.setenv("DISABLE_NOTIFICATIONS", "true")
+    # Set environment variable to not send notifications
+    context.disable_notification_setting = os.environ.get("DISABLE_NOTIFICATIONS", None)
+    os.environ["DISABLE_NOTIFICATIONS"] = "true"
 
     context.features_directory = Path(__file__).parent
 
@@ -112,6 +112,10 @@ def after_all(context):
     Stop and remove the docker container after all tests have finished running.
     Also remove the temporary directories for test output files.
     """
+    # Setting the environment back to how it was before testing
+    if context.disable_notification_setting is not None:
+        os.environ["DISABLE_NOTIFICATIONS"] = context.disable_notification_setting
+
     context.backend_container.stop()
     context.backend_container.remove()
 

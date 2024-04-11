@@ -11,7 +11,7 @@ Feature: Data Ingress v1
     Given a temporary source directory of files
         | file                   |  fixture                           |
         | pipeline-config.json   |  pipeline_config_basic_valid.json  |
-        | data.xml               |  data.xml                          |
+        | data.xml               |  esa2010_test_data.xml             |
     And v1_data_ingress starts using the temporary source directory
     Then the pipeline should generate no errors
     And I read the csv output 'data.csv'
@@ -25,6 +25,6 @@ Feature: Data Ingress v1
     Given a temporary source directory of files
         | file                            |  fixture                           |
         | incorrectly-named-config.json   |  pipeline_config_basic_valid.json  |
-        | data.xml                        |  data.xml                          |
+        | data.xml                        |  esa2010_test_data.xml             |
     And v1_data_ingress starts using the temporary source directory
     Then the pipeline should generate an error with a message containing "issue finding a local file"
