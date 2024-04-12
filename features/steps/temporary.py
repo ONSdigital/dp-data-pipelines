@@ -1,4 +1,4 @@
-import json
+from pathlib import Path
 from behave import Given, Then
 
 
@@ -9,8 +9,6 @@ def _parse_destination_url_from_log(log: str) -> str:
     path_line = [x for x in log.split("\n") if "this-requests-url" in x]
     assert len(path_line) == 1, f'Cannot find "this-requests-url" in service log {log}'
     return "/" + path_line[0].split("/")[-1].strip()
-
-
 def _parse_request_headers_as_dict_from_log(log: str) -> dict:
     """
     Get the headers from the docker logs as a dictionary.
@@ -23,8 +21,6 @@ def _parse_request_headers_as_dict_from_log(log: str) -> dict:
     )
     headers_as_dict = json.loads(headers_dict_as_str)
     return headers_as_dict
-
-
 def get_request_logs(container, request_id) -> str:
     """
     Get docker logs for this request as one big string.
@@ -38,14 +34,16 @@ def get_request_logs(container, request_id) -> str:
         {str(docker_logs)}
         """
     return docker_logs.split(request_id)[1]
-
-
 @Given('a request json payload of "{request_json_payload}"')
 def step_impl(context, request_json_payload):
     """
     Load a JSON payload file to submit as part of the request.
     """
-    with open(request_json_payload, "r") as f:
+    relative_features_path = Path(__file__).parent.parent
+
+    request_json_payload_path = relative_features_path / request_json_payload
+
+    with open(request_json_payload_path, "r") as f:
         context.json = json.load(f)
 
 
@@ -60,8 +58,6 @@ def step_impl(context):
         value = row["value"].strip()
         headers[key] = value
     context.request_headers = headers
-
-
 @Given('I send the request to the upload service at "{service_endpoint}"')
 def step_impl(context, service_endpoint):
     """
@@ -76,8 +72,6 @@ def step_impl(context, service_endpoint):
     context.receiving_service_log = get_request_logs(
         context.backend_container, context.request_id
     )
-
-
 @Then('the backend receives a request to "{service_endpoint}"')
 def step_impl(context, service_endpoint):
     """
@@ -85,24 +79,24 @@ def step_impl(context, service_endpoint):
     of the receiving service.
     """
     destination_url = _parse_destination_url_from_log(context.receiving_service_log)
-
     assert (
         service_endpoint in destination_url
     ), f"""
         Cannot find path "{service_endpoint}" in destination url: {destination_url}.
         """
-
-
 @Then('the json payload received should match "{request_json_payload}"')
 def step_impl(context, request_json_payload):
     """
     Ensure that the request body contains the JSON data specified in the test file.
     """
     request_body = context.response.request.body.decode("utf-8")
-    with open(request_json_payload, "r") as f:
+    relative_features_path = Path(__file__).parent.parent
+
+    request_json_payload_path = relative_features_path / request_json_payload
+
+    with open(request_json_payload_path, "r") as f:
         data = json.load(f)
     assert data == json.loads(request_body)
-
 
 @Then("the headers received should match")
 def step_impl(context):
@@ -114,13 +108,11 @@ def step_impl(context):
     headers_as_dict = _parse_request_headers_as_dict_from_log(
         context.receiving_service_log
     )
-
     # Check that the headers dict contains the expected key-value pairs
     for row in context.table:
         key = row["key"].strip()
         value = row["value"].strip()
-
         assert key in headers_as_dict, f'No "{key}" header found in {headers_as_dict}'
         assert (
             value in headers_as_dict[key]
-        ), f'Expecting header "{key}" to have value "{value}, but got "{headers_as_dict[key]}"'
+), f'Expecting header "{key}" to have value "{value}, but got "{headers_as_dict[key]}"'
