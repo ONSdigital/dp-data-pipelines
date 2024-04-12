@@ -11,7 +11,7 @@ Feature: Data Ingress v1
     Given a temporary source directory of files
         | file                   |  fixture                           |
         | data.xml               |  data_sdmx_valid_1.sdmx            |
-    And a valid pipeline configuration dictionary
+    And a pipeline configuration dictionary that is 'valid'
     And v1_data_ingress starts using the temporary source directory
     Then the pipeline should generate no errors
 
@@ -19,6 +19,6 @@ Feature: Data Ingress v1
     Given a temporary source directory of files
         | file                            |  fixture                           |
         | data.xml                        |  data_sdmx_valid_1.sdmx            |
-    And an invalid pipeline configuration dictionary
+    And a pipeline configuration dictionary that is 'invalid'
     And v1_data_ingress starts using the temporary source directory
     Then the pipeline should generate an error with a message containing "Config version 2 not recognised"

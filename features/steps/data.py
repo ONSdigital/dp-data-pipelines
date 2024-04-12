@@ -8,6 +8,27 @@ from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
     sdmx_sanity_check_v1,
 )
 
+configuration = {
+    "valid": {
+        "config_version": 1,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    },
+    "invalid": {
+        "config_version": 2,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    },
+}
+
 
 @given("a temporary source directory of files")
 def step_impl(context):
@@ -36,30 +57,9 @@ def step_impl(context):
                 f2.write(file_object)
 
 
-@given("a valid pipeline configuration dictionary")
-def step_impl(context):
-    context.pipeline_config = {
-        "config_version": 1,
-        "transform": sdmx_compact_2_0_prototype_1,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
-        "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
-        "secondary_function": dataset_ingress_v1,
-    }
-
-
-@given("an invalid pipeline configuration dictionary")
-def step_impl(context):
-    context.pipeline_config = {
-        "config_version": 2,
-        "transform": sdmx_compact_2_0_prototype_1,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
-        "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
-        "secondary_function": dataset_ingress_v1,
-    }
+@given("a pipeline configuration dictionary that is '{validity}'")
+def step_impl(context, validity):
+    context.pipeline_config = configuration[validity]
 
 
 @given("v1_data_ingress starts using the temporary source directory")
