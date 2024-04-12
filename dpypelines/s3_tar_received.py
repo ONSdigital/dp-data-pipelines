@@ -70,7 +70,4 @@ def start(s3_object_name: str):
 
     # Call the secondary_function specified in pipeline_config
     secondary_function = pipeline_config["secondary_function"]
-
-    # Replace once `dataset_ingress_v1` arguments are updated to include pipeline_config
-    secondary_function(files_dir)
-    # secondary_function(files_dir, pipeline_config)
+    secondary_function(files_dir, pipeline_config)

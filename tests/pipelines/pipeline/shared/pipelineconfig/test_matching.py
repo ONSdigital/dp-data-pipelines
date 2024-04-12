@@ -1,103 +1,131 @@
 import pytest
 
+from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared.pipelineconfig.matching import (
     get_supplementary_distribution_patterns,
     get_required_files_patterns,
 )
-from tests.fixtures.configs import (
-    config_valid_id,
-    config_invalid_id,
-    config_valid_multiple_matches,
-    config_no_required_files,
-    config_no_supplementary_distributions,
+from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
+    sdmx_compact_2_0_prototype_1,
+    sdmx_sanity_check_v1,
 )
 
 
-def test_get_supplementary_distribution_patterns_single_match(config_valid_id):
+def test_get_supplementary_distribution_patterns_single_match():
     """
-    Ensures that a config file with one match returns one result
+    Ensures that a pipeline config dictionary with one supplementary distribution match returns one result
     """
-    results = get_supplementary_distribution_patterns(config_valid_id)
+    config = {
+        "config_version": 1,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    }
+    results = get_supplementary_distribution_patterns(config)
 
     assert len(results) == 1
-    assert set(results) == {"^data.sdmx$"}
+    assert set(results) == {"^data.xml$"}
 
 
-def test_no_supplementary_distributions(config_no_supplementary_distributions):
+def test_no_supplementary_distributions():
     """
-    Ensures that the correct error is raised if the `supplementary_distributions` field is missing from the config file
+    Ensures that the correct error is raised if the `supplementary_distributions` field is missing from the pipeline config dictionary
     """
+    config = {
+        "config_version": 1,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    }
     with pytest.raises(AssertionError) as err:
-        get_supplementary_distribution_patterns(config_no_supplementary_distributions)
+        get_supplementary_distribution_patterns(config)
     assert "'supplementary_distributions' field not found in config dictionary" in str(
         err.value
     )
 
 
-def test_get_supplementary_distribution_patterns_multiple_matches(
-    config_valid_multiple_matches,
-):
+def test_get_supplementary_distribution_patterns_multiple_matches():
     """
-    Ensures that a config file with multiple matches returns three results
+    Ensures that a pipeline config dictionary with multiple supplementary distribution matches returns three results
     """
-    results = get_supplementary_distribution_patterns(config_valid_multiple_matches)
+    config = {
+        "config_version": 1,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [
+            {"matches": "^data.xml$", "count": "1"},
+            {"matches": "^data.csv$", "count": "1"},
+            {"matches": "^data.xls$", "count": "1"},
+        ],
+        "secondary_function": dataset_ingress_v1,
+    }
+    results = get_supplementary_distribution_patterns(config)
 
     assert len(results) == 3
-    assert set(results) == {"*.sdmx", "*.csv", "*.xls"}
+    assert set(results) == {"^data.xml$", "^data.csv$", "^data.xls$"}
 
 
-def test_get_supplementary_distribution_patterns_invalid_id(config_invalid_id):
+def test_get_required_files_patterns_single_match():
     """
-    Ensures that the correct error is raised for an invalid `$id` value in the config file
+    Ensures that a pipeline config dictionary with one required file match returns one result
     """
-    with pytest.raises(NotImplementedError) as err:
-        get_supplementary_distribution_patterns(config_invalid_id)
-
-    assert (
-        "https://raw.githubusercontent.com/ONSdigital/dp-data-pipelines/sandbox/schemas/dataset-ingress/config/invalid.json is not a recognised schema."
-        in str(err.value)
-    )
-
-
-def test_get_required_files_patterns_single_match(config_valid_id):
-    """
-    Ensures that a config file with one match returns one result
-    """
-    results = get_required_files_patterns(config_valid_id)
+    config = {
+        "config_version": 1,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    }
+    results = get_required_files_patterns(config)
 
     assert len(results) == 1
-    assert set(results) == {"^data.sdmx$"}
+    assert set(results) == {"^data.xml$"}
 
 
-def test_no_required_files(config_no_required_files):
+def test_no_required_files():
     """
-    Ensures that the correct error is raised if the `required_files` field is missing from the config file
+    Ensures that the correct error is raised if the `required_files` field is missing from the pipeline config dictionary
     """
+    config = {
+        "config_version": 1,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    }
     with pytest.raises(AssertionError) as err:
-        get_required_files_patterns(config_no_required_files)
+        get_required_files_patterns(config)
     assert "'required_files' field not found in config dictionary" in str(err.value)
 
 
-def test_get_required_files_patterns_multiple_matches(
-    config_valid_multiple_matches,
-):
+def test_get_required_files_patterns_multiple_matches():
     """
-    Ensures that a config file with multiple matches returns three results
+    Ensures that a pipeline config dictionary with multiple required files matches returns three results
     """
-    results = get_required_files_patterns(config_valid_multiple_matches)
+    config = {
+        "config_version": 1,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [
+            {"matches": "^data.xml$", "count": "1"},
+            {"matches": "^data.csv$", "count": "1"},
+            {"matches": "^data.xls$", "count": "1"},
+        ],
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    }
+    results = get_required_files_patterns(config)
 
     assert len(results) == 3
-    assert set(results) == {"*.sdmx", "*.csv", "*.xls"}
-
-
-def test_get_required_files_patterns_invalid_id(config_invalid_id):
-    """
-    Ensures that the correct error is raised for an invalid `$id` value in the config file
-    """
-    with pytest.raises(NotImplementedError) as err:
-        get_required_files_patterns(config_invalid_id)
-
-    assert (
-        "https://raw.githubusercontent.com/ONSdigital/dp-data-pipelines/sandbox/schemas/dataset-ingress/config/invalid.json is not a recognised schema."
-        in str(err.value)
-    )
+    assert set(results) == {"^data.xml$", "^data.csv$", "^data.xls$"}

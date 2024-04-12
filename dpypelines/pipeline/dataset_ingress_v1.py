@@ -4,8 +4,6 @@ from pathlib import Path
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.shared import message
-from dpypelines.pipeline.shared.config import get_transform_identifier_from_config
-from dpypelines.pipeline.shared.details import all_transform_details
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
@@ -13,7 +11,7 @@ from dpypelines.pipeline.shared.notification import (
 from dpypelines.pipeline.shared.pipelineconfig import matching
 
 
-def dataset_ingress_v1(files_dir: str):
+def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     """
     Version one of the dataset ingress pipeline.
 
@@ -22,6 +20,7 @@ def dataset_ingress_v1(files_dir: str):
 
     Args:
         files_dir (str): Path to the directory where the input files for this pipeline are located.
+        pipeline_config (dict): Dictionary of configuration details required to run the pipeline (determined by dataset id)
 
     Raises:
         ValueError: If required files, supplementary distributions, or pipeline configuration are not found in the input directory.
@@ -39,36 +38,6 @@ def dataset_ingress_v1(files_dir: str):
         de_notifier.failure()
         raise Exception(
             message.unexpected_error(f"Failed to access local data at {files_dir}", err)
-        ) from err
-
-    # Load the pipeline configuration as a dictionary
-    try:
-        pipeline_config: dict = local_store.get_lone_matching_json_as_dict(
-            r"^pipeline-config.json$"
-        )
-    except Exception as err:
-        de_notifier.failure()
-        raise Exception(
-            message.unexpected_error("Failed to get pipeline-config.json", err)
-        ) from err
-
-    # Check for the existence of a pipeline configuration file
-    try:
-        if not local_store.has_lone_file_matching(r"^pipeline-config.json$"):
-            de_notifier.failure()
-            msg = message.expected_local_file_missing(
-                "Pipeline config not found",
-                "pipeline-config.json",
-                "dataset_ingress_v1",
-                local_store,
-            )
-            raise ValueError(msg)
-    except Exception as err:
-        de_notifier.failure()
-        raise Exception(
-            message.unexpected_error(
-                "Error while checking for pipeline-config.json", err
-            )
         ) from err
 
     # Extract the patterns for required files from the pipeline configuration
@@ -134,38 +103,16 @@ def dataset_ingress_v1(files_dir: str):
                 )
             ) from err
 
-    # Get transform identifier from the config
-    try:
-        transform_identifier = get_transform_identifier_from_config(pipeline_config)
-    except Exception as err:
-        de_notifier.failure()
-        raise Exception(
-            message.unexpected_error(
-                f"""
-            Failed to get transform identifier from transform details", 
-            {json.dumps(all_transform_details, indent=2, default=lambda x: str(x))}
-            """,
-                err,
-            )
-        ) from err
-
-    # Use the identifier to get the transform details
-    if transform_identifier not in all_transform_details.keys():
-        de_notifier.failure()
-        msg = message.unknown_transform(transform_identifier, all_transform_details)
-        raise ValueError(msg)
-    transform_details: dict = all_transform_details[transform_identifier]
-
-    # Get the positional arguments (the inputs) from the transform_details
+    # Get the positional arguments (the inputs) from the pipeline_config
     # dict and run the specified sanity checker for it
     args = []
-    for match, sanity_checker in transform_details["transform_inputs"].items():
+    for match, sanity_checker in pipeline_config["transform_inputs"].items():
         try:
             input_file_path: Path = local_store.save_lone_file_matching(match)
         except Exception as err:
             de_notifier.failure()
             printable_transform_details = json.dumps(
-                transform_details, indent=2, default=lambda x: str(x)
+                pipeline_config, indent=2, default=lambda x: str(x)
             )
             raise Exception(
                 message.pipeline_input_exception(
@@ -179,22 +126,22 @@ def dataset_ingress_v1(files_dir: str):
             de_notifier.failure()
             raise Exception(
                 message.pipeline_input_sanity_check_exception(
-                    transform_details, local_store, err
+                    pipeline_config, local_store, err
                 )
             ) from err
 
         args.append(input_file_path)
 
     # Get the transform function and keyword arguments from the transform_details
-    transform_function = transform_details["transform"]
-    kwargs = transform_details["transform_kwargs"]
+    transform_function = pipeline_config["transform"]
+    kwargs = pipeline_config["transform_kwargs"]
 
     try:
         csv_path, metadata_path = transform_function(*args, **kwargs)
     except Exception as err:
         de_notifier.failure()
         printable_transform_details = json.dumps(
-            transform_details, indent=2, default=lambda x: str(x)
+            pipeline_config, indent=2, default=lambda x: str(x)
         )
         raise Exception(
             message.error_in_transform(printable_transform_details, local_store, err)
@@ -220,7 +167,7 @@ def dataset_ingress_v1(files_dir: str):
         f"""
 
 Tranform ran to completion.
-                            
+
 Data Snippet:
 ```
 {pd.read_csv(csv_path)[:5]}
