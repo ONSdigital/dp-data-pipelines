@@ -1,8 +1,7 @@
 from behave import *
-from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from pathlib import Path
-import os
 
+from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
     sdmx_compact_2_0_prototype_1,
     sdmx_sanity_check_v1,
@@ -28,16 +27,16 @@ configuration = {
         "secondary_function": dataset_ingress_v1,
     },
 }
+import pandas as pd
+import json
 
 
 @given("a temporary source directory of files")
 def step_impl(context):
     files_to_retrieve = {}
-
     # Create a temporary directory to use for the test.
     context.temporary_directory = Path("temporary-data-fixtures").absolute()
     context.temporary_directory.mkdir()
-
     for row in context.table:
         # Populate a dictionary with the table contents from the context.
         file = row["file"].strip()
@@ -52,7 +51,6 @@ def step_impl(context):
 
         with open(fixtures_path / fixture) as f1:
             file_object = f1.read()
-
             with open(context.temporary_directory / file, "w") as f2:
                 f2.write(file_object)
 
@@ -65,7 +63,9 @@ def step_impl(context, validity):
 @given("v1_data_ingress starts using the temporary source directory")
 def step_impl(context):
     try:
-        dataset_ingress_v1(context.temporary_directory, context.pipeline_config)
+        dataset_ingress_v1(
+            context.temporary_directory.absolute(), context.pipeline_config
+        )
         context.exception = None
     except Exception as exc:
         context.exception = exc
@@ -77,25 +77,63 @@ def step_impl(context):
         raise context.exception
 
 
+@then("I read the csv output '{csv_output}'")
+def step_impl(context, csv_output):
+    context.csv_output = pd.read_csv(csv_output)
+
+
+@then("the csv output should have '{number}' rows")
+def step_impl(context, number):
+    num_rows = len(context.csv_output.index)
+
+    assert num_rows == int(number), f"Csv should have {number} rows but has {num_rows}"
+
+
+@then("the csv output has the columns")
+def step_impl(context):
+    test_table_cols = context.table.headings
+    for column in test_table_cols:
+        assert (
+            column in context.csv_output.columns
+        ), f"Column {column} does not match any expected columns: {context.csv_output.columns}"
+
+
+@then("I read the metadata output '{metadata_output}'")
+def step_impl(context, metadata_output):
+    json_output_path = Path(metadata_output)
+
+    metadata_file = open(json_output_path)
+
+    context.json_output = json.load(metadata_file)
+
+
+@then("the metadata should match '{correct_metadata}'")
+def step_impl(context, correct_metadata):
+    relative_features_path = Path(__file__).parent.parent
+
+    correct_metadata_path = Path(relative_features_path / correct_metadata)
+    correct_metadata_file = open(correct_metadata_path)
+    correct_metadata_json = json.load(correct_metadata_file)
+
+    assert (
+        context.json_output == correct_metadata_json
+    ), f"Metadata does not match expected metadata from {correct_metadata_json}."
+
+
 @then('the pipeline should generate an error with a message containing "{err_msg}"')
 def step_impl(context, err_msg):
     assert (
         context.exception is not None
     ), "An error was expected but none was encountered"
-
     assert err_msg in str(
         context.exception
     ), f"""
         The expected string
         "{err_msg}"
-
         Was not found in the encountered exception:
-
         -----------------
         Exception follows
         -----------------
-
         {context.exception}
-
         -----------------
-        """
+"""

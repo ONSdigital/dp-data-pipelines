@@ -1,21 +1,3 @@
-import os
-
-
-def enrich_online(message_creating_function):
-    def wrapper(*args, **kwargs):
-        msg: str = message_creating_function(*args, **kwargs)
-
-        # Get the enviormentl variable
-        enrich_message = os.environ.get("ENRICH_OUTGOING_MESSAGES", None)
-        # If there is a value stored add (enrich) message otherwise return original message
-        if enrich_message is not None:
-            return msg + " " + enrich_message
-        else:
-            return msg
-
-    return wrapper
-
-
 # devnote: not using strtobool from disutils as that
 # package is being depreciate from the standard
 # library in python >3.12
