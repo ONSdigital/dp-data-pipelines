@@ -3,6 +3,11 @@ from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from pathlib import Path
 import os
 
+from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
+    sdmx_compact_2_0_prototype_1,
+    sdmx_sanity_check_v1,
+)
+
 
 @given("a temporary source directory of files")
 def step_impl(context):
@@ -31,10 +36,36 @@ def step_impl(context):
                 f2.write(file_object)
 
 
+@given("a valid pipeline configuration dictionary")
+def step_impl(context):
+    context.pipeline_config = {
+        "config_version": 1,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    }
+
+
+@given("an invalid pipeline configuration dictionary")
+def step_impl(context):
+    context.pipeline_config = {
+        "config_version": 2,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    }
+
+
 @given("v1_data_ingress starts using the temporary source directory")
 def step_impl(context):
     try:
-        dataset_ingress_v1(context.temporary_directory)
+        dataset_ingress_v1(context.temporary_directory, context.pipeline_config)
         context.exception = None
     except Exception as exc:
         context.exception = exc

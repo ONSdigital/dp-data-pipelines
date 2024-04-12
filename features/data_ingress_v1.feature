@@ -10,15 +10,15 @@ Feature: Data Ingress v1
   Scenario: Pipeline runs without errors
     Given a temporary source directory of files
         | file                   |  fixture                           |
-        | pipeline-config.json   |  pipeline_config_basic_valid.json  |
         | data.xml               |  data_sdmx_valid_1.sdmx            |
+    And a valid pipeline configuration dictionary
     And v1_data_ingress starts using the temporary source directory
     Then the pipeline should generate no errors
 
   Scenario: Pipeline runs with an expected error
     Given a temporary source directory of files
         | file                            |  fixture                           |
-        | incorrectly-named-config.json   |  pipeline_config_basic_valid.json  |
         | data.xml                        |  data_sdmx_valid_1.sdmx            |
+    And an invalid pipeline configuration dictionary
     And v1_data_ingress starts using the temporary source directory
-    Then the pipeline should generate an error with a message containing "issue finding a local file"
+    Then the pipeline should generate an error with a message containing "Config version 2 not recognised"
