@@ -6,10 +6,10 @@ import pandas as pd
 import xmltodict
 
 from dpypelines.pipeline.shared.transforms.utils import (
-    convert,
-    flatten_dict,
     pathify,
     set_key,
+    flatten_dict,
+    convert,
 )
 from dpypelines.pipeline.shared.transforms.validate_transform import (
     check_columns_of_dataframes_are_unique,
