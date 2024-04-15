@@ -1,11 +1,16 @@
 import json
 import xml.etree.ElementTree as ET
-from datetime import datetime, date
+from datetime import datetime
 import pandas as pd
 import xmltodict
 
 
-from dpypelines.pipeline.shared.transforms.utils import convert, flatten_dict, pathify, set_key
+from dpypelines.pipeline.shared.transforms.utils import (
+    convert, 
+    flatten_dict, 
+    pathify, 
+    set_key
+)
 from dpypelines.pipeline.shared.transforms.validate_transform import (
     check_columns_of_dataframes_are_unique,
     check_header_info,
