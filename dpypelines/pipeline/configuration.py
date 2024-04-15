@@ -40,12 +40,12 @@ def get_dataset_id(s3_object_name: str) -> str:
     return "not-specified"
 
 
-def get_pipeline_config(dataset_id: str, configuration: dict) -> dict:
+def get_pipeline_config(dataset_id: str) -> tuple[dict, list]:
     """
     Get pipeline config details for the given dataset_id
     """
-    for key in configuration.keys():
+    for key in CONFIGURATION.keys():
         if re.match(key, dataset_id):
-            pipeline_config = configuration[key]
+            pipeline_config = CONFIGURATION[key]
             break
-    return pipeline_config
+    return pipeline_config, list(CONFIGURATION.keys())

@@ -10,7 +10,7 @@ Feature: Data Ingress v1
     Given a temporary source directory of files
         | file                   |  fixture                           |
         | data.xml               |  esa2010_test_data.xml             |
-    And a pipeline configuration dictionary that is 'valid'
+    And a dataset id of 'valid'
     And v1_data_ingress starts using the temporary source directory
     Then the pipeline should generate no errors
     And I read the csv output 'data.csv'
@@ -24,6 +24,6 @@ Feature: Data Ingress v1
     Given a temporary source directory of files
         | file                            |  fixture                           |
         | data.xml                        |  esa2010_test_data.xml             |
-    And a pipeline configuration dictionary that is 'invalid'
+    And a dataset id of 'invalid'
     And v1_data_ingress starts using the temporary source directory
     Then the pipeline should generate an error with a message containing "Config version 2 not recognised"

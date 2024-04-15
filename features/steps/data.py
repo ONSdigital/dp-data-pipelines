@@ -7,7 +7,7 @@ from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
     sdmx_sanity_check_v1,
 )
 
-configuration = {
+CONFIGURATION = {
     "valid": {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
@@ -55,9 +55,9 @@ def step_impl(context):
                 f2.write(file_object)
 
 
-@given("a pipeline configuration dictionary that is '{validity}'")
+@given("a dataset id of '{validity}'")
 def step_impl(context, validity):
-    context.pipeline_config = configuration[validity]
+    context.pipeline_config = CONFIGURATION[validity]
 
 
 @given("v1_data_ingress starts using the temporary source directory")
