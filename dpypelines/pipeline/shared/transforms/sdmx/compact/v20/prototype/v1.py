@@ -104,7 +104,7 @@ def xmlToCsvSDMX2_0(input_path, output_path):
 
 
 def generate_versions_metadata(
-    transformedCSV, outputPath, metadataTemplate, structureXML=False, config=False
+    transformedCSV, outputPath, metadataTemplate=False, structureXML=False, config=False
 ):
 
     # Read in Structure XML provided with the SDMX and tidyCSV we created earlier in the transform
@@ -177,11 +177,15 @@ def generate_versions_metadata(
 
     # Read in our metadata template
 
-    with open(metadataTemplate) as json_data:
-        versions_template = json.load(json_data)
+    if metadataTemplate:
+        with open(metadataTemplate) as json_data:
+            versions_template = json.load(json_data)
+    else:
+        versions_template = {}
 
     # now a very terrible and hardcoded implementation of applying what little metadata we have to as many fields as possible
 
+    versions_template["title"] = dataset_title
     versions_template["description"] = ""
     versions_template["identifier"] = (
         "https://staging.idpd.uk/datasets/" + pathify(dataset_title) + "/editions"
@@ -219,7 +223,6 @@ def generate_versions_metadata(
     versions_template["temporal_resolution"] = list(tidyCSV.TIME_FORMAT.unique())[
         0
     ]  # this will need investigation into whether this is accurate to what we need for this field
-    versions_template["title"] = dataset_title
     versions_template["contact_point"] = {
         "email": "",
         "name": "",
@@ -268,7 +271,12 @@ def generate_versions_metadata(
     versions_template["@type"] = "dcat:dataset"
     versions_template["etag"] = ""  # ?
     versions_template["is_based_on"] = {"id": "", "type": ""}  # ?
-    # versions_template["_embedded"] = {"code_list": "string", "identifier": "string", "label": "string", "name": "string"}
+    versions_template["_embedded"] = {
+        "code_list": "string",
+        "identifier": "string",
+        "label": "string",
+        "name": "string",
+    }
     versions_template["type"] = ""  # ?
     versions_template["state"] = ""  # ?
 
