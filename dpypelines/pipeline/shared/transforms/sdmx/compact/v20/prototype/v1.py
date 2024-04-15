@@ -9,7 +9,7 @@ from dpypelines.pipeline.shared.transforms.utils import (
     convert, 
     flatten_dict, 
     pathify, 
-    set_key
+    set_key,
 )
 from dpypelines.pipeline.shared.transforms.validate_transform import (
     check_columns_of_dataframes_are_unique,
