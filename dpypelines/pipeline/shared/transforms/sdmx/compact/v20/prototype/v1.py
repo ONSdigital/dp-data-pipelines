@@ -103,7 +103,7 @@ def xmlToCsvSDMX2_0(input_path, output_path):
     return full_table
 
 
-def generate_metadata(
+def generate_versions_metadata(
     transformedCSV, outputPath, metadataTemplate, structureXML=False, config=False
 ):
 
