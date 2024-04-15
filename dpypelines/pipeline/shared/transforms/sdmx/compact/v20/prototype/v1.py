@@ -277,7 +277,7 @@ def generate_versions_metadata(
     # dump out metadata file
 
     with open(
-        outputPath
+        str(outputPath)
         + pathify(dataset_title)
         + "_"
         + str(datetime.now().strftime("%Y-%m"))
