@@ -112,11 +112,8 @@ def generate_versions_metadata(transformedCSV, outputPath, metadataTemplate = Fa
     tidyCSV = pd.read_csv(transformedCSV)
 
     # Pull out the dataset title which we'll use later
-    # I'm having to put in this try except cause there's an issue causing some of the code in the sdmx transform to be flagged as unreachable, ideally it should never need the except 
-    try:
-        dataset_title = tidyCSV['TITLE'].iloc[0]
-    except:
-        dataset_title = tidyCSV['@TITLE'].iloc[0]
+    dataset_title = tidyCSV['TITLE'].iloc[0]
+    
 
     # Get a list of the concepts and key families from the structure XML which contain info on the data dimensions, at the moment we're basically just using this for the datatype and dimension name where possible
     # this then gets thrown into a dictionary with an entry for each possible dimension header
