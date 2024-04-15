@@ -96,7 +96,7 @@ def xmlToCsvSDMX2_0(input_path, output_path):
     return full_table
 
 
-def generate_metadata(transformedCSV, outputPath, metadataTemplate, structureXML = False, config = False):
+def generate_versions_metadata(transformedCSV, outputPath, metadataTemplate, structureXML = False, config = False):
 
     # Read in Structure XML provided with the SDMX and tidyCSV we created earlier in the transform 
     if structureXML:
