@@ -48,7 +48,13 @@ def start(s3_object_name: str):
 
     # get_dataset_id() currently empty - returns "not-specified"
     # To be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
-    dataset_id = get_dataset_id(s3_object_name)
+    try:
+        dataset_id = get_dataset_id(s3_object_name)
+    except Exception as err:
+        de_notifier.failure()
+        raise Exception(
+            message.unexpected_error(f"Failed to get dataset id {dataset_id}", err)
+        ) from err
 
     # Get config details for the given dataset_id
     try:
