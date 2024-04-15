@@ -1,7 +1,31 @@
 from behave import *
-from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from pathlib import Path
-import os
+from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
+from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
+    sdmx_compact_2_0_prototype_1,
+    sdmx_sanity_check_v1,
+)
+
+CONFIGURATION = {
+    "valid": {
+        "config_version": 1,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    },
+    "invalid": {
+        "config_version": 2,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    },
+}
 import pandas as pd
 import json
 
@@ -28,6 +52,11 @@ def step_impl(context):
             file_object = f1.read()
             with open(context.temporary_directory / file, "w") as f2:
                 f2.write(file_object)
+
+
+@given("a dataset id of '{validity}'")
+def step_impl(context, validity):
+    context.pipeline_config = CONFIGURATION[validity]
 
 
 @given("v1_data_ingress starts using the temporary source directory")

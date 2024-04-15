@@ -1,11 +1,7 @@
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 
-from dpypelines.pipeline.configuration import (
-    CONFIGURATION,
-    get_dataset_id,
-    get_pipeline_config,
-)
+from dpypelines.pipeline.configuration import get_dataset_id, get_pipeline_config
 from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
@@ -56,12 +52,13 @@ def start(s3_object_name: str):
 
     # Get config details for the given dataset_id
     try:
-        pipeline_config = get_pipeline_config(dataset_id, CONFIGURATION)
+        pipeline_config, config_keys = get_pipeline_config(dataset_id)
     except Exception as err:
         de_notifier.failure()
         raise Exception(
             message.unexpected_error(
-                "Failed to get pipeline configuration details", err
+                f"Failed to match dataset_id {dataset_id} to available configuration keys {config_keys}",
+                err,
             )
         ) from err
 

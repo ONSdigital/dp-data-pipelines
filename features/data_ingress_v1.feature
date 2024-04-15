@@ -11,6 +11,7 @@ Feature: Data Ingress v1
         | file                   |  fixture                           |
         | pipeline-config.json   |  pipeline_config_basic_valid.json  |
         | data.xml               |  esa2010_test_data.xml             |
+    And a dataset id of 'valid'
     And v1_data_ingress starts using the temporary source directory
     Then the pipeline should generate no errors
     And I read the csv output 'data.csv'
@@ -25,5 +26,6 @@ Feature: Data Ingress v1
         | file                            |  fixture                           |
         | incorrectly-named-config.json   |  pipeline_config_basic_valid.json  |
         | data.xml                        |  esa2010_test_data.xml             |
+    And a dataset id of 'invalid'
     And v1_data_ingress starts using the temporary source directory
     Then the pipeline should generate an error with a message containing "Config version 2 not recognised"
