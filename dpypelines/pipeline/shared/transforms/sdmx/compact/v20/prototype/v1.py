@@ -235,7 +235,7 @@ def generate_versions_metadata(transformedCSV, outputPath, metadataTemplate = Fa
 
     # dump out metadata file
 
-    with open(outputPath + pathify(dataset_title) + "_" + str(datetime.now().strftime("%Y-%m")) + "-metadata.json", "w") as outfile:
+    with open(str(outputPath) + pathify(dataset_title) + "_" + str(datetime.now().strftime("%Y-%m")) + "-metadata.json", "w") as outfile:
         json.dump(versions_template, outfile, ensure_ascii=False, indent=4)
 
     return versions_template
