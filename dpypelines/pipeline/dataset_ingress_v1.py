@@ -168,37 +168,5 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             message.error_in_transform(printable_transform_details, local_store, err)
         ) from err
 
-    # TODO - validate the metadata once we have a schema for it.
-
-    # TODO - validate the csv once we know what we're validating
-
-    # ---------------------------------
-    # TODO - delete me at a later point
-    # just an everything is ok alarm for
-    # now so we know the right things happen
-    # ---------------------------------
-
-    with open(metadata_path) as f:
-        metadata = json.load(f)
-
-    import pandas as pd
-
     de_notifier.success()
-    de_notifier.msg_str(
-        f"""
-
-Tranform ran to completion.
-
-Data Snippet:
-```
-{pd.read_csv(csv_path)[:5]}
-```
-
-Metadata:
-```
-{json.dumps(metadata, indent=2)}
-```
-        """
-    )
-
     print("Worked. I ran to completion.")
