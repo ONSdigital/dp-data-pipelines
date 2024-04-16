@@ -1,3 +1,5 @@
+import os
+
 # devnote: not using strtobool from disutils as that
 # package is being depreciate from the standard
 # library in python >3.12
@@ -23,3 +25,14 @@ def str_to_bool(should_be_bool: str) -> bool:
         raise ValueError(
             f"A str value representing a boolean should be one of 'True', 'true', 'False', 'false'. Got '{should_be_bool}'"
         )
+
+def get_submitter_email() -> str:
+    """
+    Placeholder function to be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
+    """
+
+    # What you can use WHILE DEVELOPING only.
+    return os.environ["TEMPORARY_SUBMITTER_EMAIL"]
+
+    # What you should put in pr
+    raise NotImplementedError("Submitter email address cannot yet be acquired.")

@@ -11,7 +11,7 @@ from dpypelines.pipeline.shared.notification import (
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig import matching
-from dpypelines.pipeline.configuration import get_submitter_email
+from dpypelines.pipeline.shared.utility import get_submitter_email
 
 
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):

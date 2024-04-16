@@ -40,19 +40,6 @@ def get_dataset_id(s3_object_name: str) -> str:
     """
     return "not-specified"
 
-
-def get_submitter_email() -> str:
-    """
-    Placeholder function to be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
-    """
-
-    # What you can use WHILE DEVELOPING only.
-    return os.environ["TEMPORARY_SUBMITTER_EMAIL"]
-
-    # What you should put in pr
-    raise NotImplementedError("Submitter email address cannot yet be acquired.")
-
-
 def get_pipeline_config(dataset_id: str) -> tuple[dict, list]:
     """
     Get pipeline config details for the given dataset_id
