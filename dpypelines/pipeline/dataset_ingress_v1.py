@@ -4,7 +4,6 @@ import os
 import re
 from pathlib import Path
 
-from dpytools.http.upload import UploadClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.email.ses.client import SesClient
@@ -14,7 +13,6 @@ from dpypelines.pipeline.shared.notification import (
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig import matching
-from dpypelines.pipeline.configuration import get_submitter_email
 
 
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
@@ -37,23 +35,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         "DE_SLACK_WEBHOOK"
     )
 
-    try:
-        submitter_email = get_submitter_email()
-    except Exception as err:
-        de_notifier.failure()
-        raise err
-
-    # Create email client from env var
-    try:
-        ses_email_identity = os.environ["SES_EMAIL_IDENTITY"]
-        email_client = SesClient(ses_email_identity, "eu-west-2")
-    except Exception as err:
-        de_notifier.failure()
-        raise err
-    
-    # just throw out an email to see if it works
-    email_client.send(submitter_email, "suitable subject", "suitable message body")
-
     # Attempt to access the local data store
     try:
         local_store = LocalDirectoryStore(files_dir)
@@ -74,9 +55,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for required_file in required_file_patterns:
         try:
             if not local_store.has_lone_file_matching(required_file):
-                email_client.send(
-                    submitter_email, "suitable subject", "suitable message body"
-                )
                 de_notifier.failure()
                 msg = message.expected_local_file_missing(
                     f"Required file {required_file} not found",
