@@ -47,6 +47,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     except Exception as err:
         de_notifier.failure()
         raise err
+    
+    # just throw out an email to see if it works
+    email_client.send(submitter_email, "suitable subject", "suitable message body")
 
     # Attempt to access the local data store
     try:
