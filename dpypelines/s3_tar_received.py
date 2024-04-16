@@ -2,8 +2,7 @@ import os
 
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
-from dpytools.email.ses.client import SesClient
-from dpypelines.pipeline.configuration import get_dataset_id, get_pipeline_config, get_submitter_email
+from dpypelines.pipeline.configuration import get_dataset_id, get_pipeline_config
 from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
@@ -26,25 +25,10 @@ def start(s3_object_name: str):
         "DE_SLACK_WEBHOOK"
     )
     
-    # Create email client from env var
-    try:
-        ses_email_identity = os.environ["SES_EMAIL_IDENTITY"]
-        email_client = SesClient(ses_email_identity, "eu-west-2")
-    except Exception as err:
-        de_notifier.failure()
-        raise err
-    
-    try:
-        submitter_email = get_submitter_email()
-    except Exception as err:
-        de_notifier.failure()
-        raise err
-    
     # Decompress the tar file to the workspace
     try:
         decompress_s3_tar(s3_object_name, "input")
     except Exception as err:
-        email_client.send(submitter_email, "appropriate subject", "appropriate email body")
         de_notifier.failure()
         raise Exception(
             message.unexpected_error(

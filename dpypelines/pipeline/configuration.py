@@ -47,7 +47,7 @@ def get_submitter_email() -> str:
     """
 
     # What you can use WHILE DEVELOPING only.
-    return os.envion["TEMPORARY_SUBMITTER_EMAIL"]
+    return os.environ["TEMPORARY_SUBMITTER_EMAIL"]
 
     # What you should put in pr
     raise NotImplementedError("Submitter email address cannot yet be acquired.")
