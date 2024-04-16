@@ -1,3 +1,4 @@
+import os
 import re
 
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
@@ -38,6 +39,18 @@ def get_dataset_id(s3_object_name: str) -> str:
     Placeholder function to be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
     """
     return "not-specified"
+
+
+def get_submitter_email() -> str:
+    """
+    Placeholder function to be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
+    """
+
+    # What you can use WHILE DEVELOPING only.
+    return os.envion["TEMPORARY_SUBMITTER_EMAIL"]
+
+    # What you should put in pr
+    raise NotImplementedError("Submitter email address cannot yet be acquired.")
 
 
 def get_pipeline_config(dataset_id: str) -> tuple[dict, list]:
