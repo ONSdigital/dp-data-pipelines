@@ -3,7 +3,6 @@ import json
 from pathlib import Path
 
 from dpytools.stores.directory.local import LocalDirectoryStore
-from dpytools.email.ses.client import SesClient
 
 from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.notification import (
@@ -11,7 +10,7 @@ from dpypelines.pipeline.shared.notification import (
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig import matching
-from dpypelines.pipeline.shared.utility import get_submitter_email
+from dpypelines.pipeline.shared.utility import get_submitter_email, get_email_client
 
 
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
@@ -42,8 +41,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     
     # Create email client from env var
     try:
-        ses_email_identity = os.environ["SES_EMAIL_IDENTITY"]
-        email_client = SesClient(ses_email_identity, "eu-west-2")
+        email_client = get_email_client()
     except Exception as err:
         de_notifier.failure()
         raise err
