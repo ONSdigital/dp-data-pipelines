@@ -6,13 +6,14 @@ from pathlib import Path
 
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
-from dpytools.email.ses.client import SesClient
+
 from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig import matching
+from dpypelines.pipeline.shared.utility import get_submitter_email, get_email_client
 
 
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
@@ -34,6 +35,22 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
         "DE_SLACK_WEBHOOK"
     )
+
+    try:
+        submitter_email = get_submitter_email()
+    except Exception as err:
+        de_notifier.failure()
+        raise err
+
+    # Create email client from env var
+    try:
+        email_client = get_email_client()
+    except Exception as err:
+        de_notifier.failure()
+        raise err
+
+    # just throw out an email to see if it works
+    email_client.send(submitter_email, "suitable subject", "suitable message body")
 
     # Attempt to access the local data store
     try:
