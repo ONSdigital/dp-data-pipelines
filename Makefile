@@ -8,13 +8,13 @@ install: ## Install development dependencies
 	poetry install
 
 fmt: install ## (Format) - runs black and isort against the codebase (auto triggered on pre-commit)
-	poetry run black ./dpypelines/*
+	poetry run black ./dpytools/*
 	poetry run black ./tests/*
-	poetry run isort ./dpypelines/*
+	poetry run isort ./dpytools/*
 	poetry run isort ./tests/*
 
 lint: install ## Run the ruff python linter
-	poetry run ruff check ./dpypelines/*
+	poetry run ruff check ./dpytools/*
 	poetry run ruff check ./test/*
 
 test: install ## Run pytest and check test coverage
