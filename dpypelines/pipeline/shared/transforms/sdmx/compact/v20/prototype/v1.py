@@ -186,7 +186,7 @@ def generate_versions_metadata(transformedCSV, outputPath, metadataTemplate = Fa
     versions_template['spatial coverage'] = list(tidyCSV.REF_AREA.unique())[0] # this will need investigation into whether this is accurate to what we need for this field
     versions_template['spatial_resolution'] = list(tidyCSV.COUNTERPART_AREA.unique()) # this will need investigation into whether this is accurate to what we need for this field
     versions_template['temporal_coverage'] = 'start: ' + str(min(tidyCSV.TIME_PERIOD)) + ', end: ' + str(max(tidyCSV.TIME_PERIOD)) # I'll need to input on the formatting of this field cause the previous iteration was a dictionry but the spec has it now as a string
-    versions_template['summary': "",
+    versions_template['summary': ""
     versions_template['temporal_resolution'] = list(tidyCSV.TIME_FORMAT.unique())[0] # this will need investigation into whether this is accurate to what we need for this field
     versions_template['contact_point']  = { 'email': "", 
                                             'name' : "",
