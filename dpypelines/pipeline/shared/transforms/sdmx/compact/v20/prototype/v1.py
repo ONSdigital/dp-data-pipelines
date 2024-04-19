@@ -214,6 +214,7 @@ def generate_versions_metadata(
         + ", end: "
         + str(max(tidyCSV.TIME_PERIOD))
     )  # I'll need to input on the formatting of this field cause the previous iteration was a dictionry but the spec has it now as a string
+    versions_template["summary"] = ("",)
     versions_template["temporal_resolution"] = list(tidyCSV.TIME_FORMAT.unique())[
         0
     ]  # this will need investigation into whether this is accurate to what we need for this field
