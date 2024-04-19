@@ -277,14 +277,9 @@ def generate_versions_metadata(
 
     # dump out metadata file
 
-    with open(
-        str(outputPath)
-        + pathify(dataset_title)
-        + "_"
-        + str(datetime.now().strftime("%Y-%m"))
-        + "-metadata.json",
-        "w",
-    ) as outfile:
+    # with open(str(outputPath) + pathify(dataset_title) + "_" + str(datetime.now().strftime("%Y-%m")) + "-metadata.json", "w") as outfile:
+    #    json.dump(versions_template, outfile, ensure_ascii=False, indent=4)
+    with open("metadata.json", "w") as outfile:
         json.dump(versions_template, outfile, ensure_ascii=False, indent=4)
 
     return versions_template
