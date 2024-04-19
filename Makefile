@@ -18,7 +18,7 @@ lint: install ## Run the ruff python linter
 	poetry run ruff check ./test/*
 
 test: install ## Run pytest and check test coverage
-	poetry run pytest --cov-report term-missing --cov=dpypelines
+	poetry run pytest --cov-report term-missing --cov=dpytools
 
 feature: install
 	poetry run behave
