@@ -177,14 +177,14 @@ def generate_versions_metadata(transformedCSV, outputPath, metadataTemplate = Fa
         versions_template['issued'] = data["mes:Structure"]['mes:Header']['mes:Prepared'].split('.')[0] + 'Z'
     else:
         versions_template['issued'] = ""
-    versions_template['license'] = "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    versions_template['license'] = "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
     versions_template['modified'] = tidyCSV['Extracted'].iloc[0].split('+')[0] + 'Z' # This is working off the assumption that every extraction date is a new modification of the data
     versions_template['next_release'] = "" # could we infer this from issued date and release frequency if we include that in the config?
     versions_template['publisher']  = {'email': "", 
                                        'name' : "",
                                        'telephone' : ""} # config file?
     versions_template['frequency'] = "" # config file?
-    versions_template['spatial coverage'] = list(tidyCSV.REF_AREA.unique())[0] # this will need investigation into whether this is accurate to what we need for this field
+    versions_template['spatial_coverage'] = list(tidyCSV.REF_AREA.unique())[0] # this will need investigation into whether this is accurate to what we need for this field
     versions_template['spatial_resolution'] = list(tidyCSV.COUNTERPART_AREA.unique()) # this will need investigation into whether this is accurate to what we need for this field
     versions_template['temporal_coverage'] = 'start: ' + str(min(tidyCSV.TIME_PERIOD)) + ', end: ' + str(max(tidyCSV.TIME_PERIOD)) # I'll need to input on the formatting of this field cause the previous iteration was a dictionry but the spec has it now as a string
     versions_template['temporal_resolution'] = list(tidyCSV.TIME_FORMAT.unique())[0] # this will need investigation into whether this is accurate to what we need for this field
