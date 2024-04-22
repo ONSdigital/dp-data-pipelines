@@ -180,6 +180,7 @@ def generate_versions_metadata(
 
     versions_template["title"] = dataset_title
     versions_template["description"] = ""
+    versions_template["summary"] = ""
     versions_template["identifier"] = (
         "https://staging.idpd.uk/datasets/" + pathify(dataset_title) + "/editions"
     )
@@ -189,6 +190,9 @@ def generate_versions_metadata(
         )
     else:
         versions_template["issued"] = ""
+    versions_template["license"] = (
+        "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    )
     versions_template["modified"] = (
         tidyCSV["Extracted"].iloc[0].split("+")[0] + "Z"
     )  # This is working off the assumption that every extraction date is a new modification of the data
@@ -213,7 +217,6 @@ def generate_versions_metadata(
         + ", end: "
         + str(max(tidyCSV.TIME_PERIOD))
     )  # I'll need to input on the formatting of this field cause the previous iteration was a dictionry but the spec has it now as a string
-    versions_template["summary"] = ""
     versions_template["temporal_resolution"] = list(tidyCSV.TIME_FORMAT.unique())[
         0
     ]  # this will need investigation into whether this is accurate to what we need for this field
