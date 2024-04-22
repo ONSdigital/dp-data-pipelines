@@ -191,7 +191,7 @@ def generate_versions_metadata(
     else:
         versions_template["issued"] = ""
     versions_template["license"] = (
-        "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+        "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
     )
     versions_template["modified"] = (
         tidyCSV["Extracted"].iloc[0].split("+")[0] + "Z"
@@ -205,7 +205,7 @@ def generate_versions_metadata(
         "telephone": "",
     }  # config file?
     versions_template["frequency"] = ""  # config file?
-    versions_template["spatial coverage"] = list(tidyCSV.REF_AREA.unique())[
+    versions_template["spatial_coverage"] = list(tidyCSV.REF_AREA.unique())[
         0
     ]  # this will need investigation into whether this is accurate to what we need for this field
     versions_template["spatial_resolution"] = list(
