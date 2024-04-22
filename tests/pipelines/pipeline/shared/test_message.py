@@ -1,4 +1,3 @@
-import pytest
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 
