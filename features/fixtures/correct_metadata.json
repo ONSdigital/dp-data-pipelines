@@ -1,10 +1,10 @@
 {
-    "title": "GVA at Basic Prices and GDP at Market Prices",
+    "title": "GDP Identity from the Income Side",
     "description": "",
-    "identifier": "https://staging.idpd.uk/datasets/gva-at-basic-prices-and-gdp-at-market-prices/editions",
+    "identifier": "https://staging.idpd.uk/datasets/gdp-identity-from-the-income-side/editions",
     "issued": "",
     "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
-    "modified": "2024-02-13T14:52:09Z",
+    "modified": "2024-02-13T14:16:36Z",
     "next_release": "",
     "publisher": {
         "email": "",
@@ -17,8 +17,8 @@
         "W2"
     ],
     "summary": "",
-    "temporal_coverage": "start: 1995, end: 2023",
-    "temporal_resolution": "P1Y",
+    "temporal_coverage": "start: 1995-Q1, end: 2023-Q4",
+    "temporal_resolution": "P3M",
     "contact_point": {
         "email": "",
         "name": "",
@@ -276,38 +276,8 @@
                     {
                         "component_type": "",
                         "datatype": "string",
-                        "name": "PRICES",
-                        "titles": "prices",
-                        "property_url": "",
-                        "value_url": "",
-                        "codelist_url": "",
-                        "sub_property_of": ""
-                    },
-                    {
-                        "component_type": "",
-                        "datatype": "string",
                         "name": "STO",
                         "titles": "sto",
-                        "property_url": "",
-                        "value_url": "",
-                        "codelist_url": "",
-                        "sub_property_of": ""
-                    },
-                    {
-                        "component_type": "",
-                        "datatype": "string",
-                        "name": "UNIT_MEASURE",
-                        "titles": "unit_measure",
-                        "property_url": "",
-                        "value_url": "",
-                        "codelist_url": "",
-                        "sub_property_of": ""
-                    },
-                    {
-                        "component_type": "",
-                        "datatype": "string",
-                        "name": "TRANSFORMATION",
-                        "titles": "transformation",
                         "property_url": "",
                         "value_url": "",
                         "codelist_url": "",
@@ -376,8 +346,8 @@
                     {
                         "component_type": "",
                         "datatype": "string",
-                        "name": "TIME_FORMAT",
-                        "titles": "time_format",
+                        "name": "UNIT_MEASURE",
+                        "titles": "unit_measure",
                         "property_url": "",
                         "value_url": "",
                         "codelist_url": "",
@@ -386,8 +356,28 @@
                     {
                         "component_type": "",
                         "datatype": "string",
-                        "name": "REF_YEAR_PRICE",
-                        "titles": "ref_year_price",
+                        "name": "PRICES",
+                        "titles": "prices",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "TRANSFORMATION",
+                        "titles": "transformation",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "TIME_FORMAT",
+                        "titles": "time_format",
                         "property_url": "",
                         "value_url": "",
                         "codelist_url": "",
