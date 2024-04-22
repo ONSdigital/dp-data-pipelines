@@ -1,1 +1,81 @@
-{"to": "do"}
+{
+    "title": "string",
+    "description": "string",
+    "summary": "string",
+    "identifier": "string",
+    "issued": "2024-03-14T14:11:17.568Z",
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "modified": "2024-03-14T14:11:17.568Z",
+    "next_release": "2024-03-14T14:11:17.568Z",
+    "publisher": {
+      "email": "string",
+      "name": "string",
+      "telephone": "string"
+    },
+    "frequency": "string",
+    "spatial_coverage": "string",
+    "spatial_resolution": [
+      "string"
+    ],
+    "temporal_coverage": "string",
+    "temporal_resolution": [
+      "string"
+    ],
+    "contact_point": {
+      "email": "string",
+      "name": "string",
+      "telephone": "string"
+    },
+    "keywords": [
+      "string"
+    ],
+    "themes": [
+      "string"
+    ],
+    "distributions": [
+      {
+        "checksum": "string",
+        "@id": "string",
+        "byte_size": "string",
+        "media_type": "string",
+        "download_url": "string",
+        "described_by": "string",
+        "table_schema": {
+          "about_url": "string",
+          "column": [
+            {
+              "component_type": "string",
+              "datatype": "string",
+              "name": "string",
+              "title": "string",
+              "property_url": "string",
+              "value_url": "string",
+              "codelist_url": "string",
+              "sub_property_of": "string"
+            }
+          ]
+        }
+      }
+    ],
+    "version_notes": [
+      "string"
+    ],
+    "@context": "string",
+    "@id": "string",
+    "@type": "dcat:dataset",
+    "etag": "string",
+    "is_based_on": {
+      "id": "string",
+      "type": "string"
+    },
+    "_embedded": [
+      {
+        "code_list": "string",
+        "identifier": "string",
+        "label": "string",
+        "name": "string"
+      }
+    ],
+    "type": "static",
+    "state": "string"
+  }
