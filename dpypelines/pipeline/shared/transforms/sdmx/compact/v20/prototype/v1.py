@@ -1,6 +1,5 @@
 import json
 import xml.etree.ElementTree as ET
-from datetime import datetime
 
 import pandas as pd
 import xmltodict
