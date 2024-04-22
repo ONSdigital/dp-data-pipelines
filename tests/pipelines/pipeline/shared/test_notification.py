@@ -4,10 +4,11 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from dpypelines.pipeline.shared.notification import (
-    PipelineNotifier,
     NopNotifier,
-    notifier_from_env_var_webhook
+    PipelineNotifier,
+    notifier_from_env_var_webhook,
 )
+
 
 def test_notification_constructor():
     """

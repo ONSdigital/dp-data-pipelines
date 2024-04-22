@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.logging.logger import DpLogger
+from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.notification import (

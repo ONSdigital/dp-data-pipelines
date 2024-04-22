@@ -1,11 +1,12 @@
-import shutil
-from zipfile import ZipFile
-from pathlib import Path
 import os
-import uuid
+import shutil
 import time
-import requests
+import uuid
+from pathlib import Path
+from zipfile import ZipFile
+
 import docker
+import requests
 from docker import DockerClient
 
 

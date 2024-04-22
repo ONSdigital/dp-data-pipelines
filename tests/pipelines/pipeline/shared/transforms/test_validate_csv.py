@@ -1,13 +1,13 @@
+from pathlib import Path
+
+import pandas as pd
 import pytest
 
-from pathlib import Path
-import pandas as pd
-
 from dpypelines.pipeline.shared.transforms.validate_csv import (
-    _read_in_csv_check,
     _correct_columns_exist,
     _dataframe_has_no_blanks,
     _dataframe_has_no_duplicates,
+    _read_in_csv_check,
     generated_dataframe_slices,
 )
 

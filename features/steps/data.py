@@ -1,5 +1,6 @@
-from behave import *
 from pathlib import Path
+
+from behave import *
 
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
@@ -27,8 +28,9 @@ CONFIGURATION = {
         "secondary_function": dataset_ingress_v1,
     },
 }
-import pandas as pd
 import json
+
+import pandas as pd
 
 
 @given("a temporary source directory of files")
