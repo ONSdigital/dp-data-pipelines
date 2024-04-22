@@ -36,7 +36,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Attempt to access the local data store
     try:
         local_store = LocalDirectoryStore(files_dir)
-        logger.info(f"Local data store successfully instansiated", data ={"local_store_dir": files_dir, "local_store": local_store})
+        logger.info("Local data store successfully instansiated", data ={"local_store_dir": files_dir, "local_store": local_store})
     except Exception as err:
         logger.error(f"Failed to access local data at {files_dir}", err, data={"local_store_dir": files_dir})
         de_notifier.failure()
@@ -46,7 +46,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Extract the patterns for required files from the pipeline configuration
     try:
         required_file_patterns = matching.get_required_files_patterns(pipeline_config)
-        logger.info(f"Required file patterns retrieved from pipeline configuration", data={"required_file_patterns": required_file_patterns})
+        logger.info("Required file patterns retrieved from pipeline configuration", data={"required_file_patterns": required_file_patterns})
     except Exception as err:
         logger.error("Failed to get required files pattern", err, data={"pipeline_config": pipeline_config, "local_store": local_store})
         de_notifier.failure()
@@ -152,7 +152,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     try:
         csv_path, metadata_path = transform_function(*args, **kwargs)
-        logger.info(f"Successfully retrieved csv path and metadata path with keyword args from transform function", 
+        logger.info("Successfully retrieved csv path and metadata path with keyword args from transform function", 
         data={"transform_function": transform_function, 
         "pipeline_config": pipeline_config})
 
