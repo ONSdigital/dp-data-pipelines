@@ -36,11 +36,11 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Attempt to access the local data store
     try:
         local_store = LocalDirectoryStore(files_dir)
-        logger.info("Local data store successfully instansiated", data ={"local_store_dir": files_dir, "local_store": local_store})
+        files_in_directory = local_store.get_file_names()
+        logger.info("Local data store successfully instansiated", data ={"local_store_dir": files_dir, "files_in_directory": files_in_directory})
     except Exception as err:
         logger.error(f"Failed to access local data at {files_dir}", err, data={"local_store_dir": files_dir})
         de_notifier.failure()
-
         raise err
 
     # Extract the patterns for required files from the pipeline configuration
@@ -48,32 +48,24 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         required_file_patterns = matching.get_required_files_patterns(pipeline_config)
         logger.info("Required file patterns retrieved from pipeline configuration", data={"required_file_patterns": required_file_patterns})
     except Exception as err:
-        logger.error("Failed to get required files pattern", err, data={"pipeline_config": pipeline_config, "local_store": local_store})
+        files_in_directory = local_store.get_file_names()
+        logger.error("Failed to get required files pattern", err, data={"pipeline_config": pipeline_config, "files_in_directory": files_in_directory})
         de_notifier.failure()
-
         raise err
 
     # Check for the existence of each required file
     for required_file in required_file_patterns:
         try:
             if not local_store.has_lone_file_matching(required_file):
-                logger.info(f"Required matching file {required_file} was not found.", data={"required_file": required_file})
-                de_notifier.failure()
-                msg = message.expected_local_file_missing(
-                    f"Required file {required_file} not found",
-                    required_file,
-                    "dataset_ingress_v1",
-                    local_store,
-                )
-                raise ValueError(msg)
+                raise FileNotFoundError(f"Could not find file matching pattern {required_file}")
         except Exception as err:
+            files_in_directory = local_store.get_file_names()
             logger.error(f"Error while looking for required file {required_file}", 
             err, 
             data={"required_file": required_file, 
             "required_file_patterns": required_file_patterns, 
-            "local_store": local_store})
+            "files_in_directory": files_in_directory})
             de_notifier.failure()
-
             raise err
 
     # Extract the patterns for supplementary distributions from the pipeline configuration
@@ -84,30 +76,22 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         logger.info("Successfully retrieved supplementary distribution patterns from pipeline config",
          data={"supplementary_distribution_pattenrs": supplementary_distribution_patterns})
     except Exception as err:
-        logger.error("Failed to get supplementary distribution patterns", err, data={"local_store": local_store})
+        files_in_directory = local_store.get_file_names()
+        logger.error("Failed to get supplementary distribution patterns", err, data={"pipeline_config": pipeline_config})
         de_notifier.failure()
-
         raise err
 
     # Check for the existence of each supplementary distribution
     for supplementary_distribution in supplementary_distribution_patterns:
         try:
             if not local_store.has_lone_file_matching(supplementary_distribution):
-                logger.info(f"Supplementary distribution {supplementary_distribution} not found", data={"supplementary_distribution": supplementary_distribution})
-                de_notifier.failure()
-                msg = message.expected_local_file_missing(
-                    f"Supplementary distribution {supplementary_distribution} not found",
-                    supplementary_distribution,
-                    "dataset_ingress_v1",
-                    local_store,
-                )
-                raise ValueError(msg)
+                raise FileNotFoundError(f"Could not find file matching pattern {supplementary_distribution}")
         except Exception as err:
             logger.error(f"Error while looking for supplementary distribution {supplementary_distribution}", 
             err, 
-            data={"supplementary_distribution": supplementary_distribution}
+            data={"supplementary_distribution": supplementary_distribution,
+            "supplementary_distribution_patterns": supplementary_distribution_patterns}
             )
-
             de_notifier.failure()
             raise err
 
@@ -117,30 +101,30 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for match, sanity_checker in pipeline_config["transform_inputs"].items():
         try:
             input_file_path: Path = local_store.save_lone_file_matching(match)
-            logger.info(f"Successfully saved file that matches pattern to path {input_file_path}", data={"input_file_path": input_file_path})
+            logger.info(f"Successfully saved file that matches pattern", data={"input_file_path": input_file_path, "match": match})
         except Exception as err:
+            files_in_directory = local_store.get_file_names()
             logger.error("Error occured while attempting to save matching pattern file.", 
             err, 
             data={"match": match, 
             "pipeline_config": pipeline_config, 
-            "local_store": local_store})    
+            "files_in_directory": files_in_directory})    
 
             de_notifier.failure()
-
             raise err
 
         try:
             sanity_checker(input_file_path)
             logger.info("Successfully ran sanity check on input file path.", data={"input_file_path": input_file_path})
         except Exception as err:
+            files_in_directory = local_store.get_file_names()
             logger.error("Error occured while running sanity checker on input file path.", 
             err, 
             data={"input_file_path": input_file_path, 
             "pipeline_config": pipeline_config, 
-            "local_store": local_store})
+            "files_in_directory": files_in_directory})
 
             de_notifier.failure()
-
             raise err
 
         args.append(input_file_path)
@@ -152,19 +136,21 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     try:
         csv_path, metadata_path = transform_function(*args, **kwargs)
-        logger.info("Successfully retrieved csv path and metadata path with keyword args from transform function", 
-        data={"transform_function": transform_function, 
-        "pipeline_config": pipeline_config})
+        logger.info("Successfully ran transform function", 
+        data={"pipeline_config": pipeline_config,
+        "csv_path": csv_path,
+        "metadata_path": metadata_path})
 
     except Exception as err:
-        logger.error("Error occured while getting transform function and keyword arguments from transform details", 
+        logger.error("Error occured while running transform function", 
         err, 
         data={"transform_function": transform_function, 
-        "pipeline_config": pipeline_config, 
-        "local_store": local_store}
-        )
+        "pipeline_config": pipeline_config,
+        "transform_function": transform_function,
+        "args": args,
+        "kwrags": kwargs
+        })
         de_notifier.failure()
-
         raise err
 
     # TODO - validate the metadata once we have a schema for it.
