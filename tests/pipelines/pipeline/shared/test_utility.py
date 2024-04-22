@@ -26,7 +26,10 @@ def test_str_to_bool_valid_raises_for_invlaid_str_value():
     with pytest.raises(ValueError) as err:
         str_to_bool("foo")
 
-    assert "A str value representing a boolean should be one of 'True', 'true', 'False', 'false'" in str(err)
+    assert (
+        "A str value representing a boolean should be one of 'True', 'true', 'False', 'false'"
+        in str(err)
+    )
 
 
 def test_str_to_bool_raises_for_not_string_argument():

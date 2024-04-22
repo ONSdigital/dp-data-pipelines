@@ -1,9 +1,8 @@
 import os
+import sys
 from pathlib import Path
 
 from _pytest.monkeypatch import MonkeyPatch
-
-import sys
 
 # Add repo root path for imports
 repo_root = Path(__file__).parent.parent
