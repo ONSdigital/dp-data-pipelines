@@ -1,6 +1,7 @@
 {
     "title": "GDP Identity from the Income Side",
     "description": "",
+    "summary": "",
     "identifier": "https://staging.idpd.uk/datasets/gdp-identity-from-the-income-side/editions",
     "issued": "",
     "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
@@ -16,7 +17,6 @@
     "spatial_resolution": [
         "W2"
     ],
-    "summary": "",
     "temporal_coverage": "start: 1995-Q1, end: 2023-Q4",
     "temporal_resolution": "P3M",
     "contact_point": {
