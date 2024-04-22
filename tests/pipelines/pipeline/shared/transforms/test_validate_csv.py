@@ -151,5 +151,5 @@ def test_generated_dataframe_slices():
 
             count += 1
 
-    except:
+    except Exception():
         raise Exception("Unexpected error")

@@ -1,4 +1,3 @@
-import pytest
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.shared.message import (
@@ -49,8 +48,7 @@ def test_cant_find_scheama():
     )
     assert "Error type: Exception" in human_readable_output
     assert "Error: Something went wrong" in human_readable_output
-    assert type(human_readable_output) == str
-
+    assert isinstance(human_readable_output, str)
 
 def test_invalid_config():
     error = Exception("Something went wrong")
@@ -74,7 +72,7 @@ def test_invalid_config():
     )
     assert "Error type: Exception" in human_readable_output
     assert "Error: Something went wrong" in human_readable_output
-    assert type(human_readable_output) == str
+    assert isinstance(human_readable_output, str)
 
 
 def test_unknown_transform():
@@ -91,7 +89,7 @@ def test_unknown_transform():
     assert "Pipeline: sdmx.default" in human_readable_output
     assert "Pipeline Configurations:" in human_readable_output
     assert '"pipeline idemtifier": "pipeline123"' in human_readable_output
-    assert type(human_readable_output) == str
+    assert isinstance(human_readable_output, str)
 
 
 def test_metadata_validation_error():
@@ -106,7 +104,7 @@ def test_metadata_validation_error():
     """
 
     assert human_readable_output == expected_output
-    assert type(human_readable_output) == str
+    assert isinstance(human_readable_output, str)
 
 
 def test_expected_local_file_missing():
@@ -129,7 +127,7 @@ def test_expected_local_file_missing():
         test_local_file.json
     """
     assert human_readable_output == expected_output
-    assert type(human_readable_output) == str
+    assert isinstance(human_readable_output, str)
 
 
 def test_pipeline_input_exception():
@@ -164,7 +162,7 @@ def test_pipeline_input_exception():
         in human_readable_output
     )
 
-    assert type(human_readable_output) == str
+    assert isinstance(human_readable_output, str)
 
 
 def test_error_in_transform():
@@ -197,7 +195,7 @@ def test_error_in_transform():
         in human_readable_output
     )
 
-    assert type(human_readable_output) == str
+    assert isinstance(human_readable_output, str)
 
 
 def test_pipeline_input_sanity_check_exception():
@@ -232,4 +230,4 @@ def test_pipeline_input_sanity_check_exception():
         in human_readable_output
     )
 
-    assert type(human_readable_output) == str
+    assert isinstance(human_readable_output, str)
