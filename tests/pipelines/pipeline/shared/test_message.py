@@ -1,4 +1,6 @@
+import pytest
 from dpytools.stores.directory.local import LocalDirectoryStore
+
 
 from dpypelines.pipeline.shared.message import (
     cant_find_schema,
@@ -49,6 +51,7 @@ def test_cant_find_scheama():
     assert "Error type: Exception" in human_readable_output
     assert "Error: Something went wrong" in human_readable_output
     assert isinstance(human_readable_output, str)
+
 
 def test_invalid_config():
     error = Exception("Something went wrong")

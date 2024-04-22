@@ -1,14 +1,15 @@
-import shutil
-from behave import fixture
-from zipfile import ZipFile
 import os
-from pathlib import Path
-import uuid
+import shutil
 import time
+import uuid
+from pathlib import Path
+from zipfile import ZipFile
 
-import requests
 import docker
+import requests
 from docker import DockerClient
+
+
 def before_all(context):
     """
     Before running the tests we set up a docker container representing a fake backend.
@@ -26,7 +27,9 @@ def before_all(context):
 
     context.features_directory = Path(__file__).parent
 
-    context.fixture_destination_path = Path(context.features_directory / "fixtures/data")
+    context.fixture_destination_path = Path(
+        context.features_directory / "fixtures/data"
+    )
 
     zip_path = Path("features/fixtures/data-fixtures.zip")
 
@@ -34,7 +37,6 @@ def before_all(context):
         os.mkdir(context.fixture_destination_path)
         with ZipFile(zip_path, "r") as fixtures_zip:
             fixtures_zip.extractall(path=context.fixture_destination_path)
-
 
     docker_client: DockerClient = docker.from_env()
     repo_root = "/".join(str(Path(__file__).absolute()).split("/")[:-2])
@@ -57,6 +59,8 @@ def before_all(context):
         "IPAddress"
     ]
     time.sleep(10)
+
+
 def before_scenario(context, scenario):
     """
     Test setup that runs at the start of each individual scenario.
@@ -64,7 +68,9 @@ def before_scenario(context, scenario):
 
     # Change directory to a temporary directory to accomodate any test files being dumped to the "current directory"
     # This allows us to safely delete them later.
-    context.temp_test_dir = Path(Path(__file__).parent.parent / "temporary_output_directory")
+    context.temp_test_dir = Path(
+        Path(__file__).parent.parent / "temporary_output_directory"
+    )
     os.mkdir(context.temp_test_dir)
     os.chdir(context.temp_test_dir)
 
@@ -86,6 +92,8 @@ def before_scenario(context, scenario):
     # a custom session with all such defaults removed.
     context.session = requests.Session()
     context.session.headers = {}
+
+
 def after_scenario(context, scenario):
     # Remove temporary directory and any files within it
     if context.temporary_directory is not None:
