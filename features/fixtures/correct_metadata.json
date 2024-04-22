@@ -1,81 +1,81 @@
 {
-    "title": "string",
-    "description": "string",
-    "summary": "string",
-    "identifier": "string",
-    "issued": "2024-03-14T14:11:17.568Z",
-    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
-    "modified": "2024-03-14T14:11:17.568Z",
-    "next_release": "2024-03-14T14:11:17.568Z",
+    "title": "",
+    "description": "",
+    "summary": "",
+    "identifier": "",
+    "issued": "",
+    "license": "",
+    "modified": "",
+    "next_release": "",
     "publisher": {
-      "email": "string",
-      "name": "string",
-      "telephone": "string"
+      "email": "",
+      "name": "",
+      "telephone": ""
     },
-    "frequency": "string",
-    "spatial_coverage": "string",
+    "frequency": "",
+    "spatial_coverage": "",
     "spatial_resolution": [
-      "string"
+      ""
     ],
-    "temporal_coverage": "string",
+    "temporal_coverage": "",
     "temporal_resolution": [
-      "string"
+      ""
     ],
     "contact_point": {
-      "email": "string",
-      "name": "string",
-      "telephone": "string"
+      "email": "",
+      "name": "",
+      "telephone": ""
     },
     "keywords": [
-      "string"
+      ""
     ],
     "themes": [
-      "string"
+      ""
     ],
     "distributions": [
       {
-        "checksum": "string",
-        "@id": "string",
-        "byte_size": "string",
-        "media_type": "string",
-        "download_url": "string",
-        "described_by": "string",
+        "checksum": "",
+        "@id": "",
+        "byte_size": "",
+        "media_type": "",
+        "download_url": "",
+        "described_by": "",
         "table_schema": {
-          "about_url": "string",
+          "about_url": "",
           "column": [
             {
-              "component_type": "string",
-              "datatype": "string",
-              "name": "string",
-              "title": "string",
-              "property_url": "string",
-              "value_url": "string",
-              "codelist_url": "string",
-              "sub_property_of": "string"
+              "component_type": "",
+              "datatype": "",
+              "name": "",
+              "title": "",
+              "property_url": "",
+              "value_url": "",
+              "codelist_url": "",
+              "sub_property_of": ""
             }
           ]
         }
       }
     ],
     "version_notes": [
-      "string"
+      ""
     ],
-    "@context": "string",
-    "@id": "string",
-    "@type": "dcat:dataset",
-    "etag": "string",
+    "@context": "",
+    "@id": "",
+    "@type": "",
+    "etag": "",
     "is_based_on": {
-      "id": "string",
-      "type": "string"
+      "id": "",
+      "type": ""
     },
     "_embedded": [
       {
-        "code_list": "string",
-        "identifier": "string",
-        "label": "string",
-        "name": "string"
+        "code_list": "",
+        "identifier": "",
+        "label": "",
+        "name": ""
       }
     ],
-    "type": "static",
-    "state": "string"
+    "type": "",
+    "state": ""
   }
