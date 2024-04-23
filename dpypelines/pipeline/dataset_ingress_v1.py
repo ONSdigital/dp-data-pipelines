@@ -4,7 +4,6 @@ from pathlib import Path
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 
-from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
