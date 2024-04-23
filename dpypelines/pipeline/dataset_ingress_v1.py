@@ -100,7 +100,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for match, sanity_checker in pipeline_config["transform_inputs"].items():
         try:
             input_file_path: Path = local_store.save_lone_file_matching(match)
-            logger.info(f"Successfully saved file that matches pattern", data={"input_file_path": input_file_path, "match": match})
+            logger.info("Successfully saved file that matches pattern", data={"input_file_path": input_file_path, "match": match})
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error("Error occured while attempting to save matching pattern file.", 
@@ -145,7 +145,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         err, 
         data={"transform_function": transform_function, 
         "pipeline_config": pipeline_config,
-        "transform_function": transform_function,
         "args": args,
         "kwrags": kwargs
         })
