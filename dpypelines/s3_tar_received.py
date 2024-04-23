@@ -55,7 +55,7 @@ def start(s3_object_name: str):
         local_store = LocalDirectoryStore("input")
         logger.info(
             "local directory store successfully set up using decompressed files",
-            data={"local store": local_store},
+            data={"local store": local_store.get_file_names()},
         )
     except Exception as err:
         logger.error(
