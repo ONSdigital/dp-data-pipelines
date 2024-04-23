@@ -15,11 +15,14 @@ This repository is provided as an installable python package
     pip install git+https://github.com/ONSdigital/dp-data-pipelines.git
     ```
 
+## Setup
+
+Before you start using the `dp-data-pipelines` , you need to set up your environment:
+
+1. **AWS SSO Login**: Ensure you are logged in to AWS via SSO. This is necessary for the function to access the S3 bucket and process the tar file. If you haven't logged in, you can do so by running `aws sso login` in your terminal.
 
 ## Usage
 This package provides multiple data pipelines. The initial use case is the s3_tar_received.start() function, which handles the required behavior when receiving a tar file indicated by an S3 object name.
-
-### Before using the `s3_tar_received.start()` function, ensure you are logged in to AWS via SSO. This is necessary for the function to access the S3 bucket and process the tar file.
 
 Here's a basic example of how to use it:
 
@@ -42,6 +45,18 @@ The `s3_tar_received.start()` function performs the following steps:
 If the `s3_tar_received.start()` function encounters any problems, an error will be raised that includes some information on the issue encountered, to help you resolve the problem. For example:
 
 -   If it is not possible to create the local store from the decompressed tar file, an error message will be displayed indicating the issue with creating the local directory store.
+
+
+## Configuration
+
+| Environment variable  | Default | Description                                                               |
+|:----------------------|:-------:|:--------------------------------------------------------------------------|
+| DE_SLACK_WEBHOOK      |  None   | Webhook for the Data Engineering Slack channel                            |
+| SE_SLACK_WEBHOOK      |  None   | Webhook for the Software Engineering Slack channel                        |
+| DS_SLACK_WEBHOOK      |  None   | Webhook for the Data Submitters Slack channel                             |
+| PS_SLACK_WEBHOOK      |  None   | Webhook for the Publishing Support Slack channel                          |
+| DISABLE_NOTIFICATIONS |  False  | Toggle Slack notifications on or off                                      |
+| AWS_PROFILE           |  None   | The AWS environment (dp-bleed-dev, dp-staging, dp-sandbox, dp-production) |
 
 Licence
 -------
