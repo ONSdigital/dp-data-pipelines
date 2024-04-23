@@ -48,11 +48,7 @@ def start(s3_object_name: str):
             data={"s3_object_name": s3_object_name},
         )
         de_notifier.failure()
-        raise Exception(
-            message.unexpected_error(
-                f"Failed to decompress tar file {s3_object_name}", err
-            )
-        ) from err
+        raise err
 
     # Create a local directory store using the decompressed files
     try:
@@ -66,11 +62,7 @@ def start(s3_object_name: str):
             "failed to create local directory store using decompresed files", err
         )
         de_notifier.failure()
-        raise Exception(
-            message.unexpected_error(
-                "Failed to create local directory store at inputs", err
-            )
-        ) from err
+        raise err
 
     # get_dataset_id() currently empty - returns "not-specified"
     # To be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
@@ -82,9 +74,7 @@ def start(s3_object_name: str):
     except Exception as err:
         logger.error("Failed to retrieve dataset_id", err)
         de_notifier.failure()
-        raise Exception(
-            message.unexpected_error(f"Failed to get dataset id {dataset_id}", err)
-        ) from err
+        raise err
 
     # Get config details for the given dataset_id
     try:
@@ -100,12 +90,7 @@ def start(s3_object_name: str):
             data={"dataset_id": dataset_id},
         )
         de_notifier.failure()
-        raise Exception(
-            message.unexpected_error(
-                f"Failed to match dataset_id {dataset_id} to available configuration keys {config_keys}",
-                err,
-            )
-        ) from err
+        raise err
 
     # Get the path to the directory
     files_dir = local_store.get_current_source_pathlike()
@@ -128,9 +113,4 @@ def start(s3_object_name: str):
             data={"pipeline_config": pipeline_config, "files_dir": files_dir},
         )
         de_notifier.failure()
-        raise Exception(
-            message.unexpected_error(
-                f"Failed to match dataset_id {dataset_id} to available configuration keys {config_keys}",
-                err,
-            )
-        ) from err
+        raise err
