@@ -1,8 +1,6 @@
-import os
-
+from dpytools.logging.logger import DpLogger
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
-from dpytools.logging.logger import DpLogger
 
 from dpypelines.pipeline.configuration import get_dataset_id, get_pipeline_config
 from dpypelines.pipeline.shared import message
