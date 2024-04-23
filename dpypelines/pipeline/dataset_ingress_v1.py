@@ -28,9 +28,14 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         Exception: If any other unexpected error occurs.
     """
     # Create notifier from webhook env var
-    de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
-        "DE_SLACK_WEBHOOK"
-    )
+    try:
+        de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
+            "DE_SLACK_WEBHOOK"
+        )
+        logger.info("Created notifier instance", data={"notifier": de_notifier})
+    except Exception as err:
+        logger.error("Error occured while attempting to create notifier instance", err)
+        raise err
 
     # Attempt to access the local data store
     try:
@@ -89,7 +94,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             logger.error(f"Error while looking for supplementary distribution {supplementary_distribution}", 
             err, 
             data={"supplementary_distribution": supplementary_distribution,
-            "supplementary_distribution_patterns": supplementary_distribution_patterns}
+            "supplementary_distribution_patterns": supplementary_distribution_patterns,
+            "files_in_directory": files_in_directory,
+            "pipeline_config": pipeline_config}
             )
             de_notifier.failure()
             raise err
@@ -100,7 +107,11 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for match, sanity_checker in pipeline_config["transform_inputs"].items():
         try:
             input_file_path: Path = local_store.save_lone_file_matching(match)
-            logger.info("Successfully saved file that matches pattern", data={"input_file_path": input_file_path, "match": match})
+            logger.info("Successfully saved file that matches pattern",
+             data={"input_file_path": input_file_path, 
+             "match": match, 
+             "files_in_directory": files_in_directory
+             })
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error("Error occured while attempting to save matching pattern file.", 
@@ -131,7 +142,11 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Get the transform function and keyword arguments from the transform_details
     transform_function = pipeline_config["transform"]
     kwargs = pipeline_config["transform_kwargs"]
-    logger.info("Retrieved transform function and keyword arguments from transform details.", data={"pipeline_config": pipeline_config})
+    logger.info("Retrieved transform function and keyword arguments from transform details.",
+     data={"pipeline_config": pipeline_config,
+    "args_got": args,
+    "kwargs_got": kwargs
+    })
 
     try:
         csv_path, metadata_path = transform_function(*args, **kwargs)
