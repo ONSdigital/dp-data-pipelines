@@ -118,7 +118,7 @@ def step_impl(context, correct_metadata):
     result = diff(context.json_output,correct_metadata_json)
     assert (
         context.json_output == correct_metadata_json
-    ), f"Metadata does not match expected metadata :\n {list(result)}."
+    ), f"Metadata does not match expected metadata, the following values are missing from the metadat output :\n {list(result)}."
 
 
 @then('the pipeline should generate an error with a message containing "{err_msg}"')
