@@ -18,7 +18,7 @@ Feature: Data Ingress v1
     And the csv output has the columns
           | ID | Test | Name xml:lang |
     And I read the metadata output 'metadata.json'
-    And the metadata should match 'fixtures/correct_metadata.json'
+    And the metadata should match 'fixtures/correct_metadata_test.json'
 
   Scenario: Pipeline runs with an expected error
     Given a temporary source directory of files

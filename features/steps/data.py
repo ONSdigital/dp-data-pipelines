@@ -1,5 +1,6 @@
 from behave import *
 from pathlib import Path
+from dictdiffer import diff
 
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
@@ -106,7 +107,6 @@ def step_impl(context, metadata_output):
 
     context.json_output = json.load(metadata_file)
 
-
 @then("the metadata should match '{correct_metadata}'")
 def step_impl(context, correct_metadata):
     relative_features_path = Path(__file__).parent.parent
@@ -115,9 +115,10 @@ def step_impl(context, correct_metadata):
     correct_metadata_file = open(correct_metadata_path)
     correct_metadata_json = json.load(correct_metadata_file)
 
+    result = diff(context.json_output,correct_metadata_json)
     assert (
         context.json_output == correct_metadata_json
-    ), f"Metadata does not match expected metadata from {correct_metadata_json}."
+    ), f"Metadata does not match expected metadata :\n {list(result)}."
 
 
 @then('the pipeline should generate an error with a message containing "{err_msg}"')
