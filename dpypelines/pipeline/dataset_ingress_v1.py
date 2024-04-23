@@ -4,7 +4,7 @@ from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.shared import message
-from dpypelines.pipeline.shared.utility import (
+from dpypelines.pipeline.shared.email_template_message import (
     EmailContent,
     file_not_found_email,
     submission_processed_email,
