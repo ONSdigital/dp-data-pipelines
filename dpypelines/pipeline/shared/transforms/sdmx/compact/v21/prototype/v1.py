@@ -6,6 +6,7 @@ import xmltodict
 from dpypelines.pipeline.shared.transforms.utils import flatten_dict, pathify, set_key
 from dpypelines.pipeline.shared.transforms.validate_transform import check_read_in_sdmx
 
+
 def xmlToCsvSDMX2_1(input_path, output_path):
 
     check_read_in_sdmx(input_path)  # transform validation
