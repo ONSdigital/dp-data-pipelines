@@ -4,21 +4,12 @@ import pandas as pd
 import xmltodict
 
 from dpypelines.pipeline.shared.transforms.utils import (
-    #convert,
     flatten_dict,
     pathify,
     set_key,
 )
 from dpypelines.pipeline.shared.transforms.validate_transform import (
-    #check_columns_of_dataframes_are_unique,
-    #check_header_info,
-    #check_header_unpacked,
-    #check_length_of_dataframe_is_expected_length,
-    #check_length_of_dict_is_expected_length,
     check_read_in_sdmx,
-    #check_tidy_data_columns,
-    #check_xml_type,
-    #get_number_of_obs_from_xml_file,
 )
 
 def xmlToCsvSDMX2_1(input_path, output_path):
