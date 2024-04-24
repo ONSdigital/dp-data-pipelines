@@ -59,9 +59,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         email_client.send(submitter_email, email_content.subject, email_content.message)
     except Exception as err:
         de_notifier.failure()
-        raise Exception(
-            message.unexpected_error("Failed to send email", err)
-        ) from err
+        raise Exception(message.unexpected_error("Failed to send email", err)) from err
 
     # Attempt to access the local data store
     try:
@@ -163,12 +161,10 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     except Exception as err:
         de_notifier.failure()
-        printable_transform_details = json.dumps(
-            pipeline_config, indent=2, default=lambda x: str(x)
-        )
-        raise Exception(
-            message.error_in_transform(printable_transform_details, local_store, err)
-        ) from err
+        raise err
 
-    de_notifier.success()
+    # TODO - validate the metadata once we have a schema for it.
+
+    # TODO - validate the csv once we know what we're validating
+
     print("Worked. I ran to completion.")
