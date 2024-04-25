@@ -1,5 +1,5 @@
-import json
 import os
+import json
 from pathlib import Path
 
 from dpytools.stores.directory.local import LocalDirectoryStore
@@ -10,14 +10,13 @@ from dpypelines.pipeline.shared.email_template_message import (
     file_not_found_email,
     submission_processed_email,
     supplementary_distribution_not_found_email,
-    unexpected_error_email,
 )
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig import matching
-from dpypelines.pipeline.shared.utility import get_email_client, get_submitter_email
+from dpypelines.pipeline.shared.utility import get_submitter_email, get_email_client
 
 
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
@@ -59,7 +58,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         email_client.send(submitter_email, email_content.subject, email_content.message)
     except Exception as err:
         de_notifier.failure()
-        raise Exception(message.unexpected_error("Failed to send email", err)) from err
+        raise Exception(
+            message.unexpected_error("Failed to send email", err)
+        ) from err
 
     # Attempt to access the local data store
     try:
