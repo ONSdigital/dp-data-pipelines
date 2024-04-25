@@ -1,19 +1,24 @@
-import os
 import json
 import os
-import re
 from pathlib import Path
 
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.shared import message
+from dpypelines.pipeline.shared.utility import (
+    EmailContent,
+    file_not_found_email,
+    submission_processed_email,
+    supplementary_distribution_not_found_email,
+    unexpected_error_email,
+)
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig import matching
-from dpypelines.pipeline.shared.utility import get_submitter_email, get_email_client
+from dpypelines.pipeline.shared.utility import get_email_client, get_submitter_email
 
 
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
@@ -50,7 +55,12 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     # just throw out an email to see if it works
-    email_client.send(submitter_email, "suitable subject", "suitable message body")
+    try:
+        email_content = submission_processed_email()
+        email_client.send(submitter_email, email_content.subject, email_content.message)
+    except Exception as err:
+        de_notifier.failure()
+        raise Exception(message.unexpected_error("Failed to send email", err)) from err
 
     # Attempt to access the local data store
     try:
@@ -72,6 +82,11 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for required_file in required_file_patterns:
         try:
             if not local_store.has_lone_file_matching(required_file):
+
+                email_content = file_not_found_email(required_file)
+                email_client.send(
+                    submitter_email, email_content.subject, email_content.message
+                )
                 de_notifier.failure()
                 msg = message.expected_local_file_missing(
                     f"Required file {required_file} not found",
@@ -99,9 +114,21 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for supp_dist_pattern in supp_dist_patterns:
         try:
             if not local_store.has_lone_file_matching(supp_dist_pattern):
-                raise FileNotFoundError(
-                    f"Could not find file matching pattern {supp_dist_pattern}"
+
+                email_content = supplementary_distribution_not_found_email(
+                    supp_dist_pattern
                 )
+                email_client.send(
+                    submitter_email, email_content.subject, email_content.message
+                )
+                de_notifier.failure()
+                msg = message.expected_local_file_missing(
+                    f"Supplementary distribution {supp_dist_pattern} not found",
+                    supp_dist_pattern,
+                    "dataset_ingress_v1",
+                    local_store,
+                )
+                raise ValueError(msg)
         except Exception as err:
             de_notifier.failure()
             raise err
