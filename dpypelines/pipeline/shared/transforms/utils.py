@@ -11,6 +11,7 @@ def pathify(label):
         r"-$", "", re.sub(r"-+", "-", re.sub(r"[^\w/]", "-", unidecode(label).lower()))
     )
 
+
 def set_key(dictionary, key, value):
     if key not in dictionary:
         dictionary[key] = value
