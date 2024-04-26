@@ -1,11 +1,11 @@
 {
-    "title": "GDP Identity from the Income Side",
+    "title": "Supply table at basic prices including a transformation into purchaser's prices",
     "description": "",
     "summary": "",
-    "identifier": "https://staging.idpd.uk/datasets/gdp-identity-from-the-income-side/editions",
+    "identifier": "https://staging.idpd.uk/datasets/supply-table-at-basic-prices-including-a-transformation-into-purchaser-s-prices/editions",
     "issued": "",
     "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
-    "modified": "2024-02-13T14:16:36Z",
+    "modified": "2024-01-24T12:58:48Z",
     "next_release": "",
     "publisher": {
         "email": "",
@@ -17,8 +17,8 @@
     "spatial_resolution": [
         "W2"
     ],
-    "temporal_coverage": "start: 1995-Q1, end: 2023-Q4",
-    "temporal_resolution": "P3M",
+    "temporal_coverage": "start: 1997, end: 2020",
+    "temporal_resolution": "P1Y",
     "contact_point": {
         "email": "",
         "name": "",
@@ -236,16 +236,6 @@
                     {
                         "component_type": "",
                         "datatype": "string",
-                        "name": "ACCOUNTING_ENTRY",
-                        "titles": "accounting_entry",
-                        "property_url": "",
-                        "value_url": "",
-                        "codelist_url": "",
-                        "sub_property_of": ""
-                    },
-                    {
-                        "component_type": "",
-                        "datatype": "string",
                         "name": "ACTIVITY",
                         "titles": "activity",
                         "property_url": "",
@@ -256,8 +246,8 @@
                     {
                         "component_type": "",
                         "datatype": "string",
-                        "name": "ADJUSTMENT",
-                        "titles": "adjustment",
+                        "name": "PRODUCT",
+                        "titles": "product",
                         "property_url": "",
                         "value_url": "",
                         "codelist_url": "",
@@ -266,8 +256,28 @@
                     {
                         "component_type": "",
                         "datatype": "string",
-                        "name": "FREQ",
-                        "titles": "freq",
+                        "name": "VALUATION",
+                        "titles": "valuation",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "COUNTERPART_AREA",
+                        "titles": "counterpart_area",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "CUST_BREAKDOWN",
+                        "titles": "cust_breakdown",
                         "property_url": "",
                         "value_url": "",
                         "codelist_url": "",
@@ -286,8 +296,8 @@
                     {
                         "component_type": "",
                         "datatype": "string",
-                        "name": "REF_AREA",
-                        "titles": "ref_area",
+                        "name": "PRICES",
+                        "titles": "prices",
                         "property_url": "",
                         "value_url": "",
                         "codelist_url": "",
@@ -296,8 +306,18 @@
                     {
                         "component_type": "",
                         "datatype": "string",
-                        "name": "COUNTERPART_AREA",
-                        "titles": "counterpart_area",
+                        "name": "FREQ",
+                        "titles": "freq",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "REF_AREA",
+                        "titles": "ref_area",
                         "property_url": "",
                         "value_url": "",
                         "codelist_url": "",
@@ -326,8 +346,8 @@
                     {
                         "component_type": "",
                         "datatype": "string",
-                        "name": "INSTR_ASSET",
-                        "titles": "instr_asset",
+                        "name": "ACCOUNTING_ENTRY",
+                        "titles": "accounting_entry",
                         "property_url": "",
                         "value_url": "",
                         "codelist_url": "",
@@ -336,8 +356,18 @@
                     {
                         "component_type": "",
                         "datatype": "string",
-                        "name": "EXPENDITURE",
-                        "titles": "expenditure",
+                        "name": "ACTIVITY_TO",
+                        "titles": "activity_to",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "PRODUCT_TO",
+                        "titles": "product_to",
                         "property_url": "",
                         "value_url": "",
                         "codelist_url": "",
@@ -348,26 +378,6 @@
                         "datatype": "string",
                         "name": "UNIT_MEASURE",
                         "titles": "unit_measure",
-                        "property_url": "",
-                        "value_url": "",
-                        "codelist_url": "",
-                        "sub_property_of": ""
-                    },
-                    {
-                        "component_type": "",
-                        "datatype": "string",
-                        "name": "PRICES",
-                        "titles": "prices",
-                        "property_url": "",
-                        "value_url": "",
-                        "codelist_url": "",
-                        "sub_property_of": ""
-                    },
-                    {
-                        "component_type": "",
-                        "datatype": "string",
-                        "name": "TRANSFORMATION",
-                        "titles": "transformation",
                         "property_url": "",
                         "value_url": "",
                         "codelist_url": "",

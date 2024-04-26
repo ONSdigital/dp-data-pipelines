@@ -47,14 +47,17 @@ If the `s3_tar_received.start()` function encounters any problems, an error will
 
 ## Configuration
 
-| Environment variable  | Default | Description                                                               |
-|:----------------------|:-------:|:--------------------------------------------------------------------------|
-| DE_SLACK_WEBHOOK      |  None   | Webhook for the Data Engineering Slack channel                            |
-| SE_SLACK_WEBHOOK      |  None   | Webhook for the Software Engineering Slack channel                        |
-| DS_SLACK_WEBHOOK      |  None   | Webhook for the Data Submitters Slack channel                             |
-| PS_SLACK_WEBHOOK      |  None   | Webhook for the Publishing Support Slack channel                          |
-| DISABLE_NOTIFICATIONS |  False  | Toggle Slack notifications on or off                                      |
-| AWS_PROFILE           |  None   | The AWS environment (dp-bleed-dev, dp-staging, dp-sandbox, dp-production) |
+| Environment variable     | Default | Description                                                               |
+|:-------------------------|:-------:|:--------------------------------------------------------------------------|
+| DE_SLACK_WEBHOOK         |  None   | Webhook for the Data Engineering Slack channel                            |
+| SE_SLACK_WEBHOOK         |  None   | Webhook for the Software Engineering Slack channel                        |
+| DS_SLACK_WEBHOOK         |  None   | Webhook for the Data Submitters Slack channel                             |
+| PS_SLACK_WEBHOOK         |  None   | Webhook for the Publishing Support Slack channel                          |
+| DISABLE_NOTIFICATIONS    |  False  | Toggle Slack notifications on or off                                      |
+| AWS_PROFILE              |  None   | The AWS environment (dp-bleed-dev, dp-staging, dp-sandbox, dp-production) |
+| UPLOAD_SERVICE_URL       |  None   |                                                                           |
+| UPLOAD_SERVICE_S3_BUCKET |  None   |                                                                           |
+| FLORENCE_TOKEN           |  None   |                                                                           |
 
 Licence
 -------

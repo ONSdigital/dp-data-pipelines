@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-
+from urllib3.util import parse_url
 from behave import *
 
 
@@ -10,7 +10,9 @@ def _parse_destination_url_from_log(log: str) -> str:
     """
     path_line = [x for x in log.split("\n") if "this-requests-url" in x]
     assert len(path_line) == 1, f'Cannot find "this-requests-url" in service log {log}'
-    return "/" + path_line[0].split("/")[-1].strip()
+    requests_url = path_line[0].split("this-requests-url: ")[1]
+    return parse_url(requests_url)[4]
+    # return "/" + path_line[0].split("/")[-1].strip()
 
 
 def _parse_request_headers_as_dict_from_log(log: str) -> dict:

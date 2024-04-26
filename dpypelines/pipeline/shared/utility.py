@@ -1,6 +1,10 @@
 # devnote: not using strtobool from disutils as that
 # package is being depreciate from the standard
 # library in python >3.12
+import os
+from dpytools.http.upload import UploadClient
+
+
 def str_to_bool(should_be_bool: str) -> bool:
     """
     Take a string that should represent a boolean
@@ -23,3 +27,14 @@ def str_to_bool(should_be_bool: str) -> bool:
         raise ValueError(
             f"A str value representing a boolean should be one of 'True', 'true', 'False', 'false'. Got '{should_be_bool}'"
         )
+
+
+def get_florence_access_token() -> str:
+    florence_access_token = os.environ.get("FLORENCE_TOKEN", None)
+    if florence_access_token is not None:
+        return florence_access_token
+    return "not-implemented"
+
+
+def create_upload_client(upload_url: str) -> UploadClient:
+    return UploadClient(upload_url)
