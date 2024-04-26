@@ -25,6 +25,12 @@ def before_all(context):
     context.disable_notification_setting = os.environ.get("DISABLE_NOTIFICATIONS", None)
     os.environ["DISABLE_NOTIFICATIONS"] = "true"
 
+    context.upload_service_url = os.environ.get("UPLOAD_SERVICE_URL", None)
+    os.environ["UPLOAD_SERVICE_URL"] = "http://127.0.0.1:5001/upload"
+
+    context.upload_service_s3_bucket = os.environ.get("UPLOAD_SERVICE_S3_BUCKET", None)
+    os.environ["UPLOAD_SERVICE_S3_BUCKET"] = "my-bucket/my.tar"
+
     context.features_directory = Path(__file__).parent
 
     context.fixture_destination_path = Path(
