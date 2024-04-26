@@ -233,4 +233,5 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # TODO - validate the csv once we know what we're validating
 
+    de_notifier.success()
     print("Worked. I ran to completion.")
