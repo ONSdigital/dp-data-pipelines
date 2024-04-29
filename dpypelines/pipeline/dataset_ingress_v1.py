@@ -115,12 +115,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     submitter_email, email_content.subject, email_content.message
                 )
                 de_notifier.failure()
-                msg = message.expected_local_file_missing(
-                    f"Required file {required_file} not found",
-                    required_file,
-                    "dataset_ingress_v1",
-                    local_store,
-                )
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error(
@@ -168,12 +162,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     submitter_email, email_content.subject, email_content.message
                 )
                 de_notifier.failure()
-                msg = message.expected_local_file_missing(
-                    f"Supplementary distribution {supplementary_distribution} not found",
-                    supplementary_distribution,
-                    "dataset_ingress_v1",
-                    local_store,
-                )
         except Exception as err:
             logger.error(
                 f"Error while looking for supplementary distribution {supplementary_distribution}",
