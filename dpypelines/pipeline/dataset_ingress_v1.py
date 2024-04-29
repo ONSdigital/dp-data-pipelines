@@ -5,7 +5,6 @@ from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.email_template_message import (
-    EmailContent,
     file_not_found_email,
     submission_processed_email,
     supplementary_distribution_not_found_email,
