@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 from dpytools.slack.slack import SlackMessenger
 
-from dpypelines.pipeline.shared.utility import str_to_bool
+from dpypelines.pipeline.shared.utils import str_to_bool
 
 
 class BasePipelineNotifier(ABC):

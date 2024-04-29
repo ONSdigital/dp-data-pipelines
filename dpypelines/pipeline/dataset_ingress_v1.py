@@ -2,7 +2,6 @@ import json
 import os
 from pathlib import Path
 
-from dpytools.http.upload import UploadClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 
@@ -11,9 +10,10 @@ from dpypelines.pipeline.shared.notification import (
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig import matching
-from dpypelines.pipeline.shared.utility import (
+from dpypelines.pipeline.shared.utils import (
     create_upload_client,
     get_florence_access_token,
+    get_supplementary_distribution_file,
 )
 
 logger = DpLogger("data-ingress-pipeline")
@@ -49,7 +49,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         local_store = LocalDirectoryStore(files_dir)
         files_in_directory = local_store.get_file_names()
         logger.info(
-            "Local data store successfully instansiated",
+            "Local data store successfully instantiated",
             data={
                 "local_store_dir": files_dir,
                 "files_in_directory": files_in_directory,
@@ -107,14 +107,12 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Extract the patterns for supplementary distributions from the pipeline configuration
     try:
-        supplementary_distribution_patterns = (
-            matching.get_supplementary_distribution_patterns(pipeline_config)
+        supp_dist_patterns = matching.get_supplementary_distribution_patterns(
+            pipeline_config
         )
         logger.info(
             "Successfully retrieved supplementary distribution patterns from pipeline config",
-            data={
-                "supplementary_distribution_pattenrs": supplementary_distribution_patterns
-            },
+            data={"supplementary_distribution_patterns": supp_dist_patterns},
         )
     except Exception as err:
         files_in_directory = local_store.get_file_names()
@@ -127,19 +125,19 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     # Check for the existence of each supplementary distribution
-    for supplementary_distribution in supplementary_distribution_patterns:
+    for supp_dist_pattern in supp_dist_patterns:
         try:
-            if not local_store.has_lone_file_matching(supplementary_distribution):
+            if not local_store.has_lone_file_matching(supp_dist_pattern):
                 raise FileNotFoundError(
-                    f"Could not find file matching pattern {supplementary_distribution}"
+                    f"Could not find file matching pattern {supp_dist_pattern}"
                 )
         except Exception as err:
             logger.error(
-                f"Error while looking for supplementary distribution {supplementary_distribution}",
+                f"Error while looking for supplementary distribution {supp_dist_pattern}",
                 err,
                 data={
-                    "supplementary_distribution": supplementary_distribution,
-                    "supplementary_distribution_patterns": supplementary_distribution_patterns,
+                    "supplementary_distribution": supp_dist_pattern,
+                    "supplementary_distribution_patterns": supp_dist_patterns,
                     "files_in_directory": files_in_directory,
                     "pipeline_config": pipeline_config,
                 },
@@ -255,7 +253,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     de_notifier.msg_str(
         f"""
 
-Tranform ran to completion.
+Transform ran to completion.
 
 Data Snippet:
 ```
@@ -273,6 +271,7 @@ Metadata:
 
     # Upload output files to Upload Service
     try:
+        # Get Upload Service URL from environment variable
         upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
         assert (
             upload_url is not None
@@ -284,30 +283,35 @@ Metadata:
         raise err
 
     try:
+        # Get S3 bucket name from environment variable
         s3_bucket = os.environ.get("UPLOAD_SERVICE_S3_BUCKET", None)
         assert (
             s3_bucket is not None
         ), "UPLOAD_SERVICE_S3_BUCKET environment variable not set."
         logger.info("Got Upload Service S3 bucket", data={"s3_bucket": s3_bucket})
     except Exception as err:
-        logger.error("Error setting Upload Service S3 bucket", err)
+        logger.error("Error getting Upload Service S3 bucket", err)
         de_notifier.failure()
         raise err
 
     try:
+        # Get Florence access token from environment variable
         florence_access_token = get_florence_access_token()
         assert (
             florence_access_token is not None
         ), "FLORENCE_TOKEN environment variable not set."
         logger.info("Got Florence access token")
-        # data={"florence_access_token": florence_access_token}
     except Exception as err:
         logger.error("Error getting Florence access token", err)
         de_notifier.failure()
         raise err
 
     try:
+        # Create UploadClient from upload_url
         upload_client = create_upload_client(upload_url)
+        logger.info(
+            "UploadClient created from upload_url", data={"upload_url": upload_url}
+        )
     except Exception as err:
         logger.error(
             "Error creating UploadClient", err, data={"upload_url": upload_url}
@@ -316,12 +320,72 @@ Metadata:
         raise err
 
     try:
+        # Upload CSV to Upload Service
         upload_client.upload_csv(csv_path, s3_bucket, florence_access_token)
+        logger.info(
+            "Uploaded CSV to Upload Service",
+            data={
+                "csv_path": csv_path,
+                "s3_bucket": s3_bucket,
+                "upload_url": upload_url,
+            },
+        )
     except Exception as err:
         logger.error(
-            "Error uploading file to Upload Service",
+            "Error uploading CSV file to Upload Service",
             err,
-            data={"csv_path": csv_path, "s3_bucket": s3_bucket},
+            data={
+                "csv_path": csv_path,
+                "s3_bucket": s3_bucket,
+                "upload_url": upload_url,
+            },
         )
         de_notifier.failure()
         raise err
+
+    # Check if there are any supplementary distributions to upload
+    if supp_dist_patterns:
+        all_files = os.listdir()
+        logger.info("Got files", data={"files": all_files})
+        for supp_dist_pattern in supp_dist_patterns:
+            # Get supplementary distribution filename and file extension matching pattern
+            supplementary_distribution, extension = get_supplementary_distribution_file(
+                all_files, supp_dist_pattern
+            )
+            logger.info(
+                "Got supplementary distribution",
+                data={
+                    "supplementary_distribution": supplementary_distribution,
+                    "file_extension": extension,
+                },
+            )
+            # If the supplementary distribution is an XML file, upload it
+            if extension == ".xml":
+                try:
+                    upload_client.upload_sdmx(
+                        supplementary_distribution, s3_bucket, florence_access_token
+                    )
+                    logger.info(
+                        "Uploaded supplementary distribution",
+                        data={
+                            "supplementary_distribution": supplementary_distribution,
+                            "s3_bucket": s3_bucket,
+                            "upload_url": upload_url,
+                        },
+                    )
+                except Exception as err:
+                    logger.error(
+                        "Error uploading SDMX file to Upload Service",
+                        err,
+                        data={
+                            "supplementary_distribution": supplementary_distribution,
+                            "s3_bucket": s3_bucket,
+                            "upload_url": upload_url,
+                        },
+                    )
+                    de_notifier.failure()
+                    raise err
+            else:
+                raise NotImplementedError(
+                    f"Uploading files of type {extension} not supported."
+                )

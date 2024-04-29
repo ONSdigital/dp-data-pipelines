@@ -50,6 +50,7 @@ def test_cant_find_scheama():
     assert "Error: Something went wrong" in human_readable_output
     assert isinstance(human_readable_output, str)
 
+
 def test_invalid_config():
     error = Exception("Something went wrong")
     config_dict = {

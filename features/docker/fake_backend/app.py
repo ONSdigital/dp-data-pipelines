@@ -22,12 +22,13 @@ def test_id(request_id):
 
 
 @app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
+@app.route("/<path:path>", methods=["GET", "POST"])
 def main(path):
     logging.info(f"this-requests-path: {path}")
     logging.info(f"this-requests-url: {request.url}")
     logging.info(f"this-requests-headers: {dict(request.headers)}")
     logging.info(f"this-requests-body: {request.get_data()}")
+    logging.info(f"this-requests-json: {request.get_json(silent=True)}")
     return "I am the backend", 200
 
 
