@@ -54,12 +54,10 @@ def get_submitter_email() -> str:
     # What you can use WHILE DEVELOPING only.
     return os.environ["TEMPORARY_SUBMITTER_EMAIL"]
 
-    
     # What you should put in pr
 
-
     # Acceptence test raises error for pr
-    # todo 
+    # todo
 
     # submitter_email = os.getenv("TEMPORARY_SUBMITTER_EMAIL")
 
