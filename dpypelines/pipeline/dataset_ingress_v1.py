@@ -104,9 +104,12 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for required_file in required_file_patterns:
         try:
             if not local_store.has_lone_file_matching(required_file):
-                raise FileNotFoundError(
-                    f"Could not find file matching pattern {required_file}"
+
+                email_content = file_not_found_email(required_file)
+                email_client.send(
+                    submitter_email, email_content.subject, email_content.message
                 )
+                de_notifier.failure()
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error(
@@ -144,9 +147,14 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for supp_dist_pattern in supp_dist_patterns:
         try:
             if not local_store.has_lone_file_matching(supp_dist_pattern):
-                raise FileNotFoundError(
-                    f"Could not find file matching pattern {supp_dist_pattern}"
+
+                email_content = supplementary_distribution_not_found_email(
+                    supp_dist_pattern
                 )
+                email_client.send(
+                    submitter_email, email_content.subject, email_content.message
+                )
+                de_notifier.failure()
         except Exception as err:
             logger.error(
                 f"Error while looking for supplementary distribution {supp_dist_pattern}",
