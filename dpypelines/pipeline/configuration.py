@@ -40,6 +40,7 @@ def get_dataset_id(s3_object_name: str) -> str:
     """
     return "not-specified"
 
+
 def get_pipeline_config(dataset_id: str) -> tuple[dict, list]:
     """
     Get pipeline config details for the given dataset_id

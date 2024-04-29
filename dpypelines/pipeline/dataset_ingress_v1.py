@@ -14,7 +14,7 @@ from dpypelines.pipeline.shared.notification import (
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig import matching
-from dpypelines.pipeline.shared.utility import get_submitter_email, get_email_client
+from dpypelines.pipeline.shared.utility import get_email_client, get_submitter_email
 
 logger = DpLogger("data-ingress-pipeline")
 
