@@ -4,10 +4,11 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from dpypelines.pipeline.shared.notification import (
-    PipelineNotifier,
     NopNotifier,
-    notifier_from_env_var_webhook
+    PipelineNotifier,
+    notifier_from_env_var_webhook,
 )
+
 
 def test_notification_constructor():
     """
@@ -74,7 +75,7 @@ def test_notification_custom_postfix_success():
     notifier.client.msg_str.assert_called_once_with(f":white_check_mark: {postfix_str}")
 
 
-def test_notification_custom_postfix_success():
+def test_notification_custom_postfix_failure():
     """
     Test that we can add a custom postfix to the notification message
     for a failure.

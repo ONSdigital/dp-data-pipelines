@@ -2,8 +2,8 @@ import pytest
 
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared.pipelineconfig.matching import (
-    get_supplementary_distribution_patterns,
     get_required_files_patterns,
+    get_supplementary_distribution_patterns,
 )
 from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
     sdmx_compact_2_0_prototype_1,
