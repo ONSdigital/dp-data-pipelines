@@ -1,6 +1,6 @@
 import pytest
 
-from dpypelines.pipeline.shared.utility import str_to_bool
+from dpypelines.pipeline.shared.utils import str_to_bool
 
 
 def test_str_to_bool_valid_values():

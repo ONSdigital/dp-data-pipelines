@@ -9,24 +9,24 @@ def _parse_destination_url_from_log(log: str) -> str:
     Get the receiving path from the docker log
     """
     path_line = [x for x in log.split("\n") if "this-requests-url" in x]
-    assert len(path_line) == 1, f'Cannot find "this-requests-url" in service log {log}'
-    requests_url = path_line[0].split("this-requests-url: ")[1]
-    return parse_url(requests_url)[4]
-    # return "/" + path_line[0].split("/")[-1].strip()
+    assert len(path_line) == 1, f"Cannot find 'this-requests-url' in service log {log}"
+    destination_url = path_line[0].split("this-requests-url: ")[1]
+    return parse_url(destination_url)[4]
 
 
-def _parse_request_headers_as_dict_from_log(log: str) -> dict:
-    """
-    Get the headers from the docker logs as a dictionary.
-    """
-    assert "this-requests-headers:" in log, (
-        "'this-requests-headers:' expected but not found in: " f"{log}"
-    )
-    headers_dict_as_str = (
-        log.split("this-requests-headers:")[1].replace("'", '"').split("}")[0] + "}"
-    )
-    headers_as_dict = json.loads(headers_dict_as_str)
-    return headers_as_dict
+def _parse_request_body_from_log(log: str) -> str:
+    body_line = [x for x in log.split("\n") if "this-requests-body" in x]
+    assert len(body_line) == 1, f"Cannot find 'this-requests-body' in service log {log}"
+    request_body = body_line[0].split("this-requests-body: ")[1]
+    return request_body
+
+
+def _parse_dict_from_log(log: str, descriptor: str) -> dict:
+    log_line = [x for x in log.split("\n") if descriptor in x]
+    assert len(log_line) == 1, f"Cannot find '{descriptor}' in service log {log}"
+    request_str = log_line[0].split(descriptor + ": ")[1].replace("'", '"')
+    request_dict = json.loads(request_str)
+    return request_dict
 
 
 def get_request_logs(container, request_id) -> str:
@@ -81,9 +81,6 @@ def step_impl(context, service_endpoint):
         headers=context.request_headers,
         json=context.json,
     )
-    context.receiving_service_log = get_request_logs(
-        context.backend_container, context.request_id
-    )
 
 
 @Then('the backend receives a request to "{service_endpoint}"')
@@ -92,6 +89,9 @@ def step_impl(context, service_endpoint):
     Check that the path in question appears in the logs
     of the receiving service.
     """
+    context.receiving_service_log = get_request_logs(
+        context.backend_container, context.request_id
+    )
     destination_url = _parse_destination_url_from_log(context.receiving_service_log)
     assert (
         service_endpoint in destination_url
@@ -100,19 +100,31 @@ def step_impl(context, service_endpoint):
         """
 
 
+@Then('the csv payload received should contain "{request_csv_payload}"')
+def step_impl(context, request_csv_payload):
+    """
+    Ensure that the request body contains the CSV data specified in the test file.
+    """
+    request_body = _parse_request_body_from_log(context.receiving_service_log)
+
+    assert request_csv_payload in request_body
+
+
 @Then('the json payload received should match "{request_json_payload}"')
 def step_impl(context, request_json_payload):
     """
     Ensure that the request body contains the JSON data specified in the test file.
     """
-    request_body = context.response.request.body.decode("utf-8")
+    request_json_dict = _parse_dict_from_log(
+        context.receiving_service_log, "this-requests-json"
+    )
     relative_features_path = Path(__file__).parent.parent
 
     request_json_payload_path = relative_features_path / request_json_payload
 
     with open(request_json_payload_path, "r") as f:
         data = json.load(f)
-    assert data == json.loads(request_body)
+    assert data == request_json_dict
 
 
 @Then("the headers received should match")
@@ -122,8 +134,8 @@ def step_impl(context):
     docker logs to pull our one json entries worth of headers and
     parse it back into a python dictionary.
     """
-    headers_as_dict = _parse_request_headers_as_dict_from_log(
-        context.receiving_service_log
+    headers_as_dict = _parse_dict_from_log(
+        context.receiving_service_log, "this-requests-headers"
     )
     # Check that the headers dict contains the expected key-value pairs
     for row in context.table:

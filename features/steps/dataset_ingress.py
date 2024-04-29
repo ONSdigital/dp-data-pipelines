@@ -18,6 +18,15 @@ CONFIGURATION = {
         "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
         "secondary_function": dataset_ingress_v1,
     },
+    "valid_no_supp_dist": {
+        "config_version": 1,
+        "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [],
+        "secondary_function": dataset_ingress_v1,
+    },
     "invalid": {
         "config_version": 2,
         "transform": sdmx_compact_2_0_prototype_1,
@@ -57,12 +66,12 @@ def step_impl(context):
                 f2.write(file_object)
 
 
-@given("a dataset id of '{validity}'")
-def step_impl(context, validity):
-    context.pipeline_config = CONFIGURATION[validity]
+@given("a dataset id of '{dataset_id}'")
+def step_impl(context, dataset_id):
+    context.pipeline_config = CONFIGURATION[dataset_id]
 
 
-@given("v1_data_ingress starts using the temporary source directory")
+@given("dataset_ingress_v1 starts using the temporary source directory")
 def step_impl(context):
     try:
         dataset_ingress_v1(context.temporary_directory.absolute())

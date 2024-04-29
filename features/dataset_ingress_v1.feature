@@ -10,15 +10,10 @@ Feature: Data Ingress v1
     Given a temporary source directory of files
         | file     | fixture                     |
         | data.xml | esa2010_test_data_short.xml |
-    And a dataset id of 'valid'
-    And v1_data_ingress starts using the temporary source directory
-    And a request json payload of "fixtures/test2.json"
-    And a request with the headers
-        | key              | value           |
-        | X-Florence-Token | not-implemented |
-    And I send the request to the upload service at "/upload"
+    And a dataset id of 'valid_no_supp_dist'
+    And dataset_ingress_v1 starts using the temporary source directory
     Then the backend receives a request to "/upload"
-    And the json payload received should match "fixtures/test2.json"
+    And the csv payload received should contain "temp-file-part-1"
     And the headers received should match
         | key              | value           |
         | X-Florence-Token | not-implemented |
@@ -36,5 +31,5 @@ Feature: Data Ingress v1
         | file     | fixture               |
         | data.xml | esa2010_test_data.xml |
     And a dataset id of 'invalid'
-    And v1_data_ingress starts using the temporary source directory
+    And dataset_ingress_v1 starts using the temporary source directory
     Then the pipeline should generate an error with a message containing "Config version 2 not recognised"
