@@ -56,8 +56,6 @@ def get_submitter_email() -> str:
 
     if (
         submitter_email is None
-        or "@" not in submitter_email
-        or submitter_email.count("@") > 1
     ):
         raise NotImplementedError("Submitter email address cannot yet be acquired.")
 
