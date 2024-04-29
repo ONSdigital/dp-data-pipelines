@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from dpytools.logging.logger import DpLogger
@@ -45,7 +46,10 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     try:
-        submitter_email = get_submitter_email()
+        if os.getenv('DISABLE_EMAILS') != 'true':
+            submitter_email = get_submitter_email()
+        else:
+            submitter_email = None
     except Exception as err:
         de_notifier.failure()
         raise err
