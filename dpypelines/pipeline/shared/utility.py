@@ -50,18 +50,24 @@ def get_submitter_email() -> str:
     """
     Placeholder function to be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
     """
-    emails_disabled = os.environ.get("DISABLE_EMAILS", "false")
-    emails_disabled = str_to_bool(emails_disabled)
-
-    if emails_disabled:
-        return None  # or return a placeholder email
 
     # What you can use WHILE DEVELOPING only.
-    submitter_email = os.getenv("TEMPORARY_SUBMITTER_EMAIL")
+    return os.environ["TEMPORARY_SUBMITTER_EMAIL"]
 
-    if (
-        submitter_email is None
-    ):
-        raise NotImplementedError("Submitter email address cannot yet be acquired.")
+    
+    # What you should put in pr
 
-    return submitter_email
+
+    # Acceptence test raises error for pr
+    # todo 
+
+    # submitter_email = os.getenv("TEMPORARY_SUBMITTER_EMAIL")
+
+    # if (
+    #     submitter_email is None
+    #     or "@" not in submitter_email
+    #     or submitter_email.count("@") > 1
+    # ):
+    #     raise NotImplementedError("Submitter email address cannot yet be acquired.")
+
+    # return submitter_email
