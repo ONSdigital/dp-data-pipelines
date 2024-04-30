@@ -41,14 +41,21 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     try:
         submitter_email = get_submitter_email()
+        logger.info(
+            "Successfully got submitter email",
+            data={"submitter_email": submitter_email},
+        )
     except Exception as err:
+        logger.error("Error occured while attempting to get submitter email", err)
         de_notifier.failure()
         raise err
 
     # Create email client from env var
     try:
         email_client = get_email_client()
+        logger.info("Created email client instance", data={"email_client": email_client})
     except Exception as err:
+        logger.error("Error occured while attempting to create email client instance", err)
         de_notifier.failure()
         raise err
 
@@ -56,7 +63,12 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     try:
         email_content = submission_processed_email()
         email_client.send(submitter_email, email_content.subject, email_content.message)
+        logger.info(
+            "Successfully sent email",
+            data={"submitter_email": submitter_email, "email_content": email_content},
+        )
     except Exception as err:
+        logger.error("Error occured while attempting to send email", err)
         de_notifier.failure()
         raise Exception(message.unexpected_error("Failed to send email", err)) from err
 
@@ -109,6 +121,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 email_client.send(
                     submitter_email, email_content.subject, email_content.message
                 )
+                logger.info("Sent email to submitter: ",submitter_email," about missing required file: ", required_file)
                 de_notifier.failure()
         except Exception as err:
             files_in_directory = local_store.get_file_names()
@@ -154,6 +167,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 email_client.send(
                     submitter_email, email_content.subject, email_content.message
                 )
+                logger.info("Sent email to submitter: ",submitter_email," about missing supplementary distribution: ", supplementary_distribution)
                 de_notifier.failure()
         except Exception as err:
             logger.error(
