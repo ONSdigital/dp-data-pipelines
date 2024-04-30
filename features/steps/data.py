@@ -1,6 +1,6 @@
-from pathlib import Path
-
 from behave import *
+from pathlib import Path
+from dictdiffer import diff
 
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
@@ -117,9 +117,24 @@ def step_impl(context, correct_metadata):
     correct_metadata_file = open(correct_metadata_path)
     correct_metadata_json = json.load(correct_metadata_file)
 
+    result = diff(context.json_output, correct_metadata_json)
     assert (
         context.json_output == correct_metadata_json
-    ), f"Metadata does not match expected metadata from {correct_metadata_json}."
+    ), f"Metadata does not match expected metadata, (`add` means values are missing, `remove` means values need to be deleted, `change` means correct amount of values but doesn't match) :\n {list(result)}."
+
+
+@then("the metadata should not match '{incorrect_metadata}'")
+def step_impl(context, incorrect_metadata):
+    relative_features_path = Path(__file__).parent.parent
+
+    incorrect_metadata_path = Path(relative_features_path / incorrect_metadata)
+    incorrect_metadata_file = open(incorrect_metadata_path)
+    incorrect_metadata_json = json.load(incorrect_metadata_file)
+
+    result = diff(context.json_output, incorrect_metadata_json)
+    assert (
+        context.json_output != incorrect_metadata_json
+    ), "Got matching metadata result when there should be no match."
 
 
 @then('the pipeline should generate an error with a message containing "{err_msg}"')
