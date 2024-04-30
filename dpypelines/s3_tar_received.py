@@ -21,6 +21,7 @@ def start(s3_object_name: str):
         Example: 'my-bucket/my-data.tar'
 
     """
+
     # Create notifier from webhook env var
     try:
         de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
