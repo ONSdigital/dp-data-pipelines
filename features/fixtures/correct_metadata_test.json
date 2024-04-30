@@ -1,0 +1,499 @@
+{
+    "title": "GDP Identity from the Income Side",
+    "description": "",
+    "summary": "",
+    "identifier": "https://staging.idpd.uk/datasets/gdp-identity-from-the-income-side/editions",
+    "issued": "",
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "modified": "2024-02-13T14:16:36Z",
+    "next_release": "",
+    "publisher": {
+        "email": "",
+        "name": "",
+        "telephone": ""
+    },
+    "frequency": "",
+    "spatial_coverage": "GB",
+    "spatial_resolution": [
+        "W2"
+    ],
+    "temporal_coverage": "start: 1995-Q1, end: 2023-Q4",
+    "temporal_resolution": "P3M",
+    "contact_point": {
+        "email": "",
+        "name": "",
+        "telephone": ""
+    },
+    "keywords": [
+        "",
+        ""
+    ],
+    "themes": [
+        "",
+        ""
+    ],
+    "distributions": [
+        {
+            "checksum": "",
+            "@id": "",
+            "byte_size": "",
+            "media_type": "",
+            "download_url": "",
+            "described_by": "",
+            "table_schema": {
+                "about_url": "",
+                "column": [
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "ID",
+                        "titles": "id",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Test",
+                        "titles": "test",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Name xml:lang",
+                        "titles": "name xml:lang",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Name #text",
+                        "titles": "name #text",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Prepared",
+                        "titles": "prepared",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Sender id",
+                        "titles": "sender id",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Sender Name xml:lang",
+                        "titles": "sender name xml:lang",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Sender Name #text",
+                        "titles": "sender name #text",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Sender Contact Department xml:lang",
+                        "titles": "sender contact department xml:lang",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Sender Contact Department #text",
+                        "titles": "sender contact department #text",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Receiver id",
+                        "titles": "receiver id",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "KeyFamilyRef",
+                        "titles": "keyfamilyref",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "KeyFamilyAgency",
+                        "titles": "keyfamilyagency",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "DataSetAgency",
+                        "titles": "datasetagency",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "DataSetID",
+                        "titles": "datasetid",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "DataSetAction",
+                        "titles": "datasetaction",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Extracted",
+                        "titles": "extracted",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Source xml:lang",
+                        "titles": "source xml:lang",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "Source #text",
+                        "titles": "source #text",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "ACCOUNTING_ENTRY",
+                        "titles": "accounting_entry",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "ACTIVITY",
+                        "titles": "activity",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "ADJUSTMENT",
+                        "titles": "adjustment",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "FREQ",
+                        "titles": "freq",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "STO",
+                        "titles": "sto",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "REF_AREA",
+                        "titles": "ref_area",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "COUNTERPART_AREA",
+                        "titles": "counterpart_area",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "REF_SECTOR",
+                        "titles": "ref_sector",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "COUNTERPART_SECTOR",
+                        "titles": "counterpart_sector",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "INSTR_ASSET",
+                        "titles": "instr_asset",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "EXPENDITURE",
+                        "titles": "expenditure",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "UNIT_MEASURE",
+                        "titles": "unit_measure",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "PRICES",
+                        "titles": "prices",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "TRANSFORMATION",
+                        "titles": "transformation",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "TIME_FORMAT",
+                        "titles": "time_format",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "DECIMALS",
+                        "titles": "decimals",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "TABLE_IDENTIFIER",
+                        "titles": "table_identifier",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "TITLE",
+                        "titles": "title",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "UNIT_MULT",
+                        "titles": "unit_mult",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "COMPILING_ORG",
+                        "titles": "compiling_org",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "TIME_PERIOD",
+                        "titles": "time_period",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "OBS_VALUE",
+                        "titles": "obs_value",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "OBS_STATUS",
+                        "titles": "obs_status",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    },
+                    {
+                        "component_type": "",
+                        "datatype": "string",
+                        "name": "CONF_STATUS",
+                        "titles": "conf_status",
+                        "property_url": "",
+                        "value_url": "",
+                        "codelist_url": "",
+                        "sub_property_of": ""
+                    }
+                ]
+            }
+        }
+    ],
+    "version_notes": [
+        ""
+    ],
+    "@context": "",
+    "@id": "",
+    "@type": "dcat:dataset",
+    "etag": "",
+    "is_based_on": {
+        "id": "",
+        "type": ""
+    },
+    "_embedded": {
+        "code_list": "string",
+        "identifier": "string",
+        "label": "string",
+        "name": "string"
+    },
+    "type": "",
+    "state": ""
+}
