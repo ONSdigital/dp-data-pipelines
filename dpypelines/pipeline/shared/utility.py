@@ -51,12 +51,6 @@ def get_submitter_email() -> str:
     """
     Placeholder function to be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
     """
-
-    # Temporary email address for testing purposes
-    # Needs to be updated once we know where the submitter email can be extracted from
-
-    os.environ["TEMPORARY_SUBMITTER_EMAIL"] = "submitter@test.com"
-
     submitter_email = os.getenv("TEMPORARY_SUBMITTER_EMAIL")
 
     if submitter_email is None:
