@@ -35,7 +35,7 @@ class NopEmailClient:
 
 
 def get_email_client():
-    emails_disabled = os.environ.get("DISABLE_EMAILS", "false")
+    emails_disabled = os.environ.get("DISABLE_EMAILS", "True")
     emails_disabled = str_to_bool(emails_disabled)
 
     if emails_disabled:
