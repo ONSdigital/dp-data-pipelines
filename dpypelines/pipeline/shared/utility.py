@@ -3,6 +3,7 @@ import os
 from dpytools.email.ses.client import SesClient
 from email_validator import EmailNotValidError, validate_email
 
+
 # devnote: not using strtobool from disutils as that
 # package is being depreciate from the standard
 # library in python >3.12
@@ -52,19 +53,18 @@ def get_submitter_email() -> str:
     """
 
     # Temporary email address for testing purposes
-    # Needs to be updated once we know where the submitter email can be extracted from 
-    
-    os.environ["TEMPORARY_SUBMITTER_EMAIL"] = "email@example.com"
-    
+    # Needs to be updated once we know where the submitter email can be extracted from
+
+    os.environ["TEMPORARY_SUBMITTER_EMAIL"] = "submitter@test.com"
+
     submitter_email = os.getenv("TEMPORARY_SUBMITTER_EMAIL")
-    
+
     if submitter_email is None:
         raise NotImplementedError("Submitter email address cannot yet be acquired.")
-    
+
     try:
         validate_email(submitter_email)
     except EmailNotValidError as e:
         raise ValueError(f"Invalid email address: {submitter_email}. Error: {str(e)}")
-
 
     return submitter_email
