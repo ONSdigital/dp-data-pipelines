@@ -57,6 +57,6 @@ def get_supplementary_distribution_file(files: list[str], pattern: str) -> str:
     matching_files = [f for f in files if re.search(pattern, f)]
     assert (
         len(matching_files) == 1
-    ), f"More than one file found matching pattern {pattern}: {matching_files}"
+    ), f"Error finding file matching pattern {pattern}: matching files are {matching_files}"
     _, extension = os.path.splitext(matching_files[0])
     return matching_files[0], extension
