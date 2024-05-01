@@ -26,13 +26,13 @@ def before_all(context):
     os.environ["DISABLE_NOTIFICATIONS"] = "true"
 
     context.upload_service_url = os.environ.get("UPLOAD_SERVICE_URL", None)
-    os.environ["UPLOAD_SERVICE_URL"] = "http://127.0.0.1:5001/upload"
+    os.environ["UPLOAD_SERVICE_URL"] = "http://127.0.0.1:5001/upload-new"
 
     context.upload_service_s3_bucket = os.environ.get("UPLOAD_SERVICE_S3_BUCKET", None)
     os.environ["UPLOAD_SERVICE_S3_BUCKET"] = "my-bucket/my.tar"
 
     context.florence_access_token = os.environ.get("FLORENCE_TOKEN", None)
-    os.environ["FLORENCE_TOKEN"] = "not-implemented"
+    os.environ["FLORENCE_TOKEN"] = "not-a-real-token"
 
     context.features_directory = Path(__file__).parent
 

@@ -1,7 +1,9 @@
 import json
 import os
+import re
 from pathlib import Path
 
+from dpytools.http.upload import UploadClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 
@@ -10,11 +12,7 @@ from dpypelines.pipeline.shared.notification import (
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig import matching
-from dpypelines.pipeline.shared.utils import (
-    create_upload_client,
-    get_florence_access_token,
-    get_supplementary_distribution_file,
-)
+from dpypelines.pipeline.shared.utils import get_florence_access_token
 
 logger = DpLogger("data-ingress-pipeline")
 
@@ -42,6 +40,42 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         logger.info("Created notifier instance", data={"notifier": de_notifier})
     except Exception as err:
         logger.error("Error occured while attempting to create notifier instance", err)
+        raise err
+
+    # Get Upload Service URL from environment variable
+    try:
+        upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
+        assert (
+            upload_url is not None
+        ), "UPLOAD_SERVICE_URL environment variable not set."
+        logger.info("Got Upload Service URL", data={"upload_url": upload_url})
+    except Exception as err:
+        logger.error("Error getting Upload Service URL", err)
+        de_notifier.failure()
+        raise err
+
+    # Get S3 bucket name from environment variable
+    try:
+        s3_bucket = os.environ.get("UPLOAD_SERVICE_S3_BUCKET", None)
+        assert (
+            s3_bucket is not None
+        ), "UPLOAD_SERVICE_S3_BUCKET environment variable not set."
+        logger.info("Got Upload Service S3 bucket", data={"s3_bucket": s3_bucket})
+    except Exception as err:
+        logger.error("Error getting Upload Service S3 bucket", err)
+        de_notifier.failure()
+        raise err
+
+    # Get Florence access token from environment variable
+    try:
+        florence_access_token = get_florence_access_token()
+        assert (
+            florence_access_token is not None
+        ), "FLORENCE_TOKEN environment variable not set."
+        logger.info("Got Florence access token")
+    except Exception as err:
+        logger.error("Error getting Florence access token", err)
+        de_notifier.failure()
         raise err
 
     # Attempt to access the local data store
@@ -228,7 +262,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 "transform_function": transform_function,
                 "pipeline_config": pipeline_config,
                 "args": args,
-                "kwrags": kwargs,
+                "kwargs": kwargs,
             },
         )
         de_notifier.failure()
@@ -271,44 +305,8 @@ Metadata:
 
     # Upload output files to Upload Service
     try:
-        # Get Upload Service URL from environment variable
-        upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
-        assert (
-            upload_url is not None
-        ), "UPLOAD_SERVICE_URL environment variable not set."
-        logger.info("Got Upload Service URL", data={"upload_url": upload_url})
-    except Exception as err:
-        logger.error("Error getting Upload Service URL", err)
-        de_notifier.failure()
-        raise err
-
-    try:
-        # Get S3 bucket name from environment variable
-        s3_bucket = os.environ.get("UPLOAD_SERVICE_S3_BUCKET", None)
-        assert (
-            s3_bucket is not None
-        ), "UPLOAD_SERVICE_S3_BUCKET environment variable not set."
-        logger.info("Got Upload Service S3 bucket", data={"s3_bucket": s3_bucket})
-    except Exception as err:
-        logger.error("Error getting Upload Service S3 bucket", err)
-        de_notifier.failure()
-        raise err
-
-    try:
-        # Get Florence access token from environment variable
-        florence_access_token = get_florence_access_token()
-        assert (
-            florence_access_token is not None
-        ), "FLORENCE_TOKEN environment variable not set."
-        logger.info("Got Florence access token")
-    except Exception as err:
-        logger.error("Error getting Florence access token", err)
-        de_notifier.failure()
-        raise err
-
-    try:
         # Create UploadClient from upload_url
-        upload_client = create_upload_client(upload_url)
+        upload_client = UploadClient(upload_url)
         logger.info(
             "UploadClient created from upload_url", data={"upload_url": upload_url}
         )
@@ -343,32 +341,43 @@ Metadata:
         de_notifier.failure()
         raise err
 
-    # Check if there are any supplementary distributions to upload
+    # Check for supplementary distributions to upload
     if supp_dist_patterns:
-        all_files = os.listdir()
+        # Get list of all files in local store
+        all_files = local_store.get_file_names()
         logger.info("Got files", data={"files": all_files})
         for supp_dist_pattern in supp_dist_patterns:
-            # Get supplementary distribution filename and file extension matching pattern
-            supplementary_distribution, extension = get_supplementary_distribution_file(
-                all_files, supp_dist_pattern
+            # Get supplementary distribution filename matching pattern from local store
+            supp_dist_matching_files = [
+                f for f in all_files if re.search(supp_dist_pattern, f)
+            ]
+            assert (
+                len(supp_dist_matching_files) == 1
+            ), f"Error finding file matching pattern {supp_dist_pattern}: matching files are {supp_dist_matching_files}"
+
+            # Create a directory to save supplementary distribution
+            if not os.path.exists("supplementary_distributions"):
+                os.mkdir("supplementary_distributions")
+            supp_dist_path = local_store.save_lone_file_matching(
+                supp_dist_pattern, "supplementary_distributions"
             )
             logger.info(
                 "Got supplementary distribution",
                 data={
-                    "supplementary_distribution": supplementary_distribution,
-                    "file_extension": extension,
+                    "supplementary_distribution": supp_dist_path,
+                    "file_extension": supp_dist_path.suffix,
                 },
             )
-            # If the supplementary distribution is an XML file, upload it
-            if extension == ".xml":
+            # If the supplementary distribution is an XML file, upload to the Upload Service
+            if supp_dist_path.suffix == ".xml":
                 try:
                     upload_client.upload_sdmx(
-                        supplementary_distribution, s3_bucket, florence_access_token
+                        supp_dist_path, s3_bucket, florence_access_token
                     )
                     logger.info(
                         "Uploaded supplementary distribution",
                         data={
-                            "supplementary_distribution": supplementary_distribution,
+                            "supplementary_distribution": supp_dist_path,
                             "s3_bucket": s3_bucket,
                             "upload_url": upload_url,
                         },
@@ -378,7 +387,7 @@ Metadata:
                         "Error uploading SDMX file to Upload Service",
                         err,
                         data={
-                            "supplementary_distribution": supplementary_distribution,
+                            "supplementary_distribution": supp_dist_path,
                             "s3_bucket": s3_bucket,
                             "upload_url": upload_url,
                         },
@@ -387,5 +396,5 @@ Metadata:
                     raise err
             else:
                 raise NotImplementedError(
-                    f"Uploading files of type {extension} not supported."
+                    f"Uploading files of type {supp_dist_path.suffix} not supported."
                 )

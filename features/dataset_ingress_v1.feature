@@ -8,15 +8,15 @@ Feature: Data Ingress v1
   # TODO - this will grow in time to encapsulate the happy path for the above
   Scenario: Pipeline runs without errors
     Given a temporary source directory of files
-        | file     | fixture                     |
-        | data.xml | esa2010_test_data_short.xml |
+        | file      | fixture                     |
+        | data.xml  | esa2010_test_data_short.xml |
     And a dataset id of 'valid_no_supp_dist'
     And dataset_ingress_v1 starts using the temporary source directory
-    Then the backend receives a request to "/upload"
+    Then the backend receives a request to "/upload-new"
     And the csv payload received should contain "temp-file-part-1"
     And the headers received should match
-        | key              | value           |
-        | X-Florence-Token | not-implemented |
+        | key              | value            |
+        | X-Florence-Token | not-a-real-token |
     And the pipeline should generate no errors
     And I read the csv output 'data.csv'
     And the csv output should have '24' rows

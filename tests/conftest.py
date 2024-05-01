@@ -15,9 +15,6 @@ sys.path.append(str(repo_root.absolute()))
 mp = MonkeyPatch()
 mp.setenv("DISABLE_NOTIFICATIONS", "True")
 for potential_env_var_name in [
-    "PS_SLACK_WEBHOOK",
-    "DS_SLACK_WEBHOOK",
-    "SE_SLACK_WEBHOOK",
     "DE_SLACK_WEBHOOK",
     "FLORENCE_TOKEN",
 ]:
