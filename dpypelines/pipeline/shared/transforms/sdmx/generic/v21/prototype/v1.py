@@ -4,12 +4,11 @@ import pandas as pd
 import xmltodict
 
 from dpypelines.pipeline.shared.transforms.utils import flatten_dict, pathify, set_key
-from dpypelines.pipeline.shared.transforms.validate_transform import (
+from dpypelines.pipeline.shared.transforms.validate_transform_v21 import (
     check_columns_of_dataframes_are_unique,
     check_header_info,
     check_header_unpacked,
     check_length_of_dataframe_is_expected_length,
-    check_length_of_dict_is_expected_length,
     check_read_in_sdmx,
     check_tidy_data_columns,
     check_xml_type,
@@ -77,8 +76,8 @@ def xmlToCsvSDMX2_1(input_path, output_path):
                 print("something fucked up")
 
     obs_frame = pd.DataFrame(obs_dicts)
-    check_length_of_dict_is_expected_length(
-        series_dict, expected_number_of_obs
+    check_length_of_dataframe_is_expected_length(
+        obs_frame, expected_number_of_obs
     )  # transform validation
 
     header_dict = flatten_dict(header)
