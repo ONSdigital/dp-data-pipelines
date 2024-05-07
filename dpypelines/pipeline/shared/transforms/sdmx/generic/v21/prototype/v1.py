@@ -43,20 +43,18 @@ def xmlToCsvSDMX2_1(input_path, output_path):
     for table in tables:
         for element in table.items():
             if element[0] == "generic:SeriesKey":
-                df = pd.DataFrame(element[1]["generic:Value"])
-                series_dict = {a: b for a, b in zip(df["@id"], df["@value"])}
+                for sub_element in element[1]["generic:Value"]:
+                    series_dict[sub_element["@id"]] = sub_element["@value"]
             elif element[0] == "generic:Attributes":
-                df = pd.DataFrame(element[1]["generic:Value"])
-                series_dict.update({a: b for a, b in zip(df["@id"], df["@value"])})
+                for sub_element in element[1]["generic:Value"]:
+                    series_dict[sub_element["@id"]] = sub_element["@value"]
             elif element[0] == "generic:Obs":
                 for observation in element[1]:
                     observation_temp = {}
-                    df = pd.DataFrame(
-                        observation["generic:Attributes"]["generic:Value"]
-                    )
-                    observation_temp.update(
-                        {a: b for a, b in zip(df["@id"], df["@value"])}
-                    )
+                    for sub_element in observation["generic:Attributes"][
+                        "generic:Value"
+                    ]:
+                        observation_temp[sub_element["@id"]] = sub_element["@value"]
                     observation_temp.update(
                         {
                             "generic:ObsDimension": next(
@@ -72,8 +70,6 @@ def xmlToCsvSDMX2_1(input_path, output_path):
                         }
                     )
                     obs_dicts.append(series_dict | observation_temp)
-            else:
-                print("something fucked up")
 
     obs_frame = pd.DataFrame(obs_dicts)
     check_length_of_dataframe_is_expected_length(
@@ -84,10 +80,12 @@ def xmlToCsvSDMX2_1(input_path, output_path):
     check_header_unpacked(header_dict)  # transform validation
     header_df = pd.DataFrame([header_dict])
 
-    repl_rows = header_df.loc[0].copy()
-    header_frame = pd.concat(
-        [header_df, pd.DataFrame([repl_rows] * (len(obs_frame) - 1))], ignore_index=True
-    )
+    header_repl_dict = header_df.to_dict(orient="list")
+    for key in header_repl_dict:
+        header_repl_dict[key] = header_repl_dict[key] * (len(obs_frame) - 1)
+
+    header_repl_df = pd.DataFrame(header_repl_dict)
+    header_frame = pd.concat([header_df, header_repl_df], ignore_index=True)
     check_length_of_dataframe_is_expected_length(
         header_frame, expected_number_of_obs
     )  # transform validation
