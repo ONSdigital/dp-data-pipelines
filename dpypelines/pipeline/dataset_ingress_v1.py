@@ -54,18 +54,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
-    # Get S3 bucket name from environment variable
-    try:
-        s3_bucket = os.environ.get("UPLOAD_SERVICE_S3_BUCKET", None)
-        assert (
-            s3_bucket is not None
-        ), "UPLOAD_SERVICE_S3_BUCKET environment variable not set."
-        logger.info("Got Upload Service S3 bucket", data={"s3_bucket": s3_bucket})
-    except Exception as err:
-        logger.error("Error getting Upload Service S3 bucket", err)
-        de_notifier.failure()
-        raise err
-
     # Get Florence access token from environment variable
     try:
         florence_access_token = get_florence_access_token()
@@ -319,12 +307,11 @@ Metadata:
 
     try:
         # Upload CSV to Upload Service
-        upload_client.upload_csv(csv_path, s3_bucket, florence_access_token)
+        upload_client.upload_new_csv(csv_path, florence_access_token)
         logger.info(
             "Uploaded CSV to Upload Service",
             data={
                 "csv_path": csv_path,
-                "s3_bucket": s3_bucket,
                 "upload_url": upload_url,
             },
         )
@@ -334,7 +321,6 @@ Metadata:
             err,
             data={
                 "csv_path": csv_path,
-                "s3_bucket": s3_bucket,
                 "upload_url": upload_url,
             },
         )
@@ -371,14 +357,11 @@ Metadata:
             # If the supplementary distribution is an XML file, upload to the Upload Service
             if supp_dist_path.suffix == ".xml":
                 try:
-                    upload_client.upload_sdmx(
-                        supp_dist_path, s3_bucket, florence_access_token
-                    )
+                    upload_client.upload_new_sdmx(supp_dist_path, florence_access_token)
                     logger.info(
                         "Uploaded supplementary distribution",
                         data={
                             "supplementary_distribution": supp_dist_path,
-                            "s3_bucket": s3_bucket,
                             "upload_url": upload_url,
                         },
                     )
@@ -388,7 +371,6 @@ Metadata:
                         err,
                         data={
                             "supplementary_distribution": supp_dist_path,
-                            "s3_bucket": s3_bucket,
                             "upload_url": upload_url,
                         },
                     )
