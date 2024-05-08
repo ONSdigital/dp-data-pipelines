@@ -20,8 +20,8 @@ from dpypelines.pipeline.shared.notification import (
 from dpypelines.pipeline.shared.pipelineconfig import matching
 from dpypelines.pipeline.shared.utils import (
     get_email_client,
-    get_submitter_email,
     get_florence_access_token,
+    get_submitter_email,
 )
 
 logger = DpLogger("data-ingress-pipeline")

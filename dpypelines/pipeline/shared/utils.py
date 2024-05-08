@@ -2,6 +2,7 @@
 # package is being depreciate from the standard
 # library in python >3.12
 import os
+
 from dpytools.email.ses.client import SesClient
 from email_validator import EmailNotValidError, validate_email
 
