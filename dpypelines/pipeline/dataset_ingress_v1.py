@@ -7,12 +7,22 @@ from dpytools.http.upload import UploadClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 
+from dpypelines.pipeline.shared import message
+from dpypelines.pipeline.shared.email_template_message import (
+    file_not_found_email,
+    submission_processed_email,
+    supplementary_distribution_not_found_email,
+)
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig import matching
-from dpypelines.pipeline.shared.utils import get_florence_access_token
+from dpypelines.pipeline.shared.utils import (
+    get_email_client,
+    get_submitter_email,
+    get_florence_access_token,
+)
 
 logger = DpLogger("data-ingress-pipeline")
 
@@ -41,6 +51,43 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     except Exception as err:
         logger.error("Error occured while attempting to create notifier instance", err)
         raise err
+
+    try:
+        submitter_email = get_submitter_email()
+        logger.info(
+            "Successfully got submitter email",
+            data={"submitter_email": submitter_email},
+        )
+    except Exception as err:
+        logger.error("Error occured while attempting to get submitter email", err)
+        de_notifier.failure()
+        raise err
+
+    # Create email client from env var
+    try:
+        email_client = get_email_client()
+        logger.info(
+            "Created email client instance", data={"email_client": email_client}
+        )
+    except Exception as err:
+        logger.error(
+            "Error occured while attempting to create email client instance", err
+        )
+        de_notifier.failure()
+        raise err
+
+    # just throw out an email to see if it works
+    try:
+        email_content = submission_processed_email()
+        email_client.send(submitter_email, email_content.subject, email_content.message)
+        logger.info(
+            "Successfully sent email",
+            data={"submitter_email": submitter_email, "email_content": email_content},
+        )
+    except Exception as err:
+        logger.error("Error occured while attempting to send email", err)
+        de_notifier.failure()
+        raise Exception(message.unexpected_error("Failed to send email", err)) from err
 
     # Get Upload Service URL from environment variable
     try:
@@ -110,9 +157,17 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for required_file in required_file_patterns:
         try:
             if not local_store.has_lone_file_matching(required_file):
-                raise FileNotFoundError(
-                    f"Could not find file matching pattern {required_file}"
+                email_content = file_not_found_email(required_file)
+                email_client.send(
+                    submitter_email, email_content.subject, email_content.message
                 )
+                logger.info(
+                    "Sent email to submitter: ",
+                    submitter_email,
+                    " about missing required file: ",
+                    required_file,
+                )
+                de_notifier.failure()
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error(
@@ -150,9 +205,19 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for supp_dist_pattern in supp_dist_patterns:
         try:
             if not local_store.has_lone_file_matching(supp_dist_pattern):
-                raise FileNotFoundError(
-                    f"Could not find file matching pattern {supp_dist_pattern}"
+                email_content = supplementary_distribution_not_found_email(
+                    supp_dist_pattern
                 )
+                email_client.send(
+                    submitter_email, email_content.subject, email_content.message
+                )
+                logger.info(
+                    "Sent email to submitter: ",
+                    submitter_email,
+                    " about missing supplementary distribution: ",
+                    supp_dist_pattern,
+                )
+                de_notifier.failure()
         except Exception as err:
             logger.error(
                 f"Error while looking for supplementary distribution {supp_dist_pattern}",
@@ -192,7 +257,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     "files_in_directory": files_in_directory,
                 },
             )
-
             de_notifier.failure()
             raise err
 
@@ -241,7 +305,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 "metadata_path": metadata_path,
             },
         )
-
     except Exception as err:
         logger.error(
             "Error occured while running transform function",
@@ -255,6 +318,8 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         )
         de_notifier.failure()
         raise err
+
+    de_notifier.success()
 
     # TODO - validate the metadata once we have a schema for it.
 
