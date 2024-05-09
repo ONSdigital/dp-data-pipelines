@@ -56,6 +56,6 @@ def test_florence_access_token_set_as_env_var():
 def test_florence_access_token_not_set_as_env_var():
     mp = pytest.MonkeyPatch()
     mp.delenv("FLORENCE_TOKEN")
-    with pytest.raises(NotImplementedError) as err:
+    with pytest.raises(ValueError) as err:
         get_florence_access_token()
     assert "No Florence token set" in str(err.value)

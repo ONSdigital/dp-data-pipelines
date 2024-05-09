@@ -324,8 +324,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # TODO - validate the csv once we know what we're validating
 
-    print("Worked. I ran to completion.")
-
     # Upload output files to Upload Service
     try:
         # Create UploadClient from upload_url
