@@ -534,8 +534,8 @@ structlog = "^23.2.0"
 [package.source]
 type = "git"
 url = "https://github.com/ONSdigital/dp-python-tools.git"
-reference = "DIS721-update-upload-client"
-resolved_reference = "150b3069de79b6fcf381d342c93971fa676aa54e"
+reference = "HEAD"
+resolved_reference = "8636a613520bb2b9a912c1c228434f5b8d303a46"
 
 [[package]]
 name = "email-validator"
@@ -1469,4 +1469,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.0,<3.10.0"
-content-hash = "3c8f12d3ef2e7219d4f5288dc45dce90055eb81206e74208638ef9b2673c8051"
+content-hash = "6f35fcd7299c60c94046fd23f50403ba20b738a5c4a32ea034aae19869813831"
