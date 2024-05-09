@@ -1,4 +1,4 @@
-# devnote: not using strtobool from disutils as that
+# devnote: not using strtobool from distutils as that
 # package is being depreciate from the standard
 # library in python >3.12
 import os
@@ -19,11 +19,11 @@ def str_to_bool(should_be_bool: str) -> bool:
         should_be_bool, str
     ), f"Function str_to_bool only accepts strings, got {type(should_be_bool)}"
 
-    consistant_should_be_bool = should_be_bool.strip().lower()
+    consistent_should_be_bool = should_be_bool.strip().lower()
 
-    if consistant_should_be_bool == "true":
+    if consistent_should_be_bool == "true":
         return True
-    elif consistant_should_be_bool == "false":
+    elif consistent_should_be_bool == "false":
         return False
     else:
         raise ValueError(
@@ -38,7 +38,7 @@ def get_florence_access_token() -> str:
     florence_access_token = os.environ.get("FLORENCE_TOKEN", None)
     if florence_access_token is not None:
         return florence_access_token
-    raise NotImplementedError("No Florence token set")
+    raise ValueError("No Florence token set")
 
 
 class NopEmailClient:
