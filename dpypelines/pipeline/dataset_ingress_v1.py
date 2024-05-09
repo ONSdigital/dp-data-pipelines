@@ -1,5 +1,8 @@
+import os
 from pathlib import Path
+import re
 
+from dpytools.http.upload import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 
@@ -39,9 +42,14 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         Exception: If any other unexpected error occurs.
     """
     # Create notifier from webhook env var
-    de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
-        "DE_SLACK_WEBHOOK"
-    )
+    try:
+        de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
+            "DE_SLACK_WEBHOOK"
+        )
+        logger.info("Created notifier instance", data={"notifier": de_notifier})
+    except Exception as err:
+        logger.error("Error occurred while attempting to create notifier instance", err)
+        raise err
 
     try:
         submitter_email = get_submitter_email()
@@ -50,7 +58,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             data={"submitter_email": submitter_email},
         )
     except Exception as err:
-        logger.error("Error occured while attempting to get submitter email", err)
+        logger.error("Error occurred while attempting to get submitter email", err)
         de_notifier.failure()
         raise err
 
@@ -62,7 +70,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         )
     except Exception as err:
         logger.error(
-            "Error occured while attempting to create email client instance", err
+            "Error occurred while attempting to create email client instance", err
         )
         de_notifier.failure()
         raise err
@@ -76,10 +84,32 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             data={"submitter_email": submitter_email, "email_content": email_content},
         )
     except Exception as err:
-        logger.error("Error occured while attempting to send email", err)
+        logger.error("Error occurred while attempting to send email", err)
         de_notifier.failure()
         raise Exception(message.unexpected_error("Failed to send email", err)) from err
 
+    # Get Upload Service URL from environment variable
+    try:
+        upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
+        assert (
+            upload_url is not None
+        ), "UPLOAD_SERVICE_URL environment variable not set."
+        logger.info("Got Upload Service URL", data={"upload_url": upload_url})
+    except Exception as err:
+        logger.error("Error getting Upload Service URL", err)
+        de_notifier.failure()
+        raise err
+    # Get Florence access token from environment variable
+    try:
+        florence_access_token = get_florence_access_token()
+        assert (
+            florence_access_token is not None
+        ), "FLORENCE_TOKEN environment variable not set."
+        logger.info("Got Florence access token")
+    except Exception as err:
+        logger.error("Error getting Florence access token", err)
+        de_notifier.failure()
+        raise err
     # Attempt to access the local data store
     try:
         local_store = LocalDirectoryStore(files_dir)
@@ -218,7 +248,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error(
-                "Error occured while attempting to save matching pattern file.",
+                "Error occurred while attempting to save matching pattern file.",
                 err,
                 data={
                     "match": match,
@@ -239,7 +269,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error(
-                "Error occured while running sanity checker on input file path.",
+                "Error occurred while running sanity checker on input file path.",
                 err,
                 data={
                     "input_file_path": input_file_path,
@@ -278,7 +308,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     except Exception as err:
         logger.error(
-            "Error occured while running transform function",
+            "Error occurred while running transform function",
             err,
             data={
                 "transform_function": transform_function,
@@ -295,3 +325,93 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # TODO - validate the csv once we know what we're validating
 
     print("Worked. I ran to completion.")
+
+    # Upload output files to Upload Service
+    try:
+        # Create UploadClient from upload_url
+        upload_client = UploadServiceClient(upload_url)
+        logger.info(
+            "UploadClient created from upload_url", data={"upload_url": upload_url}
+        )
+    except Exception as err:
+        logger.error(
+            "Error creating UploadClient", err, data={"upload_url": upload_url}
+        )
+        de_notifier.failure()
+        raise err
+
+    try:
+        # Upload CSV to Upload Service
+        upload_client.upload_new_csv(csv_path, florence_access_token)
+        logger.info(
+            "Uploaded CSV to Upload Service",
+            data={
+                "csv_path": csv_path,
+                "upload_url": upload_url,
+            },
+        )
+    except Exception as err:
+        logger.error(
+            "Error uploading CSV file to Upload Service",
+            err,
+            data={
+                "csv_path": csv_path,
+                "upload_url": upload_url,
+            },
+        )
+        de_notifier.failure()
+        raise err
+
+    # Check for supplementary distributions to upload
+    if supp_dist_patterns:
+        # Get list of all files in local store
+        all_files = local_store.get_file_names()
+        logger.info("Got files", data={"files": all_files})
+        for supp_dist_pattern in supp_dist_patterns:
+            # Get supplementary distribution filename matching pattern from local store
+            supp_dist_matching_files = [
+                f for f in all_files if re.search(supp_dist_pattern, f)
+            ]
+            assert (
+                len(supp_dist_matching_files) == 1
+            ), f"Error finding file matching pattern {supp_dist_pattern}: matching files are {supp_dist_matching_files}"
+
+            # Create a directory to save supplementary distribution
+            if not os.path.exists("supplementary_distributions"):
+                os.mkdir("supplementary_distributions")
+            supp_dist_path = local_store.save_lone_file_matching(
+                supp_dist_pattern, "supplementary_distributions"
+            )
+            logger.info(
+                "Got supplementary distribution",
+                data={
+                    "supplementary_distribution": supp_dist_path,
+                    "file_extension": supp_dist_path.suffix,
+                },
+            )
+            # If the supplementary distribution is an XML file, upload to the Upload Service
+            if supp_dist_path.suffix == ".xml":
+                try:
+                    upload_client.upload_new_sdmx(supp_dist_path, florence_access_token)
+                    logger.info(
+                        "Uploaded supplementary distribution",
+                        data={
+                            "supplementary_distribution": supp_dist_path,
+                            "upload_url": upload_url,
+                        },
+                    )
+                except Exception as err:
+                    logger.error(
+                        "Error uploading SDMX file to Upload Service",
+                        err,
+                        data={
+                            "supplementary_distribution": supp_dist_path,
+                            "upload_url": upload_url,
+                        },
+                    )
+                    de_notifier.failure()
+                    raise err
+            else:
+                raise NotImplementedError(
+                    f"Uploading files of type {supp_dist_path.suffix} not supported."
+                )
