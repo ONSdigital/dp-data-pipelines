@@ -3,7 +3,7 @@ import os
 import re
 from pathlib import Path
 
-from dpytools.http.upload import UploadClient
+from dpytools.http.upload import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 
@@ -49,7 +49,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         )
         logger.info("Created notifier instance", data={"notifier": de_notifier})
     except Exception as err:
-        logger.error("Error occured while attempting to create notifier instance", err)
+        logger.error("Error occurred while attempting to create notifier instance", err)
         raise err
 
     try:
@@ -59,7 +59,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             data={"submitter_email": submitter_email},
         )
     except Exception as err:
-        logger.error("Error occured while attempting to get submitter email", err)
+        logger.error("Error occurred while attempting to get submitter email", err)
         de_notifier.failure()
         raise err
 
@@ -71,7 +71,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         )
     except Exception as err:
         logger.error(
-            "Error occured while attempting to create email client instance", err
+            "Error occurred while attempting to create email client instance", err
         )
         de_notifier.failure()
         raise err
@@ -85,7 +85,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             data={"submitter_email": submitter_email, "email_content": email_content},
         )
     except Exception as err:
-        logger.error("Error occured while attempting to send email", err)
+        logger.error("Error occurred while attempting to send email", err)
         de_notifier.failure()
         raise Exception(message.unexpected_error("Failed to send email", err)) from err
 
@@ -249,7 +249,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error(
-                "Error occured while attempting to save matching pattern file.",
+                "Error occurred while attempting to save matching pattern file.",
                 err,
                 data={
                     "match": match,
@@ -269,7 +269,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error(
-                "Error occured while running sanity checker on input file path.",
+                "Error occurred while running sanity checker on input file path.",
                 err,
                 data={
                     "input_file_path": input_file_path,
@@ -307,7 +307,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         )
     except Exception as err:
         logger.error(
-            "Error occured while running transform function",
+            "Error occurred while running transform function",
             err,
             data={
                 "transform_function": transform_function,
@@ -359,7 +359,7 @@ Metadata:
     # Upload output files to Upload Service
     try:
         # Create UploadClient from upload_url
-        upload_client = UploadClient(upload_url)
+        upload_client = UploadServiceClient(upload_url)
         logger.info(
             "UploadClient created from upload_url", data={"upload_url": upload_url}
         )
