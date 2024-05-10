@@ -6,7 +6,6 @@ from dpytools.http.upload import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 
-from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.email_template_message import (
     file_not_found_email,
     submission_processed_email,
@@ -16,62 +15,62 @@ from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
 )
-from dpypelines.pipeline.shared.pipelineconfig import matching
+from dpypelines.pipeline.shared.pipelineconfig.matching import (
+    get_required_files_patterns,
+    get_supplementary_distribution_patterns,
+)
+from dpypelines.pipeline.shared.pipelineconfig.transform import (
+    get_transform_function,
+    get_transform_inputs,
+    get_transform_kwargs,
+)
 from dpypelines.pipeline.shared.utils import (
     get_email_client,
     get_florence_access_token,
     get_submitter_email,
 )
 
-logger = DpLogger("data-ingress-pipeline")
+logger = DpLogger("data-ingress-pipeline-v1")
 
 
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     """
-    Version one of the dataset ingress pipeline.
-
-    files_dir: Path to the directory where the input
-    files for this pipeline are located.
+    Version 1 of the dataset ingress pipeline.
 
     Args:
         files_dir (str): Path to the directory where the input files for this pipeline are located.
         pipeline_config (dict): Dictionary of configuration details required to run the pipeline (determined by dataset id)
 
     Raises:
-        ValueError: If required files, supplementary distributions, or pipeline configuration are not found in the input directory.
-        Exception: If any other unexpected error occurs.
+        Exception: If any unexpected error occurs.
     """
     # Create notifier from webhook env var
     try:
         de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
             "DE_SLACK_WEBHOOK"
         )
-        logger.info("Created notifier instance", data={"notifier": de_notifier})
+        logger.info("Notifier created", data={"notifier": de_notifier})
     except Exception as err:
-        logger.error("Error occurred while attempting to create notifier instance", err)
+        logger.error("Error occurred when creating notifier", err)
         raise err
 
     try:
         submitter_email = get_submitter_email()
         logger.info(
-            "Successfully got submitter email",
+            "Got submitter email",
             data={"submitter_email": submitter_email},
         )
     except Exception as err:
-        logger.error("Error occurred while attempting to get submitter email", err)
+        logger.error("Error occurred when getting submitter email", err)
         de_notifier.failure()
         raise err
 
     # Create email client from env var
     try:
         email_client = get_email_client()
-        logger.info(
-            "Created email client instance", data={"email_client": email_client}
-        )
+        logger.info("Created email client", data={"email_client": email_client})
     except Exception as err:
-        logger.error(
-            "Error occurred while attempting to create email client instance", err
-        )
+        logger.error("Error occurred when creating email client", err)
         de_notifier.failure()
         raise err
 
@@ -80,13 +79,13 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         email_content = submission_processed_email()
         email_client.send(submitter_email, email_content.subject, email_content.message)
         logger.info(
-            "Successfully sent email",
+            "Email sent",
             data={"submitter_email": submitter_email, "email_content": email_content},
         )
     except Exception as err:
-        logger.error("Error occurred while attempting to send email", err)
+        logger.error("Error occurred when sending email", err)
         de_notifier.failure()
-        raise Exception(message.unexpected_error("Failed to send email", err)) from err
+        raise err
 
     # Get Upload Service URL from environment variable
     try:
@@ -96,7 +95,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         ), "UPLOAD_SERVICE_URL environment variable not set."
         logger.info("Got Upload Service URL", data={"upload_url": upload_url})
     except Exception as err:
-        logger.error("Error getting Upload Service URL", err)
+        logger.error("Error occurred when getting Upload Service URL", err)
         de_notifier.failure()
         raise err
     # Get Florence access token from environment variable
@@ -107,7 +106,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         ), "FLORENCE_TOKEN environment variable not set."
         logger.info("Got Florence access token")
     except Exception as err:
-        logger.error("Error getting Florence access token", err)
+        logger.error("Error occurred when getting Florence access token", err)
         de_notifier.failure()
         raise err
     # Attempt to access the local data store
@@ -115,7 +114,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         local_store = LocalDirectoryStore(files_dir)
         files_in_directory = local_store.get_file_names()
         logger.info(
-            "Local data store successfully instansiated",
+            "Local data store created",
             data={
                 "local_store_dir": files_dir,
                 "files_in_directory": files_in_directory,
@@ -123,7 +122,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         )
     except Exception as err:
         logger.error(
-            f"Failed to access local data at {files_dir}",
+            "Error occurred when creating local data store from files directory",
             err,
             data={"local_store_dir": files_dir},
         )
@@ -132,19 +131,19 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Extract the patterns for required files from the pipeline configuration
     try:
-        required_file_patterns = matching.get_required_files_patterns(pipeline_config)
+        required_file_patterns = get_required_files_patterns(pipeline_config)
         logger.info(
-            "Required file patterns retrieved from pipeline configuration",
+            "Required file patterns retrieved from pipeline config",
             data={"required_file_patterns": required_file_patterns},
         )
     except Exception as err:
         files_in_directory = local_store.get_file_names()
         logger.error(
-            "Failed to get required files pattern",
+            "Error occurred when getting required file patterns",
             err,
             data={
-                "pipeline_config": pipeline_config,
                 "files_in_directory": files_in_directory,
+                "pipeline_config": pipeline_config,
             },
         )
         de_notifier.failure()
@@ -160,21 +159,23 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     submitter_email, email_content.subject, email_content.message
                 )
                 logger.info(
-                    "Sent email to submitter: ",
-                    submitter_email,
-                    " about missing required file: ",
-                    required_file,
+                    "Email sent to submitter about missing required file",
+                    data={
+                        "submitter_email": submitter_email,
+                        "required_file": required_file,
+                    },
                 )
                 de_notifier.failure()
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error(
-                f"Error while looking for required file {required_file}",
+                "Error occurred when looking for required file",
                 err,
                 data={
                     "required_file": required_file,
                     "required_file_patterns": required_file_patterns,
                     "files_in_directory": files_in_directory,
+                    "pipeline_config": pipeline_config,
                 },
             )
             de_notifier.failure()
@@ -182,17 +183,15 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Extract the patterns for supplementary distributions from the pipeline configuration
     try:
-        supp_dist_patterns = matching.get_supplementary_distribution_patterns(
-            pipeline_config
-        )
+        supp_dist_patterns = get_supplementary_distribution_patterns(pipeline_config)
         logger.info(
-            "Successfully retrieved supplementary distribution patterns from pipeline config",
-            data={"supplementary_distribution_pattenrs": supp_dist_patterns},
+            "Supplementary distribution patterns retrieved from pipeline config",
+            data={"supplementary_distribution_patterns": supp_dist_patterns},
         )
     except Exception as err:
         files_in_directory = local_store.get_file_names()
         logger.error(
-            "Failed to get supplementary distribution patterns",
+            "Error occurred when getting supplementary distribution patterns",
             err,
             data={"pipeline_config": pipeline_config},
         )
@@ -211,15 +210,16 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     submitter_email, email_content.subject, email_content.message
                 )
                 logger.info(
-                    "Sent email to submitter: ",
-                    submitter_email,
-                    " about missing supplementary distribution: ",
-                    supp_dist_pattern,
+                    "Email sent to submitter about missing supplementary distribution file",
+                    data={
+                        "submitter_email": submitter_email,
+                        "supplementary_distribution_pattern": supp_dist_pattern,
+                    },
                 )
                 de_notifier.failure()
         except Exception as err:
             logger.error(
-                f"Error while looking for supplementary distribution {supp_dist_pattern}",
+                "Error occurred when looking for supplementary distribution",
                 err,
                 data={
                     "supplementary_distribution": supp_dist_pattern,
@@ -231,29 +231,38 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             de_notifier.failure()
             raise err
 
-    # Get the positional arguments (the inputs) from the pipeline_config
-    # dict and run the specified sanity checker for it
-    args = []
-    for match, sanity_checker in pipeline_config["transform_inputs"].items():
+    # Get the transform inputs from the pipeline_config and run the specified sanity checker for it
+    input_file_paths = []
+    try:
+        transform_inputs = get_transform_inputs(pipeline_config)
+        logger.info("Got transform inputs", data={"transform_inputs": transform_inputs})
+    except Exception as err:
+        logger.error(
+            "Error when getting transform inputs from pipeline config",
+            err,
+            data={"pipeline_config": pipeline_config},
+        )
+
+    for pattern, sanity_checker in transform_inputs.items():
         try:
-            input_file_path: Path = local_store.save_lone_file_matching(match)
+            input_file_path: Path = local_store.save_lone_file_matching(pattern)
             logger.info(
-                "Successfully saved file that matches pattern",
+                "Saved input file that matches pattern",
                 data={
                     "input_file_path": input_file_path,
-                    "match": match,
+                    "pattern": pattern,
                     "files_in_directory": files_in_directory,
                 },
             )
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error(
-                "Error occurred while attempting to save matching pattern file.",
+                "Error occurred when looking for file matching pattern",
                 err,
                 data={
-                    "match": match,
-                    "pipeline_config": pipeline_config,
+                    "pattern": pattern,
                     "files_in_directory": files_in_directory,
+                    "pipeline_config": pipeline_config,
                 },
             )
 
@@ -263,44 +272,69 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         try:
             sanity_checker(input_file_path)
             logger.info(
-                "Successfully ran sanity check on input file path.",
-                data={"input_file_path": input_file_path},
+                "Sanity check run on input file path.",
+                data={
+                    "sanity_checker": sanity_checker,
+                    "input_file_path": input_file_path,
+                },
             )
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error(
-                "Error occurred while running sanity checker on input file path.",
+                "Error occurred when running sanity checker on input file path.",
                 err,
                 data={
                     "input_file_path": input_file_path,
-                    "pipeline_config": pipeline_config,
                     "files_in_directory": files_in_directory,
+                    "pipeline_config": pipeline_config,
                 },
             )
 
             de_notifier.failure()
             raise err
 
-        args.append(input_file_path)
+        input_file_paths.append(input_file_path)
 
-    # Get the transform function and keyword arguments from the transform_details
-    transform_function = pipeline_config["transform"]
-    kwargs = pipeline_config["transform_kwargs"]
-    logger.info(
-        "Retrieved transform function and keyword arguments from transform details.",
-        data={
-            "pipeline_config": pipeline_config,
-            "args_got": args,
-            "kwargs_got": kwargs,
-        },
-    )
+    # Get the transform function from pipeline config
+    try:
+        transform_function = get_transform_function(pipeline_config)
+        logger.info(
+            "Got transform function from pipeline config",
+            data={
+                "transform_function": transform_function,
+                "input_file_paths": input_file_paths,
+            },
+        )
+    except Exception as err:
+        logger.error(
+            "Error occurred when getting transform function from pipeline config",
+            err,
+            data={"pipeline_config": pipeline_config},
+        )
+    # Get transform keyword arguments (kwargs) from pipeline config
+    try:
+        transform_kwargs = get_transform_kwargs(pipeline_config)
+        logger.info(
+            "Got transform kwargs from pipeline config",
+            data={"transform_kwargs": transform_kwargs},
+        )
+    except Exception as err:
+        logger.error(
+            "Error occurred when getting transform kwargs from pipeline config",
+            err,
+            data={"pipeline_config": pipeline_config},
+        )
 
     try:
-        csv_path, metadata_path = transform_function(*args, **kwargs)
+        csv_path, metadata_path = transform_function(
+            *input_file_paths, **transform_kwargs
+        )
         logger.info(
             "Successfully ran transform function",
             data={
-                "pipeline_config": pipeline_config,
+                "transform_function": transform_function,
+                "input_file_paths": input_file_paths,
+                "transform_kwargs": transform_kwargs,
                 "csv_path": csv_path,
                 "metadata_path": metadata_path,
             },
@@ -308,13 +342,13 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     except Exception as err:
         logger.error(
-            "Error occurred while running transform function",
+            "Error occurred when running transform function",
             err,
             data={
                 "transform_function": transform_function,
+                "input_file_paths": input_file_paths,
+                "transform_kwargs": transform_kwargs,
                 "pipeline_config": pipeline_config,
-                "args": args,
-                "kwrags": kwargs,
             },
         )
         de_notifier.failure()
@@ -364,7 +398,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     if supp_dist_patterns:
         # Get list of all files in local store
         all_files = local_store.get_file_names()
-        logger.info("Got files", data={"files": all_files})
+        logger.info("Got all files in local store", data={"files": all_files})
         for supp_dist_pattern in supp_dist_patterns:
             # Get supplementary distribution filename matching pattern from local store
             supp_dist_matching_files = [
