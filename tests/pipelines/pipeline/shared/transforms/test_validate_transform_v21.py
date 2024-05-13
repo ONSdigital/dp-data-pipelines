@@ -12,6 +12,7 @@ from dpypelines.pipeline.shared.transforms.validate_transform_v21 import (
     check_tidy_data_columns,
     check_xml_type,
     get_number_of_obs_from_xml_file,
+    check_obs_dicts_have_same_keys,
 )
 
 test_dir = Path(__file__).parents[4]
@@ -143,7 +144,7 @@ def test_check_length_of_dataframe_is_expected_length_incorrect_length():
     assert f"expected length of dataframe is not {expected_size}" in str(err.value)
 
 
-def test_check_columns_of_dataframes_are_unique_not_unique_columns_1():
+def test_check_columns_of_dataframes_are_unique_not_unique_columns():
     duplicated_column = "column1"
     obs_columns = pd.Index([duplicated_column, "obs_column1"])
     header_columns = pd.Index([duplicated_column, "header_column1"])
@@ -154,5 +155,27 @@ def test_check_columns_of_dataframes_are_unique_not_unique_columns_1():
         )
 
     assert f"{duplicated_column} is duplicated in obs_frame and header_frame" in str(
+        err.value
+    )
+
+
+def test_check_obs_dicts_have_same_keys_incorrect_sizes():
+    obs_list = [{"key1": "value1", "key2": "value2"}, {"key1": "value1"}]
+
+    with pytest.raises(AssertionError) as err:
+        check_obs_dicts_have_same_keys(obs_list)
+
+    assert "not all items in obs_dicts are the same length" in str(
+        err.value
+    )
+
+
+def test_check_obs_dicts_have_same_keys_incorrect_keys():
+    obs_list = [{"key1": "value1", "key2": "value2"}, {"key1": "value1", "key3": "value3"}]
+
+    with pytest.raises(AssertionError) as err:
+        check_obs_dicts_have_same_keys(obs_list)
+
+    assert "not all keys in obs_dicts are the same" in str(
         err.value
     )

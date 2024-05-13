@@ -4,6 +4,7 @@ ie -  generic sdmx data version 2_1
 """
 
 from pathlib import Path
+from typing import List
 
 import pandas as pd
 
@@ -91,3 +92,13 @@ def check_tidy_data_columns(df_columns: pd.Index):
         assert "@" not in col, "@ found in tidy data column name"
         assert "#" not in col, "# found in tidy data column name"
         assert "generic:" not in col, "generic: found in tidy data column name"
+
+
+def check_obs_dicts_have_same_keys(obs_dict: List):
+    # checks each item in obs_dicts has same length and same keys
+    first_dict = obs_dict[0]
+    for item in obs_dict:
+        assert len(first_dict) == len(item), "not all items in obs_dicts are the same length"
+        assert first_dict.keys() == item.keys(), "not all keys in obs_dicts are the same"
+
+
