@@ -13,6 +13,7 @@ from dpypelines.pipeline.shared.transforms.validate_transform_v21 import (
     check_tidy_data_columns,
     check_xml_type,
     get_number_of_obs_from_xml_file,
+    check_obs_dicts_have_same_keys,
 )
 
 
@@ -71,6 +72,7 @@ def xmlToCsvSDMX2_1(input_path, output_path):
                     )
                     obs_dicts.append(series_dict | observation_temp)
 
+    check_obs_dicts_have_same_keys(obs_dicts) # transform validation
     obs_frame = pd.DataFrame(obs_dicts)
     check_length_of_dataframe_is_expected_length(
         obs_frame, expected_number_of_obs
