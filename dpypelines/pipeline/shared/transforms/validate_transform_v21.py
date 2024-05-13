@@ -1,7 +1,6 @@
 """
 Transform validation functions to be used by dpypelines.pipeline.shared.transforms.sdmx.generic.v21.prototype.v1
 ie -  generic sdmx data version 2_1
-file may need renaming when further transforms for different sdmx's are created
 """
 
 from pathlib import Path
@@ -17,7 +16,7 @@ def check_read_in_sdmx(xml_file: Path):
 
 
 def check_xml_type(data: dict):
-    # check that the xml type is 'GenerictData'
+    # check that the xml type is 'GenericData'
     assert len(data.keys()) == 1, "xml format looks incorrect"
     assert (
         "message:GenericData" in data.keys()
