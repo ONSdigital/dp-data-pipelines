@@ -202,21 +202,25 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for supp_dist_pattern in supp_dist_patterns:
         try:
             if not local_store.has_lone_file_matching(supp_dist_pattern):
-
+                err = FileNotFoundError(
+                    f"No file found matching pattern {supp_dist_pattern}"
+                )
                 email_content = supplementary_distribution_not_found_email(
                     supp_dist_pattern
                 )
                 email_client.send(
                     submitter_email, email_content.subject, email_content.message
                 )
-                logger.info(
+                logger.error(
                     "Email sent to submitter about missing supplementary distribution file",
+                    err,
                     data={
                         "submitter_email": submitter_email,
                         "supplementary_distribution_pattern": supp_dist_pattern,
                     },
                 )
                 de_notifier.failure()
+                raise err
         except Exception as err:
             logger.error(
                 "Error occurred when looking for supplementary distribution",
