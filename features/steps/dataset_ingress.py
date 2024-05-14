@@ -88,7 +88,7 @@ def step_impl(context):
 
         assert files_to_retrieve, f"No fixtures found to match input dictionary."
 
-    fixtures_path = Path(Path(__file__).parent.parent / "fixtures/data")
+    fixtures_path = Path(Path(__file__).parent.parent / "fixtures/data/data-fixtures")
 
     for fixture, file in files_to_retrieve.items():
 
@@ -103,7 +103,7 @@ def step_impl(context, dataset_id):
     context.pipeline_config = CONFIGURATION_SDMX_2_0[dataset_id]
 
 
-@given("a SDMX 2.1 dataset of '{dataset_id}'")
+@given("a SDMX 2.1 dataset id of '{dataset_id}'")
 def step_impl(context, dataset_id):
     context.pipeline_config = CONFIGURATION_SDMX_2_1[dataset_id]
 
