@@ -60,11 +60,11 @@ If the `s3_tar_received.start()` function encounters any problems, an error will
 
 The following point will detail the release procedure and what steps need to be taken when a new version is released.
 
-    1. In the `pyproject.toml` file the under "[tool.poetry]" the version needs to be updated to the new verion.
+    1. In the `pyproject.toml` file the under "[tool.poetry]" the version needs to be updated to the new semantic version.
     2. Push the changes to the GitHub repo and merge it.
     3. The using the GitHub release UI (That can be found on the repo main page just to the right side).
 
- The Following steps will be needed to make a release.
+ The following steps will be needed to make a new release.
 
     1. On the releases page select `Draft New Release`.
     2. Add a new release tag following the `v0.1.0` semantic.
