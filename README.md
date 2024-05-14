@@ -69,14 +69,14 @@ The following point will detail the release procedure and what steps need to be 
     1. On the releases page select `Draft New Release`.
     2. Add a new release tag following the `v0.1.0` semantic.
 
-    first number is major chnage and complete overhaul (which won't be used any time soon),
-    second is updates that may chnage or add functionalities and the last one are smaller update or bug fixes.
+    first number is major change and complete overhaul (which won't be used any time soon),
+    second is updates that may change or add functionalities and the last one are smaller update or bug fixes.
     The pre-release  or non-production ready releases are meant to have a tacg such as `v0.1.0-rc1`.
 
     3. Choose the target branch that will be in our case `sandbox`.
-    4. The release title should contain the version number and the following what the release mainly contains.
+    4. The release title should contain the version number and then following what the release mainly contains.
     example: `v0.1.0 - Initial Release`
-    5. Generate the release notes that can be done by using the `generate release notes` function of Github.
+    5. Generate the release notes which can be done by using the `generate release notes` function on Github.
     6. At the bottom of the page tick the `Set as latest release` box.
     7. Finally Publish the release or save as draft.
     
