@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from dpypelines.pipeline.shared.transforms.validate_transform import (
+from dpypelines.pipeline.shared.transforms.validate_transform_v20 import (
     check_columns_of_dataframes_are_unique,
     check_header_info,
     check_header_unpacked,
