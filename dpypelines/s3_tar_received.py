@@ -8,7 +8,7 @@ from dpypelines.pipeline.shared.notification import (
     notifier_from_env_var_webhook,
 )
 
-logger = DpLogger("data-ingress-pipeline")
+logger = DpLogger("data-ingress-pipeline", flush_stdout_after_log_entry=True)
 
 
 def start(s3_object_name: str):

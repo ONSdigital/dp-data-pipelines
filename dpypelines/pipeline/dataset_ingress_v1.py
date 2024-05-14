@@ -30,7 +30,7 @@ from dpypelines.pipeline.shared.utils import (
     get_submitter_email,
 )
 
-logger = DpLogger("data-ingress-pipeline-v1")
+logger = DpLogger("data-ingress-pipeline-v1", flush_stdout_after_log_entry=True)
 
 
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
