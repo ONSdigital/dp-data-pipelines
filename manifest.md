@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The recommendations below are predicated on the assumption that files should be uploaded to the DP Upload Service `/upload-new` endpoint. Files are uploaded to an S3 bucket that is already defined (for the Staging environment, this is the "ons-dp-sandbox-encrypted-datasets" bucket). Files larger than 5MB are chunked, and these chunks are uploaded separately and reassembled in the "datasets" folder of the "ons-dp-sandbox-encrypted-datasets" bucket.
+The recommendations below are predicated on the assumption that files should be uploaded to the DP Upload Service `/upload-new` endpoint. Files are uploaded to an S3 bucket that is already defined (for the Sandbox environment, this is the "ons-dp-sandbox-encrypted-datasets" bucket). Files larger than 5MB are chunked, and these chunks are uploaded separately and reassembled in the "datasets" folder of the pre-defined bucket.
 
 ## Reference documents
 
@@ -44,7 +44,7 @@ Most fields that are required for the [`Resumable` struct](https://github.com/ON
 
 The following fields are defined in the [`FileMetadata` struct](https://github.com/ONSdigital/dp-api-clients-go/blob/main/files/data.go#L3), but there is no reference to these in the [Transform pipeline #3](https://confluence.ons.gov.uk/display/DIS/Transfer+of+input+files#Transferofinputfiles-Transportpipeline#3) table.
 
-| Field       | Current                                                                                                  | JSON alias      | Required? |
+| Field       | Current value                                                                                            | JSON alias      | Required? |
 |-------------|----------------------------------------------------------------------------------------------------------|-----------------|-----------|
 | Title       | `_generate_upload_new_params` (defaults to filename without extension if not provided)                   | `title`         | Yes       |
 | SizeInBytes | `_generate_upload_new_params` (total file size?)                                                         | `size_in_bytes` | Yes       |
@@ -71,6 +71,8 @@ Upload the following files to the relevant API:
 
 ## Recommendations for `manifest.json` structure
 
+Need to be very clear about the difference between catalog metadata and manifest metadata.
+
 ```json
 {
     "dataset_id": "string",
@@ -88,17 +90,32 @@ Upload the following files to the relevant API:
 }
 ```
 
-Clarification needed:
-- Issues with file chunking need to be resolved. Currently, files that are larger than 5MB cannot be uploaded, as this is raising a `DuplicateFileError` (we think this is happening [here](https://github.com/ONSdigital/dp-api-clients-go/blob/a26491512a8336ad9c31b694c045d8e3a3ed0578/files/client.go#L160)), because the `path` value is the same for each chunk. If the `path` value should be different for each chunk, what should it be?
-- Should `path` be provided in `manifest.json` or do we want to generate it from a concatenation of pre-defined bucket name, timestamp and filename (or similar)?
-- Is `fileAuthorEmail` the same as `publisherEmail`?
-- `fileVersion` - what is this used for? May need careful handling. What if two files are uploaded with the same version number? What if someone tries to upload v1 when v2 has already been uploaded? How will version numbers be tracked?
-- What should `resumableRelativePath` be (currently passing the local path of the file to be uploaded)?
-- What should `state` and `etag` be? Can these be inferred or automatically generated?
-- Do we need a JSON schema to validate `manifest.json` against (using `manifestVersion`)?
-- Should additional files (supplementary distributions) be uploaded to the same bucket (and folder) as the CSV file?
-- Should `manifest.json` contain anything that would be considered to be catalog metadata, e.g. issued/modified/release dates, or should these all come from the XML file?
+### Questions
 
-| Field        | Description                                                               |
-|--------------|---------------------------------------------------------------------------|
-| `dataset_id` | Needed to populate `pipeline_config` dictionary in `dataset_ingress_v1()` |
+1. Should `path` be provided in `manifest.json` or do we want to generate it from a concatenation of pre-defined bucket name, timestamp and filename (or similar)?
+2. Issues with file chunking need to be resolved. Currently, files that are larger than 5MB cannot be uploaded, as this is raising a `DuplicateFileError` (we think this is happening [here](https://github.com/ONSdigital/dp-api-clients-go/blob/a26491512a8336ad9c31b694c045d8e3a3ed0578/files/client.go#L160)), because the `path` value is the same for each chunk. If the `path` value should be different for each chunk, what should it be?
+3. Is `fileAuthorEmail` the same as `publisherEmail`?
+4. `fileVersion` - what is this used for? May need careful handling. What if two files are uploaded with the same version number? What if someone tries to upload v1 when v2 has already been uploaded? How will version numbers be tracked?
+5. What should `resumableRelativePath` be (currently passing the local path of the file to be uploaded)?
+6. What should `state` and `etag` be? Can these be inferred or automatically generated?
+7. Do we need a JSON schema to validate `manifest.json` against (using `manifestVersion`)?
+8. Should additional files (supplementary distributions) be uploaded to the same bucket (and folder) as the CSV file generated by the pipeline transform? What file types do we need to support for aupplementary distributions? `UploadServiceClient` will need to be updated if not just CSV and XML.
+9. Should `manifest.json` contain anything that would be considered to be catalog metadata, e.g. issued/modified/release dates, or should these all come from the XML file?
+10. Are `licence` and `licenceUrl` already included in catalog metadata?
+
+### `manifest.json` fields
+
+| Field                | Description | Used for transform?                                                                                                                                   |
+|----------------------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `dataset_id`         |             | Yes, to get transform details from `CONFIGURATION` in `dpypelines.pipeline.configuration.py`                                                          |
+| `fileAuthorEmail`    |             | No, but could replace env var in `dpypelines.pipeline.shared.utils.get_submitter_email()`                                                             |
+| `fileAuthorUsername` |             | No, but could be used to personalise emails sent by `SesClient`                                                                                       |
+| `fileVersion`        |             | Have concerns about this (see [Question 4](#questions))                                                                                               |
+| `isPublishable`      |             | Used in `UploadServiceClient._get_upload_new_params()` (currently set as `False`)                                                                     |
+| `licence`            |             | Used in `UploadServiceClient._get_upload_new_params()` (currently set as "Open Government Licence v3.0")                                              |
+| `licenceUrl`         |             | Used in `UploadServiceClient._get_upload_new_params()` (currently set as "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/") |
+| `manifestVersion`    |             | No, but will need to be validated (against a schema?) to ensure required fields are present                                                           |
+| `aliasName`          |             | Used in `UploadServiceClient._get_upload_new_params()` (currently defaults to `filename`)                                                             |
+| `collectionId`       |             | Should be set in `UploadServiceClient._get_upload_new_params()` (not currently populated).                                                            |
+| `state`              |             | Should be set in `UploadServiceClient._get_upload_new_params()` (not currently populated).                                                            |
+| `etag`               |             | Should be set in `UploadServiceClient._get_upload_new_params()` (not currently populated).                                                            |
