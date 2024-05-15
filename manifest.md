@@ -57,6 +57,26 @@ Upload the following files to the relevant API:
 
 All of the `.csv` output files and supplementary distribution files should be uploaded to the same location, as these form a complete submission. 
 
+## Challenges
+
+As stated in the [Introduction](#introduction) section, output files are uploaded to a pre-defined S3 bucket. The `path` field listed in the [Transport Pipeline #3](#required-fields-for-transport-pipeline-3) table below is defined as "The file path that the file should be available at once published to web and api users". Currently, when generating the HTTP request parameters, the DTV pipeline is generating a separate `path` value for each of the `.csv` output files and supplementary distribution files. For the example above, if using the Sandbox environment, the generated `path` and published file location would be as follows:
+
+| File         | `path`                            | File location                                                                       |
+|--------------|-----------------------------------|-------------------------------------------------------------------------------------|
+| `data1.csv`  | `datasets/<timestamp>-data1-csv`  | `s3://ons-dp-sandbox-encrypted-datasets/datasets/<timestamp>-data1-csv/data1.csv`   |
+| `data2.xlsx` | `datasets/<timestamp>-data2-xlsx` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/<timestamp>-data2-xlsx/data2.xlsx` |
+| `data3.ods`  | `datasets/<timestamp>-data3-ods`  | `s3://ons-dp-sandbox-encrypted-datasets/datasets/<timestamp>-data3-ods/data3.ods`   |
+
+This would not be correct, as these three files should all be contained in the same folder within the bucket. One of the fields that we are recommending for inclusion in `manifest.json` is `dataset_id`, which would permit the following folder structure to be implemented:
+
+| File         | `path`                               | File location                                                                       |
+|--------------|--------------------------------------|-------------------------------------------------------------------------------------|
+| `data1.csv`  | `datasets/<dataset_id>/<timestamp>/` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/dataset_id/<timestamp>/data1.csv`  |
+| `data2.xlsx` | `datasets/<dataset_id>/<timestamp>/` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/dataset_id/<timestamp>/data2.xlsx` |
+| `data3.ods`  | `datasets/<dataset_id>/<timestamp>/` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/dataset_id/<timestamp>/data3.ods`  |
+
+This proposal would require the ability for users to submit multiple files as a single `.tar` file via, for example, Sharepoint. Assurance is sought from the CloudOps team that this is feasible. Some form of validation that all required files are present in the `.tar` file prior to submission to DTV will also need to be implemented.
+
 ## Supplementary information
 
 The recommendations in this document are based on the AND Solution Design for [Transfer of input files](https://confluence.ons.gov.uk/display/DIS/Transfer+of+input+files), in particular [Transform pipeline #3](https://confluence.ons.gov.uk/display/DIS/Transfer+of+input+files#Transferofinputfiles-Transportpipeline#3).
@@ -83,26 +103,6 @@ The table below is copied from the [Transform pipeline #3](https://confluence.on
 | path               | Mandatory | The file path that the file should be available at once published to web and api users                                           |
 | aliasName          | Optional  | Alias for the file to be uploaded to the static file system                                                                      |
 | collectionId       | Optional  | Id of an existing collection in Florence that the file should be attached to once it is uploaded to the static file system       |
-
-## Challenges
-
-As stated in the [Introduction](#introduction) section, output files are uploaded to a pre-defined S3 bucket. The `path` field listed in the [Transport Pipeline #3](#required-fields-for-transport-pipeline-3) table is defined as "The file path that the file should be available at once published to web and api users". Currently, when generating the HTTP request parameters, the DTV pipeline is generating a separate `path` value for each of the `.csv` output files and supplementary distribution files. For the example above, if using the Sandbox environment, the generated `path` and published file location would be as follows:
-
-| File         | `path`                            | File location                                                                       |
-|--------------|-----------------------------------|-------------------------------------------------------------------------------------|
-| `data1.csv`  | `datasets/<timestamp>-data1-csv`  | `s3://ons-dp-sandbox-encrypted-datasets/datasets/<timestamp>-data1-csv/data1.csv`   |
-| `data2.xlsx` | `datasets/<timestamp>-data2-xlsx` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/<timestamp>-data2-xlsx/data2.xlsx` |
-| `data3.ods`  | `datasets/<timestamp>-data3-ods`  | `s3://ons-dp-sandbox-encrypted-datasets/datasets/<timestamp>-data3-ods/data3.ods`   |
-
-This would not be correct, as these three files should all be contained in the same folder within the bucket. One of the fields that we are recommending for inclusion in `manifest.json` is `dataset_id`, which would permit the following folder structure to be implemented:
-
-| File         | `path`                               | File location                                                                       |
-|--------------|--------------------------------------|-------------------------------------------------------------------------------------|
-| `data1.csv`  | `datasets/<dataset_id>/<timestamp>/` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/dataset_id/<timestamp>/data1.csv`  |
-| `data2.xlsx` | `datasets/<dataset_id>/<timestamp>/` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/dataset_id/<timestamp>/data2.xlsx` |
-| `data3.ods`  | `datasets/<dataset_id>/<timestamp>/` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/dataset_id/<timestamp>/data3.ods`  |
-
-This proposal would require the ability for users to submit multiple files as a single `.tar` file via, for example, Sharepoint. Assurance is sought from the CloudOps team that this is feasible.
 
 ## Recommendations for `manifest.json` structure
 
