@@ -57,30 +57,6 @@ If the `s3_tar_received.start()` function encounters any problems, an error will
 | FLORENCE_TOKEN           |  None   | The Florence access token required to access the Upload Service |
 
 
-## Release
-
-The following point will detail the release procedure and what steps need to be taken when a new version is released.
-
-    1. In the `pyproject.toml` file the under "[tool.poetry]" the version needs to be updated to the new semantic version.
-    2. Push the changes to the GitHub repo and merge it.
-    3. The using the GitHub release UI (That can be found on the repo main page just to the right side).
-
- The following steps will be needed to make a new release.
-
-    1. On the releases page select `Draft New Release`.
-    2. Add a new release tag following the `v0.1.0` semantic.
-
-    first number is major change and complete overhaul (which won't be used any time soon),
-    second is updates that may change or add functionalities and the last one are smaller update or bug fixes.
-    The pre-release  or non-production ready releases are meant to have a tacg such as `v0.1.0-rc1`.
-
-    3. Choose the target branch that will be in our case `sandbox`.
-    4. The release title should contain the version number and then following what the release mainly contains.
-    example: `v0.1.0 - Initial Release`
-    5. Generate the release notes which can be done by using the `generate release notes` function on Github.
-    6. At the bottom of the page tick the `Set as latest release` box.
-    7. Finally Publish the release or save as draft.
-    
 Licence
 -------
 
