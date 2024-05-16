@@ -86,7 +86,7 @@ The DP Upload Service is written in Go. There are (at least) two locations in th
 - [FileMetadata struct](https://github.com/ONSdigital/dp-api-clients-go/blob/main/files/data.go#L3)
 - [Resumable struct](https://github.com/ONSdigital/dp-upload-service/blob/develop/upload/upload.go#L19)
 
-### Required fields for Transport Pipeline #3
+### Required fields for Transform Pipeline #3
 
 The table below is copied from the [Transform pipeline #3](https://confluence.ons.gov.uk/display/DIS/Transfer+of+input+files#Transferofinputfiles-Transportpipeline#3) section. There is significant overlap between the fields in this table and the fields in the `FileMetadata` and `Resumable` structs linked to in the [Supplementary information](#supplementary-information) section.
 
