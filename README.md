@@ -56,6 +56,7 @@ If the `s3_tar_received.start()` function encounters any problems, an error will
 | UPLOAD_SERVICE_S3_BUCKET |  None   | The S3 bucket name to upload to                                 |
 | FLORENCE_TOKEN           |  None   | The Florence access token required to access the Upload Service |
 
+
 Licence
 -------
 
