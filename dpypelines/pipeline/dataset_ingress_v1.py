@@ -357,8 +357,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
-    de_notifier.success()
-
     # TODO - validate the metadata once we have a schema for it.
 
     # TODO - validate the csv once we know what we're validating
@@ -452,3 +450,5 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 raise NotImplementedError(
                     f"Uploading files of type {supp_dist_path.suffix} not supported."
                 )
+
+    de_notifier.success()
