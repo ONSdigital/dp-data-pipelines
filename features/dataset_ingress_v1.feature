@@ -19,6 +19,11 @@ Feature: Data Ingress v1
           | ID | Test | Name xml:lang |
     And I read the metadata output 'metadata.json'
     And the metadata should match 'fixtures/correct_metadata_2_0.json'
+    And the backend receives a request to "/upload-new"
+    And the csv payload received should contain "temp-file-part-1"
+    And the headers received should match
+        | key            | value                   |
+        | Authorization  | Bearer not-a-real-token |
 
   Scenario: SDMX 2.1 runs without errors
     Given a temporary source directory of files
