@@ -10,7 +10,7 @@ from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
     sdmx_sanity_check_v1,
 )
 
-CONFIGURATION_SDMX_2_0 = {
+CONFIGURATION = {
     "valid": {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
@@ -20,9 +20,18 @@ CONFIGURATION_SDMX_2_0 = {
         "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
         "secondary_function": dataset_ingress_v1,
     },
-    "valid_no_supp_dist": {
+    "valid_no_supp_dist_2_0": {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [],
+        "secondary_function": dataset_ingress_v1,
+    },
+    "valid_no_supp_dist_2_1": {
+        "config_version": 1,
+        "transform": sdmx_compact_2_1_prototype,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$", "count": "1"}],
@@ -38,36 +47,6 @@ CONFIGURATION_SDMX_2_0 = {
         "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
         "secondary_function": dataset_ingress_v1,
     },
-}
-
-CONFIGURATION_SDMX_2_1 = {
-        "valid": {
-        "config_version": 1,
-        "transform": sdmx_compact_2_1_prototype,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
-        "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
-        "secondary_function": dataset_ingress_v1,
-    },
-    "valid_no_supp_dist": {
-        "config_version": 1,
-        "transform": sdmx_compact_2_1_prototype,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
-        "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [],
-        "secondary_function": dataset_ingress_v1,
-    },
-    "invalid": {
-        "config_version": 2,
-        "transform": sdmx_compact_2_1_prototype,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
-        "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
-        "secondary_function": dataset_ingress_v1,
-}
 }
 
 import json
@@ -101,13 +80,7 @@ def step_impl(context):
 
 @given("a dataset id of '{dataset_id}'")
 def step_impl(context, dataset_id):
-    context.pipeline_config = CONFIGURATION_SDMX_2_0[dataset_id]
-
-
-@given("a SDMX 2.1 dataset id of '{dataset_id}'")
-def step_impl(context, dataset_id):
-    context.pipeline_config = CONFIGURATION_SDMX_2_1[dataset_id]
-
+    context.pipeline_config = CONFIGURATION[dataset_id]
 
 @given("dataset_ingress_v1 starts using the temporary source directory")
 def step_impl(context):
