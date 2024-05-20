@@ -23,9 +23,22 @@ Feature: Data Ingress v1
     And the csv output has the columns
           | ID | Test | Name xml:lang |
     And I read the metadata output 'metadata.json'
-    And the metadata should match 'fixtures/correct_metadata.json'
+    And the metadata should match 'fixtures/correct_metadata_2_0.json'
 
-
+  Scenario: SDMX 2.1 runs without errors
+    Given a temporary source directory of files
+        | file      | fixture      |
+        | data.xml  | esa10_sdmx21.xml |
+    And a SDMX 2.1 dataset id of 'valid_no_supp_dist'
+    And dataset_ingress_v1 starts using the temporary source directory
+    Then the pipeline should generate no errors
+    Then I read the csv output 'data.csv'
+    And the csv output should have '258042' rows
+    And the csv output has the columns
+          | ID | Test | Prepared | Sender id | Sender Name xml:lang |
+    Then I read the metadata output 'metadata.json'
+    And the metadata should match 'fixtures/correct_metadata_2_1.json'
+    
   Scenario: Pipeline runs with an expected error
     Given a temporary source directory of files
         | file     | fixture               |
