@@ -6,6 +6,7 @@ from dpytools.http.upload import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 
+from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.email_template_message import (
     file_not_found_email,
     submission_processed_email,
