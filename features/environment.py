@@ -31,8 +31,8 @@ def before_all(context):
     context.upload_service_s3_bucket = os.environ.get("UPLOAD_SERVICE_S3_BUCKET", None)
     os.environ["UPLOAD_SERVICE_S3_BUCKET"] = "my-bucket/my.tar"
 
-    context.florence_access_token = os.environ.get("FLORENCE_TOKEN", None)
-    os.environ["FLORENCE_TOKEN"] = "not-a-real-token"
+    context.service_token_for_upload = os.environ.get("SERVICE_TOKEN_FOR_UPLOAD", None)
+    os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = "not-a-real-token"
 
     context.features_directory = Path(__file__).parent
 
@@ -129,8 +129,8 @@ def after_all(context):
     if context.upload_service_s3_bucket is not None:
         os.environ["UPLOAD_SERVICE_S3_BUCKET"] = context.upload_service_s3_bucket
 
-    if context.florence_access_token is not None:
-        os.environ["FLORENCE_TOKEN"] = context.florence_access_token
+    if context.service_token_for_upload is not None:
+        os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = context.service_token_for_upload
 
     context.backend_container.stop()
     context.backend_container.remove()

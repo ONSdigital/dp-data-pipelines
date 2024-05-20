@@ -12,19 +12,18 @@ Feature: Data Ingress v1
         | data.xml  | esa2010_test_data_short.xml |
     And a dataset id of 'valid_no_supp_dist'
     And dataset_ingress_v1 starts using the temporary source directory
-    Then the backend receives a request to "/upload-new"
-    And the csv payload received should contain "temp-file-part-1"
-    And the headers received should match
-        | key              | value            |
-        | X-Florence-Token | not-a-real-token |
-    And the pipeline should generate no errors
+    Then the pipeline should generate no errors
     And I read the csv output 'data.csv'
     And the csv output should have '24' rows
     And the csv output has the columns
           | ID | Test | Name xml:lang |
     And I read the metadata output 'metadata.json'
     And the metadata should match 'fixtures/correct_metadata.json'
-
+    And the backend receives a request to "/upload-new"
+    And the csv payload received should contain "temp-file-part-1"
+    And the headers received should match
+        | key            | value                   |
+        | Authorization  | Bearer not-a-real-token |
 
   Scenario: Pipeline runs with an expected error
     Given a temporary source directory of files
