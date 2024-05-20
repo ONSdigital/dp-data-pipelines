@@ -328,77 +328,76 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             err,
             data={"pipeline_config": pipeline_config},
         )
-    
-    if transform_function and transform_kwargs:
-        try:
-            csv_path, metadata_path = transform_function(
-                *input_file_paths, **transform_kwargs
-            )
-            logger.info(
-                "Successfully ran transform function",
-                data={
-                    "transform_function": transform_function,
-                    "input_file_paths": input_file_paths,
-                    "transform_kwargs": transform_kwargs,
-                    "csv_path": csv_path,
-                    "metadata_path": metadata_path,
-                },
-            )
-        except Exception as err:
-            logger.error(
-                "Error occurred when running transform function",
-                err,
-                data={
-                    "transform_function": transform_function,
-                    "input_file_paths": input_file_paths,
-                    "transform_kwargs": transform_kwargs,
-                    "pipeline_config": pipeline_config,
-                },
-            )
-            de_notifier.failure()
-            raise err
 
-        de_notifier.success()
+    try:
+        csv_path, metadata_path = transform_function(
+            *input_file_paths, **transform_kwargs
+        )
+        logger.info(
+            "Successfully ran transform function",
+            data={
+                "transform_function": transform_function,
+                "input_file_paths": input_file_paths,
+                "transform_kwargs": transform_kwargs,
+                "csv_path": csv_path,
+                "metadata_path": metadata_path,
+            },
+        )
+    except Exception as err:
+        logger.error(
+            "Error occurred when running transform function",
+            err,
+            data={
+                "transform_function": transform_function,
+                "input_file_paths": input_file_paths,
+                "transform_kwargs": transform_kwargs,
+                "pipeline_config": pipeline_config,
+            },
+        )
+        de_notifier.failure()
+        raise err
 
-        # TODO - validate the metadata once we have a schema for it.
+    de_notifier.success()
 
-        # TODO - validate the csv once we know what we're validating
+    # TODO - validate the metadata once we have a schema for it.
 
-        # Upload output files to Upload Service
-        try:
-            # Create UploadClient from upload_url
-            upload_client = UploadServiceClient(upload_url)
-            logger.info(
-                "UploadClient created from upload_url", data={"upload_url": upload_url}
-            )
-        except Exception as err:
-            logger.error(
-                "Error creating UploadClient", err, data={"upload_url": upload_url}
-            )
-            de_notifier.failure()
-            raise err
+    # TODO - validate the csv once we know what we're validating
 
-        try:
-            # Upload CSV to Upload Service
-            upload_client.upload_new_csv(csv_path, florence_access_token)
-            logger.info(
-                "Uploaded CSV to Upload Service",
-                data={
-                    "csv_path": csv_path,
-                    "upload_url": upload_url,
-                },
-            )
-        except Exception as err:
-            logger.error(
-                "Error uploading CSV file to Upload Service",
-                err,
-                data={
-                    "csv_path": csv_path,
-                    "upload_url": upload_url,
-                },
-            )
-            de_notifier.failure()
-            raise err
+    # Upload output files to Upload Service
+    try:
+        # Create UploadClient from upload_url
+        upload_client = UploadServiceClient(upload_url)
+        logger.info(
+            "UploadClient created from upload_url", data={"upload_url": upload_url}
+        )
+    except Exception as err:
+        logger.error(
+            "Error creating UploadClient", err, data={"upload_url": upload_url}
+        )
+        de_notifier.failure()
+        raise err
+
+    try:
+        # Upload CSV to Upload Service
+        upload_client.upload_new_csv(csv_path, florence_access_token)
+        logger.info(
+            "Uploaded CSV to Upload Service",
+            data={
+                "csv_path": csv_path,
+                "upload_url": upload_url,
+            },
+        )
+    except Exception as err:
+        logger.error(
+            "Error uploading CSV file to Upload Service",
+            err,
+            data={
+                "csv_path": csv_path,
+                "upload_url": upload_url,
+            },
+        )
+        de_notifier.failure()
+        raise err
 
         # Check for supplementary distributions to upload
         if supp_dist_patterns:

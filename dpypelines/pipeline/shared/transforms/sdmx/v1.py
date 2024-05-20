@@ -37,6 +37,8 @@ def sdmx_compact_2_1_prototype(input_file: Path):
     xmlToCsvSDMX2_1(input_file, csv_out)
     generate_versions_metadata(csv_out, metadata_out)
 
+    return csv_out, metadata_out
+
 
 def stub_smdx_default_v1():
     """
