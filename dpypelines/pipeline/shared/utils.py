@@ -31,16 +31,6 @@ def str_to_bool(should_be_bool: str) -> bool:
         )
 
 
-def get_florence_access_token() -> str:
-    """
-    Get Florence access token from environment variable, if set, otherwise raise NotImplementedError
-    """
-    florence_access_token = os.environ.get("FLORENCE_TOKEN", None)
-    if florence_access_token is not None:
-        return florence_access_token
-    raise ValueError("No Florence token set")
-
-
 class NopEmailClient:
     def send(self, *args, **kwargs):
         print("Email feature is turned off. No email was sent.")

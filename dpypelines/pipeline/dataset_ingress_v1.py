@@ -24,11 +24,7 @@ from dpypelines.pipeline.shared.pipelineconfig.transform import (
     get_transform_inputs,
     get_transform_kwargs,
 )
-from dpypelines.pipeline.shared.utils import (
-    get_email_client,
-    get_florence_access_token,
-    get_submitter_email,
-)
+from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 
 logger = DpLogger("data-ingress-pipeline-v1")
 
@@ -96,18 +92,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         logger.info("Got Upload Service URL", data={"upload_url": upload_url})
     except Exception as err:
         logger.error("Error occurred when getting Upload Service URL", err)
-        de_notifier.failure()
-        raise err
-
-    # Get Florence access token from environment variable
-    try:
-        florence_access_token = get_florence_access_token()
-        assert (
-            florence_access_token is not None
-        ), "FLORENCE_TOKEN environment variable not set."
-        logger.info("Got Florence access token")
-    except Exception as err:
-        logger.error("Error occurred when getting Florence access token", err)
         de_notifier.failure()
         raise err
 
@@ -357,8 +341,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
-    de_notifier.success()
-
     # TODO - validate the metadata once we have a schema for it.
 
     # TODO - validate the csv once we know what we're validating
@@ -379,7 +361,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     try:
         # Upload CSV to Upload Service
-        upload_client.upload_new_csv(csv_path, florence_access_token)
+        upload_client.upload_new_csv(csv_path)
         logger.info(
             "Uploaded CSV to Upload Service",
             data={
@@ -429,7 +411,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             # If the supplementary distribution is an XML file, upload to the Upload Service
             if supp_dist_path.suffix == ".xml":
                 try:
-                    upload_client.upload_new_sdmx(supp_dist_path, florence_access_token)
+                    upload_client.upload_new_sdmx(supp_dist_path)
                     logger.info(
                         "Uploaded supplementary distribution",
                         data={
@@ -452,3 +434,5 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 raise NotImplementedError(
                     f"Uploading files of type {supp_dist_path.suffix} not supported."
                 )
+
+    de_notifier.success()
