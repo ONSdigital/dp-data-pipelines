@@ -6,7 +6,6 @@ from dpytools.http.upload import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 
-from dpypelines.pipeline.shared import message
 from dpypelines.pipeline.shared.email_template_message import (
     file_not_found_email,
     submission_processed_email,
@@ -86,7 +85,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     except Exception as err:
         logger.error("Error occurred while attempting to send email", err)
         de_notifier.failure()
-        raise Exception(message.unexpected_error("Failed to send email", err)) from err
+        raise err
 
     # Get Upload Service URL from environment variable
     try:
