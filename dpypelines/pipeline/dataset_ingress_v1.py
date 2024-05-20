@@ -24,10 +24,7 @@ from dpypelines.pipeline.shared.pipelineconfig.transform import (
     get_transform_inputs,
     get_transform_kwargs,
 )
-from dpypelines.pipeline.shared.utils import (
-    get_email_client,
-    get_submitter_email,
-)
+from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 
 logger = DpLogger("data-ingress-pipeline-v1")
 

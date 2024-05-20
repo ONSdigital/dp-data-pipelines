@@ -1,6 +1,6 @@
 import pytest
 
-from dpypelines.pipeline.shared.utils import get_florence_access_token, str_to_bool
+from dpypelines.pipeline.shared.utils import str_to_bool
 
 
 def test_str_to_bool_valid_values():
@@ -44,18 +44,3 @@ def test_str_to_bool_raises_for_not_string_argument():
             str_to_bool(invalid_type)
 
         assert "Function str_to_bool only accepts strings" in str(err)
-
-
-def test_florence_access_token_set_as_env_var():
-    mp = pytest.MonkeyPatch()
-    mp.setenv("FLORENCE_TOKEN", "florence-access-token")
-    florence_token = get_florence_access_token()
-    assert florence_token == "florence-access-token"
-
-
-def test_florence_access_token_not_set_as_env_var():
-    mp = pytest.MonkeyPatch()
-    mp.delenv("FLORENCE_TOKEN")
-    with pytest.raises(ValueError) as err:
-        get_florence_access_token()
-    assert "No Florence token set" in str(err.value)
