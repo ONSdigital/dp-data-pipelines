@@ -1,6 +1,7 @@
 import pandas as pd
 import xmltodict
 
+from dpypelines.pipeline.shared.transforms.utils import flatten_dict
 from dpypelines.pipeline.shared.transforms.validate_transform_v21 import (
     check_columns_of_dataframes_are_unique,
     check_header_info,
