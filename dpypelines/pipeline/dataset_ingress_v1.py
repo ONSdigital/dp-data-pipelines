@@ -151,7 +151,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
-    # Check for the existence of each required file 
+    # Check for the existence of each required file
     for required_file in required_file_patterns:
         try:
             if not local_store.has_lone_file_matching(required_file):
