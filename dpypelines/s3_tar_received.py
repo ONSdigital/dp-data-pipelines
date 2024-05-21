@@ -78,7 +78,7 @@ def start(s3_object_name: str):
 
     # Get config details for the given dataset_id
     try:
-        pipeline_config, config_keys = get_pipeline_config(dataset_id)
+        pipeline_config = get_pipeline_config(dataset_id)
         logger.info(
             "Successfully retrieved config details for given dataset_id",
             data={"pipeline_config": pipeline_config, "dataset_id": dataset_id},

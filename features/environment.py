@@ -25,6 +25,10 @@ def before_all(context):
     context.disable_notification_setting = os.environ.get("DISABLE_NOTIFICATIONS", None)
     os.environ["DISABLE_NOTIFICATIONS"] = "true"
 
+    # Don't skip the upload when testing
+    context.skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", None)
+    os.environ["SKIP_DATA_UPLOAD"] = "false"
+
     context.upload_service_url = os.environ.get("UPLOAD_SERVICE_URL", None)
     os.environ["UPLOAD_SERVICE_URL"] = "http://127.0.0.1:5001/upload-new"
 
@@ -122,6 +126,9 @@ def after_all(context):
     # Setting the environment back to how it was before testing
     if context.disable_notification_setting is not None:
         os.environ["DISABLE_NOTIFICATIONS"] = context.disable_notification_setting
+
+    if context.skip_data_upload is not None:
+        os.environ["SKIP_DATA_UPLOAD"] = context.skip_data_upload
 
     if context.upload_service_url is not None:
         os.environ["UPLOAD_SERVICE_URL"] = context.upload_service_url
