@@ -18,7 +18,7 @@ files_dir = "path/to/directory/of/inputs"
 
 # Specify the dataset id for picking the configuration you want to use for
 # your source.
-pipeline_config  = get_pipeline_config("<dataset_id>")
+pipeline_config = get_pipeline_config("<dataset_id>")
 
 # Run the function
 dataset_ingress_v1(files_dir, pipeline_config)
