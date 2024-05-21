@@ -24,7 +24,11 @@ from dpypelines.pipeline.shared.pipelineconfig.transform import (
     get_transform_inputs,
     get_transform_kwargs,
 )
-from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
+from dpypelines.pipeline.shared.utils import (
+    get_email_client,
+    get_submitter_email,
+    str_to_bool,
+)
 
 logger = DpLogger("data-ingress-pipeline-v1")
 
@@ -353,27 +357,16 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # developing code locally.
     skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", False)
     if skip_data_upload is not False:
-        if skip_data_upload.strip() in ["True", "true"]:
-            skip_data_upload = True
-        elif skip_data_upload.strip() in ["False", "false"]:
-            skip_data_upload = False
-        else:
-            # Catch a trivial raise as we need the stack trace of the
-            # error for the logger, so it needs to be a raised error.
-            try:
-                raise ValueError(
-                    "If present SKIP_DATA_UPLOAD must be one of: True, true, False, false."
-                )
-            except ValueError as err:
-                logger.error(
-                    "Error occurred when configuring from SKIP_DATA_UPLOAD env var",
-                    err,
-                    data={
-                        "value": skip_data_upload,
-                    },
-                )
-                de_notifier.failure()
-                raise err
+        try:
+            skip_data_upload = str_to_bool(skip_data_upload)
+        except Exception as err:
+            logger.error(
+                "Unable to cast SKIP_DATA_UPLOAD to boolean",
+                err,
+                data={"value": skip_data_upload},
+            )
+            de_notifier.failure()
+            raise err
 
     logger.info(
         "skip_data_upload set from SKIP_DATA_UPLOAD env var",
