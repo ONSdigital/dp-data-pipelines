@@ -187,25 +187,29 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for supp_dist_pattern in supp_dist_patterns:
         try:
             if not local_store.has_lone_file_matching(supp_dist_pattern):
-                err = FileNotFoundError(
-                    f"No file found matching pattern {supp_dist_pattern}"
-                )
-                email_content = supplementary_distribution_not_found_email(
-                    supp_dist_pattern
-                )
-                email_client.send(
-                    submitter_email, email_content.subject, email_content.message
-                )
-                logger.error(
-                    "Email sent to submitter about missing supplementary distribution file",
-                    err,
-                    data={
-                        "submitter_email": submitter_email,
-                        "supplementary_distribution_pattern": supp_dist_pattern,
-                    },
-                )
-                de_notifier.failure()
-                raise err
+                # Catch a trivial raise as we need the stack trace of the
+                # error for the logger, so it needs to be a raised error.
+                try:
+                    raise FileNotFoundError(
+                        f"No file found matching pattern {supp_dist_pattern}"
+                    )
+                except FileNotFoundError as err:
+                    email_content = supplementary_distribution_not_found_email(
+                        supp_dist_pattern
+                    )
+                    email_client.send(
+                        submitter_email, email_content.subject, email_content.message
+                    )
+                    logger.error(
+                        "Email sent to submitter about missing supplementary distribution file",
+                        err,
+                        data={
+                            "submitter_email": submitter_email,
+                            "supplementary_distribution_pattern": supp_dist_pattern,
+                        },
+                    )
+                    de_notifier.failure()
+                    raise err
         except Exception as err:
             logger.error(
                 "Error occurred when looking for supplementary distribution",
@@ -345,94 +349,127 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # TODO - validate the csv once we know what we're validating
 
-    # Upload output files to Upload Service
-    try:
-        # Create UploadClient from upload_url
-        upload_client = UploadServiceClient(upload_url)
-        logger.info(
-            "UploadClient created from upload_url", data={"upload_url": upload_url}
-        )
-    except Exception as err:
-        logger.error(
-            "Error creating UploadClient", err, data={"upload_url": upload_url}
-        )
-        de_notifier.failure()
-        raise err
+    # Allow DE's to skip the upload to s3 part of the pipeline while
+    # developing code locally.
+    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", False)
+    if skip_data_upload is not False:
+        if skip_data_upload.strip() in ["True", "true"]:
+            skip_data_upload = True
+        elif skip_data_upload.strip() in ["False", "false"]:
+            skip_data_upload = False
+        else:
+            # Catch a trivial raise as we need the stack trace of the
+            # error for the logger, so it needs to be a raised error.
+            try:
+                raise ValueError(
+                    "If present SKIP_DATA_UPLOAD must be one of: True, true, False, false."
+                )
+            except ValueError as err:
+                logger.error(
+                    "Error occurred when configuring from SKIP_DATA_UPLOAD env var",
+                    err,
+                    data={
+                        "value": skip_data_upload,
+                    },
+                )
+                de_notifier.failure()
+                raise err
 
-    try:
-        # Upload CSV to Upload Service
-        upload_client.upload_new_csv(csv_path)
-        logger.info(
-            "Uploaded CSV to Upload Service",
-            data={
-                "csv_path": csv_path,
-                "upload_url": upload_url,
-            },
-        )
-    except Exception as err:
-        logger.error(
-            "Error uploading CSV file to Upload Service",
-            err,
-            data={
-                "csv_path": csv_path,
-                "upload_url": upload_url,
-            },
-        )
-        de_notifier.failure()
-        raise err
+    logger.info(
+        "skip_data_upload set from SKIP_DATA_UPLOAD env var",
+        data={"value": skip_data_upload},
+    )
 
-    # Check for supplementary distributions to upload
-    if supp_dist_patterns:
-        # Get list of all files in local store
-        all_files = local_store.get_file_names()
-        logger.info("Got all files in local store", data={"files": all_files})
-        for supp_dist_pattern in supp_dist_patterns:
-            # Get supplementary distribution filename matching pattern from local store
-            supp_dist_matching_files = [
-                f for f in all_files if re.search(supp_dist_pattern, f)
-            ]
-            assert (
-                len(supp_dist_matching_files) == 1
-            ), f"Error finding file matching pattern {supp_dist_pattern}: matching files are {supp_dist_matching_files}"
+    if skip_data_upload is not True:
 
-            # Create a directory to save supplementary distribution
-            if not os.path.exists("supplementary_distributions"):
-                os.mkdir("supplementary_distributions")
-            supp_dist_path = local_store.save_lone_file_matching(
-                supp_dist_pattern, "supplementary_distributions"
-            )
+        # Upload output files to Upload Service
+        try:
+            # Create UploadClient from upload_url
+            upload_client = UploadServiceClient(upload_url)
             logger.info(
-                "Got supplementary distribution",
+                "UploadClient created from upload_url", data={"upload_url": upload_url}
+            )
+        except Exception as err:
+            logger.error(
+                "Error creating UploadClient", err, data={"upload_url": upload_url}
+            )
+            de_notifier.failure()
+            raise err
+
+        try:
+            # Upload CSV to Upload Service
+            upload_client.upload_new_csv(csv_path)
+            logger.info(
+                "Uploaded CSV to Upload Service",
                 data={
-                    "supplementary_distribution": supp_dist_path,
-                    "file_extension": supp_dist_path.suffix,
+                    "csv_path": csv_path,
+                    "upload_url": upload_url,
                 },
             )
-            # If the supplementary distribution is an XML file, upload to the Upload Service
-            if supp_dist_path.suffix == ".xml":
-                try:
-                    upload_client.upload_new_sdmx(supp_dist_path)
-                    logger.info(
-                        "Uploaded supplementary distribution",
-                        data={
-                            "supplementary_distribution": supp_dist_path,
-                            "upload_url": upload_url,
-                        },
-                    )
-                except Exception as err:
-                    logger.error(
-                        "Error uploading SDMX file to Upload Service",
-                        err,
-                        data={
-                            "supplementary_distribution": supp_dist_path,
-                            "upload_url": upload_url,
-                        },
-                    )
-                    de_notifier.failure()
-                    raise err
-            else:
-                raise NotImplementedError(
-                    f"Uploading files of type {supp_dist_path.suffix} not supported."
+        except Exception as err:
+            logger.error(
+                "Error uploading CSV file to Upload Service",
+                err,
+                data={
+                    "csv_path": csv_path,
+                    "upload_url": upload_url,
+                },
+            )
+            de_notifier.failure()
+            raise err
+
+        # Check for supplementary distributions to upload
+        if supp_dist_patterns:
+            # Get list of all files in local store
+            all_files = local_store.get_file_names()
+            logger.info("Got all files in local store", data={"files": all_files})
+            for supp_dist_pattern in supp_dist_patterns:
+                # Get supplementary distribution filename matching pattern from local store
+                supp_dist_matching_files = [
+                    f for f in all_files if re.search(supp_dist_pattern, f)
+                ]
+                assert (
+                    len(supp_dist_matching_files) == 1
+                ), f"Error finding file matching pattern {supp_dist_pattern}: matching files are {supp_dist_matching_files}"
+
+                # Create a directory to save supplementary distribution
+                if not os.path.exists("supplementary_distributions"):
+                    os.mkdir("supplementary_distributions")
+                supp_dist_path = local_store.save_lone_file_matching(
+                    supp_dist_pattern, "supplementary_distributions"
                 )
+                logger.info(
+                    "Got supplementary distribution",
+                    data={
+                        "supplementary_distribution": supp_dist_path,
+                        "file_extension": supp_dist_path.suffix,
+                    },
+                )
+                # If the supplementary distribution is an XML file, upload to the Upload Service
+                if supp_dist_path.suffix == ".xml":
+                    try:
+                        upload_client.upload_new_sdmx(supp_dist_path)
+                        logger.info(
+                            "Uploaded supplementary distribution",
+                            data={
+                                "supplementary_distribution": supp_dist_path,
+                                "upload_url": upload_url,
+                            },
+                        )
+                    except Exception as err:
+                        logger.error(
+                            "Error uploading SDMX file to Upload Service",
+                            err,
+                            data={
+                                "supplementary_distribution": supp_dist_path,
+                                "upload_url": upload_url,
+                            },
+                        )
+                        de_notifier.failure()
+                        raise err
+                else:
+                    raise NotImplementedError(
+                        f"Uploading files of type {supp_dist_path.suffix} not supported."
+                    )
 
     de_notifier.success()
