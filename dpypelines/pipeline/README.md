@@ -43,6 +43,7 @@ Set the following env vars:
 ```
 export DISABLE_NOTIFICATIONS=true
 export SKIP_DATA_UPLOAD=true
+export UPLOAD_SERVICE_URL=not-used
 ```
 
 Note: this will run the full transform but will stop short of uploading things to the [dp-upload-service](https://github.com/ONSdigital/dp-upload-service) such that they get into an encrypted bucket on s3.
