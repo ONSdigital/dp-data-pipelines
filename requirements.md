@@ -13,7 +13,7 @@ Business areas wishing to submit datasets to the DTV pipeline will add the relev
 ```json
 {
     "manifestVersion": "integer",
-    "dataset_id": "string",
+    "source_id": "string",
     "fileAuthorEmail": "string",
     "fileAuthorUsername": "string",
     "isPublishable": "Optional boolean",
@@ -27,7 +27,7 @@ Business areas wishing to submit datasets to the DTV pipeline will add the relev
 | Field                | Required? | Description                                                                                                                                                                                          | Default value                                                               |
 |----------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
 | `manifestVersion`    | Mandatory | A version number to support different manifest versions in the future, if required. Used to validate the submitted `manifest.json` file against a JSON schema to ensure required fields are present. | None                                                                        |
-| `dataset_id`         | Mandatory | Used to get the correct transform details within the DTV pipeline.                                                                                                                                   | None                                                                        |
+| `source_id`          | Mandatory | Used to get the correct transform details within the DTV pipeline.                                                                                                                                   | None                                                                        |
 | `fileAuthorEmail`    | Mandatory | Email address of the file author. Used for notifications generated during DTV pipeline. processing                                                                                                   | None                                                                        |
 | `fileAuthorUsername` | Mandatory | Username of the file author. Used for notifications generated during DTV pipeline. processing                                                                                                        | None                                                                        |
 | `isPublishable`      | Optional  | Whether the file is intended to by published to web and api users by the static file system.                                                                                                         | False                                                                       |
