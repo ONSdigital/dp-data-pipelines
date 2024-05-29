@@ -67,13 +67,13 @@ As stated in the [Introduction](#introduction) section, output files are uploade
 | `data2.xlsx` | `datasets/<timestamp>-data2-xlsx` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/<timestamp>-data2-xlsx/data2.xlsx` |
 | `data3.ods`  | `datasets/<timestamp>-data3-ods`  | `s3://ons-dp-sandbox-encrypted-datasets/datasets/<timestamp>-data3-ods/data3.ods`   |
 
-This would not be correct, as these three files should all be contained in the same folder within the bucket. One of the fields that we are recommending for inclusion in `manifest.json` is `dataset_id`, which would permit the following folder structure to be implemented:
+This would not be correct, as these three files should all be contained in the same folder within the bucket. One of the fields that we are recommending for inclusion in `manifest.json` is `source_id`, which would permit the following folder structure to be implemented:
 
-| File         | `path`                               | File location                                                                       |
-|--------------|--------------------------------------|-------------------------------------------------------------------------------------|
-| `data1.csv`  | `datasets/<dataset_id>/<timestamp>/` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/dataset_id/<timestamp>/data1.csv`  |
-| `data2.xlsx` | `datasets/<dataset_id>/<timestamp>/` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/dataset_id/<timestamp>/data2.xlsx` |
-| `data3.ods`  | `datasets/<dataset_id>/<timestamp>/` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/dataset_id/<timestamp>/data3.ods`  |
+| File         | `path`                              | File location                                                                      |
+|--------------|-------------------------------------|------------------------------------------------------------------------------------|
+| `data1.csv`  | `datasets/<source_id>/<timestamp>/` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/source_id/<timestamp>/data1.csv`  |
+| `data2.xlsx` | `datasets/<source_id>/<timestamp>/` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/source_id/<timestamp>/data2.xlsx` |
+| `data3.ods`  | `datasets/<source_id>/<timestamp>/` | `s3://ons-dp-sandbox-encrypted-datasets/datasets/source_id/<timestamp>/data3.ods`  |
 
 This proposal would require the ability for users to submit multiple files as a single `.tar` file via, for example, Sharepoint. Assurance is sought from the CloudOps team that this is feasible. Some form of validation that all required files are present in the `.tar` file prior to submission to DTV will also need to be implemented.
 
@@ -111,7 +111,7 @@ Having reviewed the requirements for Transport Pipeline #3, the following fields
 ```json
 {
     "manifestVersion": "integer",
-    "dataset_id": "string",
+    "source_id": "string",
     "fileAuthorEmail": "string",
     "fileAuthorUsername": "string",
     "isPublishable": "Optional boolean",
@@ -129,7 +129,7 @@ Some of these fields are required only for interacting with the DP Upload Servic
 | Field                | Required? | Used in pipeline?                                                                                             | Default value                                                               | Go struct            |
 |----------------------|-----------|---------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|----------------------|
 | `manifestVersion`    | Mandatory | No, would be used to validate the `manifest.json` file against a schema to ensure required fields are present | None                                                                        | N/A, pipeline config |
-| `dataset_id`         | Mandatory | Yes, to get transform details from `CONFIGURATION` in `dpypelines.pipeline.configuration.py`                  | None                                                                        | N/A, pipeline config |
+| `source_id`          | Mandatory | Yes, to get transform details from `CONFIGURATION` in `dpypelines.pipeline.configuration.py`                  | None                                                                        | N/A, pipeline config |
 | `fileAuthorEmail`    | Mandatory | No, but could replace env var in `dpypelines.pipeline.shared.utils.get_submitter_email()`                     | None                                                                        | Unknown              |
 | `fileAuthorUsername` | Mandatory | No, but could be used to personalise emails sent by `SesClient`                                               | None                                                                        | Unknown              |
 | `isPublishable`      | Optional  | Yes, used in `UploadServiceClient._get_upload_new_params()`                                                   | False                                                                       | `FileMetadata`       |
@@ -140,9 +140,9 @@ Some of these fields are required only for interacting with the DP Upload Servic
 
 The following [Transport Pipeline #3](#required-fields-for-transport-pipeline-3) fields have been omitted for the stated reasons:
 
-| Field        | Omission reason                                                  |
-|--------------|------------------------------------------------------------------|
-| fileName     | Can be inferred from the name of the file provided               |
-| fileVersion  | Outside of DTV scope                                             |
-| path         | Can be inferred from combination of bucket name and `dataset_id` |
-| collectionId | Outside of DTV scope                                             |
+| Field        | Omission reason                                                 |
+|--------------|-----------------------------------------------------------------|
+| fileName     | Can be inferred from the name of the file provided              |
+| fileVersion  | Outside of DTV scope                                            |
+| path         | Can be inferred from combination of bucket name and `source_id` |
+| collectionId | Outside of DTV scope                                            |
