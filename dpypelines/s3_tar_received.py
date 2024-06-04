@@ -1,3 +1,4 @@
+from threading import local
 from dpytools.logging.logger import DpLogger
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
@@ -67,7 +68,8 @@ def start(s3_object_name: str):
     # get_dataset_id() currently empty - returns "not-specified"
     # To be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
     try:
-        dataset_id = get_dataset_id(s3_object_name)
+        manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
+        dataset_id = get_dataset_id(manifest_dict)
         logger.info(
             "Successfully retrieved dataset_id", data={"dataset_id": dataset_id}
         )
