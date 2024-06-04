@@ -96,19 +96,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
-    # just throw out an email to see if it works
-    try:
-        email_content = submission_processed_email()
-        email_client.send(submitter_email, email_content.subject, email_content.message)
-        logger.info(
-            "Email sent",
-            data={"submitter_email": submitter_email, "email_content": email_content},
-        )
-    except Exception as err:
-        logger.error("Error occurred when sending email", err)
-        de_notifier.failure()
-        raise err
-
     # Get Upload Service URL from environment variable
     try:
         upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
