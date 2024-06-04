@@ -55,7 +55,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     try:
-        submitter_email = get_submitter_email()
+        local_store = LocalDirectoryStore("input")
+        manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
+        submitter_email = get_submitter_email(manifest_dict)
         logger.info(
             "Got submitter email",
             data={"submitter_email": submitter_email},

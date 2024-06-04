@@ -49,18 +49,18 @@ def get_email_client():
     return email_client
 
 
-def get_submitter_email() -> str:
+def get_submitter_email(manifest_dict: dict) -> str:
     """
     Placeholder function to be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
     """
 
     # Temporary email address for testing purposes
     # Needs to be updated once we know where the submitter email can be extracted from
+    submitter_email =manifest_dict["fileAuthorEmail"]
 
-    os.environ["TEMPORARY_SUBMITTER_EMAIL"] = "submitter@test.com"
-
-    submitter_email = os.getenv("TEMPORARY_SUBMITTER_EMAIL")
-
+    if manifest_dict["manifestVersion"] != "1":
+        raise ValueError(f'The manifest version does not match required version(whioch should be 1) suppllied version: {manifest_dict["manifestVersion"]}.')
+        
     if submitter_email is None:
         raise NotImplementedError("Submitter email address cannot yet be acquired.")
 
