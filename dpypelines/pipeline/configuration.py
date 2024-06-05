@@ -1,9 +1,11 @@
 import re
 
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
-from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
-    sdmx_compact_2_0_prototype_1,
-    sdmx_sanity_check_v1,
+from dpypelines.pipeline.generic_file_ingress_v1 import generic_file_ingress_v1
+from dpypelines.pipeline.shared.transforms.sanity_check import sdmx_sanity_check_v1
+from dpypelines.pipeline.shared.transforms.sdmx.v20 import sdmx_compact_2_0_prototype_1
+from dpypelines.pipeline.shared.transforms.sdmx.v21 import (  # sdmx_sanity_check_v1,
+    sdmx_generic_2_1_prototype_1,
 )
 
 # Set a regex pattern matching the `dataset_id` as `CONFIGURATION` dictionary key
@@ -23,12 +25,21 @@ CONFIGURATION = {
     # This *always* needs to be the final entry in the dictionary to prevent inadvertent matches
     "^.*$": {
         "config_version": 1,
-        "transform": sdmx_compact_2_0_prototype_1,
+        "transform": sdmx_generic_2_1_prototype_1,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$", "count": "1"}],
         "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
         "secondary_function": dataset_ingress_v1,
+    },
+    "*._move$": {
+        "config_version": 1,
+        "transform": None,
+        "transform_inputs": {},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": generic_file_ingress_v1,
     },
 }
 
