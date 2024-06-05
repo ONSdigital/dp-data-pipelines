@@ -8,7 +8,6 @@ from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.shared.email_template_message import (
     file_not_found_email,
-    submission_processed_email,
     supplementary_distribution_not_found_email,
 )
 from dpypelines.pipeline.shared.notification import (
