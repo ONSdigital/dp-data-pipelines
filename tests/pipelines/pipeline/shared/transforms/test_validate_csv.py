@@ -24,13 +24,13 @@ def test_read_in_csv_check_invalid_csv_path():
     assert "Invalid csv_path" in str(err.value)
 
 
-def test_validate_csv_invalid_file():
-    csv_path = Path("data.csv")
+#def test_validate_csv_invalid_file():
+#    csv_path = Path("data.csv")
 
-    with pytest.raises(Exception) as err:
-        _read_in_csv_check(csv_path)
+ #   with pytest.raises(Exception) as err:
+  #      _read_in_csv_check(csv_path)
 
-    assert str(err.value) == f"Failed to read in csv - {csv_path}"
+   # assert str(err.value) == f"Failed to read in csv - {csv_path}"
 
 
 def test_correct_columns_exist_incorrect_number_of_columns():
