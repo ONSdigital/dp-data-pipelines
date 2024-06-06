@@ -4,8 +4,10 @@
 import os
 
 from dpytools.email.ses.client import SesClient
+from dpytools.logging.logger import DpLogger
 from email_validator import EmailNotValidError, validate_email
 
+logger = DpLogger("data-ingress-pipeline")
 
 def str_to_bool(should_be_bool: str) -> bool:
     """
@@ -33,7 +35,7 @@ def str_to_bool(should_be_bool: str) -> bool:
 
 class NopEmailClient:
     def send(self, *args, **kwargs):
-        print("Email feature is turned off. No email was sent.")
+        logger.warning("Email feature is turned off. No email was sent.")
 
 
 def get_email_client():
