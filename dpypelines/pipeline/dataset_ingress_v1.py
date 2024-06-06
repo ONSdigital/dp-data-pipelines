@@ -156,13 +156,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 email_client.send(
                     submitter_email, email_content.subject, email_content.message
                 )
-                logger.info(
-                    "Email sent to submitter about missing required file",
-                    data={
-                        "submitter_email": submitter_email,
-                        "required_file": required_file,
-                    },
-                )
                 de_notifier.failure()
         except Exception as err:
             files_in_directory = local_store.get_file_names()
@@ -212,14 +205,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     )
                     email_client.send(
                         submitter_email, email_content.subject, email_content.message
-                    )
-                    logger.error(
-                        "Email sent to submitter about missing supplementary distribution file",
-                        err,
-                        data={
-                            "submitter_email": submitter_email,
-                            "supplementary_distribution_pattern": supp_dist_pattern,
-                        },
                     )
                     de_notifier.failure()
                     raise err
