@@ -8,7 +8,6 @@ from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.shared.email_template_message import (
     file_not_found_email,
-    submission_processed_email,
     supplementary_distribution_not_found_email,
 )
 from dpypelines.pipeline.shared.notification import (
@@ -74,19 +73,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
-    # just throw out an email to see if it works
-    try:
-        email_content = submission_processed_email()
-        email_client.send(submitter_email, email_content.subject, email_content.message)
-        logger.info(
-            "Email sent",
-            data={"submitter_email": submitter_email, "email_content": email_content},
-        )
-    except Exception as err:
-        logger.error("Error occurred when sending email", err)
-        de_notifier.failure()
-        raise err
-
     # Get Upload Service URL from environment variable
     try:
         upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
@@ -147,13 +133,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 email_client.send(
                     submitter_email, email_content.subject, email_content.message
                 )
-                logger.info(
-                    "Email sent to submitter about missing required file",
-                    data={
-                        "submitter_email": submitter_email,
-                        "required_file": required_file,
-                    },
-                )
                 de_notifier.failure()
         except Exception as err:
             files_in_directory = local_store.get_file_names()
@@ -203,14 +182,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     )
                     email_client.send(
                         submitter_email, email_content.subject, email_content.message
-                    )
-                    logger.error(
-                        "Email sent to submitter about missing supplementary distribution file",
-                        err,
-                        data={
-                            "submitter_email": submitter_email,
-                            "supplementary_distribution_pattern": supp_dist_pattern,
-                        },
                     )
                     de_notifier.failure()
                     raise err

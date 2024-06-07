@@ -4,13 +4,18 @@
 import os
 
 from dpytools.email.ses.client import SesClient
+<<<<<<< HEAD
 from dpytools.utilities.utilities import str_to_bool
+=======
+from dpytools.logging.logger import DpLogger
+>>>>>>> sandbox
 from email_validator import EmailNotValidError, validate_email
 
+logger = DpLogger("data-ingress-pipeline")
 
 class NopEmailClient:
     def send(self, *args, **kwargs):
-        print("Email feature is turned off. No email was sent.")
+        logger.warning("Email feature is turned off. No email was sent.")
 
 
 def get_email_client():
