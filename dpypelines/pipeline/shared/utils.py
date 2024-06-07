@@ -56,11 +56,13 @@ def get_submitter_email(manifest_dict: dict) -> str:
 
     # Temporary email address for testing purposes
     # Needs to be updated once we know where the submitter email can be extracted from
-    submitter_email =manifest_dict["fileAuthorEmail"]
+    submitter_email = manifest_dict["fileAuthorEmail"]
 
     if manifest_dict["manifestVersion"] != "1":
-        raise ValueError(f'The manifest version does not match required version(whioch should be 1) suppllied version: {manifest_dict["manifestVersion"]}.')
-        
+        raise ValueError(
+            f'The manifest version does not match required version(whioch should be 1) suppllied version: {manifest_dict["manifestVersion"]}.'
+        )
+
     if submitter_email is None:
         raise NotImplementedError("Submitter email address cannot yet be acquired.")
 
