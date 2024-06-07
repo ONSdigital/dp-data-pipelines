@@ -10,7 +10,7 @@ Feature: Data Ingress v1
     Given a temporary source directory of files
         | file      | fixture                     |
         | data.xml  | esa2010_test_data_short.xml |
-        | manifest.json | valid-manifest.json |
+        | manifest.json | valid_manifest.json |
     And a dataset id of 'valid_no_supp_dist_2_0'
     And dataset_ingress_v1 starts using the temporary source directory
     Then the pipeline should generate no errors
@@ -30,7 +30,7 @@ Feature: Data Ingress v1
     Given a temporary source directory of files
         | file      | fixture      |
         | data.xml  | esa10_sdmx21.xml |
-        | manifest.json | valid-manifest.json |
+        | manifest.json | valid_manifest.json |
     And a dataset id of 'valid_no_supp_dist_2_1'
     And dataset_ingress_v1 starts using the temporary source directory
     Then the pipeline should generate no errors
@@ -45,7 +45,7 @@ Feature: Data Ingress v1
     Given a temporary source directory of files
         | file     | fixture               |
         | data.xml | esa2010_test_data.xml |
-        | manifest.json | valid-manifest.json |
+        | manifest.json | valid_manifest.json |
     And a dataset id of 'invalid'
     And dataset_ingress_v1 starts using the temporary source directory
     Then the pipeline should generate an error with a message containing "Config version 2 not recognised"
