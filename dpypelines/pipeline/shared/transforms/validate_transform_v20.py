@@ -60,7 +60,7 @@ def check_xml_type(data_As_dict: dict):
     assert len(data_As_dict.keys()) == 1, "xml format looks incorrect"
     assert (
         "CompactData" in data_As_dict.keys()
-    ), "could not find 'CompactData' in xml data"
+    ), "could not find 'CompactData' in xml data; file is not smx v2.0"
 
 
 def check_read_in_sdmx(xml_file: Path):
