@@ -3,6 +3,7 @@ from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.configuration import get_dataset_id, get_pipeline_config
+from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
@@ -69,7 +70,8 @@ def start(s3_object_name: str):
     try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
         logger.info(
-            "Successfully retrieved dataset_id", data={"files_found": local_store.get_file_names(), "pattern_looked_for": "manifest.json"}
+            "Successfully retrieved dataset_id", data={"files_found": local_store.get_file_names(),
+             "pattern_looked_for": "manifest.json"}
         )
     except Exception as err:
         logger.error("Failed to to retrieve file: manifest.json", err)
@@ -77,9 +79,9 @@ def start(s3_object_name: str):
         raise err
     
     try:
-        source_id = get_dataset_id(manifest_dict)
+        dataset_id = get_dataset_id(manifest_dict)
         logger.info(
-            "Successfully retrieved source_id", data={"source_id": source_id}
+            "Successfully retrieved source_id", data={"source_id": dataset_id}
         )
     except Exception as err:
         logger.error("Failed to retrieve source_id", err)
