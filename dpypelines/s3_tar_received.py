@@ -77,9 +77,9 @@ def start(s3_object_name: str):
         raise err
     
     try:
-        dataset_id = get_dataset_id(manifest_dict)
+        source_id = get_dataset_id(manifest_dict)
         logger.info(
-            "Successfully retrieved source_id", data={"source_id": dataset_id}
+            "Successfully retrieved source_id", data={"source_id": source_id}
         )
     except Exception as err:
         logger.error("Failed to retrieve source_id", err)
