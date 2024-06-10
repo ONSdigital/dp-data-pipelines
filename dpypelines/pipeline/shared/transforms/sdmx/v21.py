@@ -6,7 +6,6 @@
 
 
 import json
-import os
 from pathlib import Path
 
 import pandas as pd
@@ -19,9 +18,8 @@ from dpypelines.pipeline.shared.transforms.sdmx.generic.v21.prototype.v1 import 
 
 def sdmx_generic_2_1_prototype_1(input_file: Path):
 
-    directory = os.path.dirname(input_file)
-    csv_out = os.path.join(directory, "data.csv")
-    metadata_out = os.path.join(directory, "metadata.json")
+    csv_out = Path("data.csv")
+    metadata_out = Path("metadata.json")
 
     xmlToCsvSDMX2_1(input_file, csv_out)
     generate_versions_metadata(csv_out, metadata_out)

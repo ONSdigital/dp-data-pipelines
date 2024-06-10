@@ -6,7 +6,6 @@
 
 
 import json
-import os
 from pathlib import Path
 
 import pandas as pd
@@ -19,12 +18,8 @@ from dpypelines.pipeline.shared.transforms.sdmx.compact.v20.prototype.v1 import 
 
 def sdmx_compact_2_0_prototype_1(input_file: Path):
 
-    # csv_out = Path("data.csv")
-    # metadata_out = Path("metadata.json")
-
-    directory = os.path.dirname(input_file)
-    csv_out = os.path.join(directory, "data.csv")
-    metadata_out = os.path.join(directory, "metadata.json")
+    csv_out = Path("data.csv")
+    metadata_out = Path("metadata.json")
 
     xmlToCsvSDMX2_0(input_file, csv_out)
     generate_versions_metadata(csv_out, metadata_out)
@@ -67,5 +62,5 @@ def sdmx_sanity_check_v1(sdmx_file: Path):
     stub_sdmx_sanity_check_v1()
 
 
-input_file = "dpypelines/pipeline/shared/transforms/sdmx/compact/v20/prototype/data.xml"
-sdmx_compact_2_0_prototype_1(input_file)
+# input_file = "dpypelines/pipeline/shared/transforms/sdmx/compact/v20/prototype/data.xml"
+# sdmx_compact_2_0_prototype_1(input_file)
