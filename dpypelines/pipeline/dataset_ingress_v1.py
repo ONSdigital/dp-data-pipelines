@@ -55,8 +55,28 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     try:
-        local_store = LocalDirectoryStore("input")
+        local_store = LocalDirectoryStore(files_dir)
+        logger.info(
+            "Got LocalStore vreated",
+            data={"local_store": local_store},
+        )
+    except Exception as err:
+        logger.error("Error occurred when creating the Local Store", err)
+        de_notifier.failure()
+        raise err
+
+    try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
+        logger.info(
+            "Got manifest.json dict output",
+            data={"manifest_dict": manifest_dict},
+        )
+    except Exception as err:
+        logger.error("Error occurred when getting manifest_dict", err)
+        de_notifier.failure()
+        raise err
+
+    try:
         submitter_email = get_submitter_email(manifest_dict)
         logger.info(
             "Got submitter email",
