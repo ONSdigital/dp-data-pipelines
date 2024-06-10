@@ -3,7 +3,6 @@ from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.configuration import get_dataset_id, get_pipeline_config
-from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
