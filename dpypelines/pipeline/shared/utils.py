@@ -4,16 +4,36 @@
 import os
 
 from dpytools.email.ses.client import SesClient
-from dpytools.logging.logger import DpLogger
-from dpytools.utilities.utilities import str_to_bool
 from email_validator import EmailNotValidError, validate_email
 
-logger = DpLogger("data-ingress-pipeline")
+
+def str_to_bool(should_be_bool: str) -> bool:
+    """
+    Take a string that should represent a boolean
+    and convert it to bool.
+
+    Raise if we've an unexpected value.
+    """
+
+    assert isinstance(
+        should_be_bool, str
+    ), f"Function str_to_bool only accepts strings, got {type(should_be_bool)}"
+
+    consistent_should_be_bool = should_be_bool.strip().lower()
+
+    if consistent_should_be_bool == "true":
+        return True
+    elif consistent_should_be_bool == "false":
+        return False
+    else:
+        raise ValueError(
+            f"A str value representing a boolean should be one of 'True', 'true', 'False', 'false'. Got '{should_be_bool}'"
+        )
 
 
 class NopEmailClient:
     def send(self, *args, **kwargs):
-        logger.warning("Email feature is turned off. No email was sent.")
+        print("Email feature is turned off. No email was sent.")
 
 
 def get_email_client():
@@ -31,14 +51,14 @@ def get_email_client():
 
 def get_submitter_email(manifest_dict: dict) -> str:
     """
-    Placeholder function to be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
+    This function returns the subbmiter email form the provided manifest_dict (which is the data in the manifest.json file)
     """
 
     # Temporary email address for testing purposes
     # Needs to be updated once we know where the submitter email can be extracted from
     submitter_email = manifest_dict["fileAuthorEmail"]
 
-    if manifest_dict["manifestVersion"] != "1":
+    if manifest_dict["manifestVersion"] != 1:
         raise ValueError(
             f'The manifest version does not match required version(whioch should be 1) suppllied version: {manifest_dict["manifestVersion"]}.'
         )

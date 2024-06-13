@@ -33,9 +33,9 @@ CONFIGURATION = {
 }
 
 
-def get_dataset_id(manifest_dict: dict) -> str:
+def get_source_id(manifest_dict: dict) -> str:
     """
-    Placeholder function to be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
+    This function returns the `source_id` form the provided manifest_dict (which is the data in the manifest.json file).
     """
     return manifest_dict["source_id"]
 
