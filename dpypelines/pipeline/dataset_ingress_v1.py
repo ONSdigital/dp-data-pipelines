@@ -5,6 +5,7 @@ from pathlib import Path
 from dpytools.http.upload import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
+from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.shared.email_template_message import (
     file_not_found_email,
@@ -23,13 +24,9 @@ from dpypelines.pipeline.shared.pipelineconfig.transform import (
     get_transform_inputs,
     get_transform_kwargs,
 )
-from dpypelines.pipeline.shared.utils import (
-    get_email_client,
-    get_submitter_email,
-    str_to_bool,
-)
+from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 
-logger = DpLogger("data-ingress-pipeline-v1")
+logger = DpLogger("data-ingress-pipelines")
 
 
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
@@ -135,12 +132,10 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             data={"required_file_patterns": required_file_patterns},
         )
     except Exception as err:
-        files_in_directory = local_store.get_file_names()
         logger.error(
             "Error occurred when getting required file patterns",
             err,
             data={
-                "files_in_directory": files_in_directory,
                 "pipeline_config": pipeline_config,
             },
         )

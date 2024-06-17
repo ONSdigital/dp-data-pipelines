@@ -3,6 +3,7 @@ import os
 from dpytools.http.upload import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
+from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.shared.email_template_message import file_not_found_email
 from dpypelines.pipeline.shared.notification import (
@@ -12,13 +13,9 @@ from dpypelines.pipeline.shared.notification import (
 from dpypelines.pipeline.shared.pipelineconfig.matching import (
     get_required_files_patterns,
 )
-from dpypelines.pipeline.shared.utils import (
-    get_email_client,
-    get_submitter_email,
-    str_to_bool,
-)
+from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 
-logger = DpLogger("generic-ingress-pipeline-v1")
+logger = DpLogger("data-ingress-pipelines")
 
 
 def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
@@ -102,12 +99,10 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
             data={"required_file_patterns": required_file_patterns},
         )
     except Exception as err:
-        files_in_directory = local_store.get_file_names()
         logger.error(
             "Error occurred when getting required file patterns",
             err,
             data={
-                "files_in_directory": files_in_directory,
                 "pipeline_config": pipeline_config,
             },
         )
@@ -130,6 +125,9 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                     },
                 )
                 de_notifier.failure()
+                raise FileNotFoundError(
+                    f"Could not find file matching pattern {required_file}"
+                )
         except Exception as err:
             files_in_directory = local_store.get_file_names()
             logger.error(
@@ -170,10 +168,27 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         # Upload output files to Upload Service
         try:
             # Create UploadClient from upload_url
-            UploadServiceClient(upload_url)
-            logger.info(
-                "UploadClient created from upload_url", data={"upload_url": upload_url}
-            )
+            upload_client = UploadServiceClient(upload_url)
+            for required_file in required_file_patterns:
+                if "manifest.json" in required_file:
+                    continue
+                elif ".xml" in required_file:
+                    upload_client.upload_new_sdmx(files_dir)
+                    logger.info(
+                        "UploadClient created from upload_url",
+                        data={"upload_url": upload_url},
+                    )
+                elif ".csv" in required_file:
+                    upload_client.upload_new_csv(files_dir)
+
+                    logger.info(
+                        "UploadClient created from upload_url",
+                        data={"upload_url": upload_url},
+                    )
+                else:
+                    raise TypeError(
+                        f"File type of {required_file} currently not supported "
+                    )
         except Exception as err:
             logger.error(
                 "Error creating UploadClient", err, data={"upload_url": upload_url}

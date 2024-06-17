@@ -2,13 +2,10 @@ import re
 
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.generic_file_ingress_v1 import generic_file_ingress_v1
-
-# from dpypelines.pipeline.shared.transforms.sdmx.v1 import sdmx_sanity_check_v1
 from dpypelines.pipeline.shared.transforms.sanity_check import sdmx_sanity_check_v1
 from dpypelines.pipeline.shared.transforms.sdmx.v20 import sdmx_compact_2_0_prototype_1
 from dpypelines.pipeline.shared.transforms.sdmx.v21 import sdmx_generic_2_1_prototype_1
 
-# Set a regex pattern matching the `source_id` as `CONFIGURATION` dictionary key
 # Set a regex pattern matching the `source_id` as `CONFIGURATION` dictionary key
 # All fields are required in order for a pipeline transform to run successfully
 CONFIGURATION = {
@@ -37,7 +34,7 @@ CONFIGURATION = {
         "transform": None,
         "transform_inputs": {},
         "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "required_files": [{"matches": "^(?!manifest.json$)", "count": "1"}],
         "supplementary_distributions": {},
         "secondary_function": generic_file_ingress_v1,
     },
