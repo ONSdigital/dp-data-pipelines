@@ -9,6 +9,7 @@ from dpypelines.pipeline.shared.transforms.sdmx.v20 import sdmx_compact_2_0_prot
 from dpypelines.pipeline.shared.transforms.sdmx.v21 import sdmx_generic_2_1_prototype_1
 
 # Set a regex pattern matching the `source_id` as `CONFIGURATION` dictionary key
+# Set a regex pattern matching the `source_id` as `CONFIGURATION` dictionary key
 # All fields are required in order for a pipeline transform to run successfully
 CONFIGURATION = {
     # This is an example of how to set configuration details for a generic source_id - ending with v2_0, v2_1 for sdmx 2.0 and 2.1 respectively, and
@@ -43,19 +44,19 @@ CONFIGURATION = {
 }
 
 
-def get_dataset_id(s3_object_name: str) -> str:
+def get_source_id(manifest_dict: dict) -> str:
     """
-    Placeholder function to be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
+    This function returns the `source_id` form the provided manifest_dict (which is the data in the manifest.json file).
     """
-    return "not-specified"
+    return manifest_dict["source_id"]
 
 
-def get_pipeline_config(dataset_id: str) -> dict:
+def get_pipeline_config(source_id: str) -> dict:
     """
-    Get pipeline config details for the given dataset_id
+    Get pipeline config details for the given source_id
     """
     for key in CONFIGURATION.keys():
-        if re.match(key, dataset_id):
+        if re.match(key, source_id):
             pipeline_config = CONFIGURATION[key]
             break
     return pipeline_config
