@@ -6,10 +6,10 @@ from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
     sdmx_sanity_check_v1,
 )
 
-# Set a regex pattern matching the `dataset_id` as `CONFIGURATION` dictionary key
+# Set a regex pattern matching the `source_id` as `CONFIGURATION` dictionary key
 # All fields are required in order for a pipeline transform to run successfully
 CONFIGURATION = {
-    # This is an example of how to set configuration details for a specific dataset_id (`cpih` in this case)
+    # This is an example of how to set configuration details for a specific source_id (`cpih` in this case)
     "^cpih$": {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
@@ -40,12 +40,12 @@ def get_source_id(manifest_dict: dict) -> str:
     return manifest_dict["source_id"]
 
 
-def get_pipeline_config(dataset_id: str) -> dict:
+def get_pipeline_config(source_id: str) -> dict:
     """
-    Get pipeline config details for the given dataset_id
+    Get pipeline config details for the given source_id
     """
     for key in CONFIGURATION.keys():
-        if re.match(key, dataset_id):
+        if re.match(key, source_id):
             pipeline_config = CONFIGURATION[key]
             break
     return pipeline_config

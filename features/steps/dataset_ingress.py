@@ -77,9 +77,9 @@ def step_impl(context):
                 f2.write(file_object)
 
 
-@given("a dataset id of '{dataset_id}'")
-def step_impl(context, dataset_id):
-    context.pipeline_config = CONFIGURATION[dataset_id]
+@given("a dataset id of '{source_id}'")
+def step_impl(context, source_id):
+    context.pipeline_config = CONFIGURATION[source_id]
 
 
 @given("dataset_ingress_v1 starts using the temporary source directory")
