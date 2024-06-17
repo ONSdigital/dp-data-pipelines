@@ -67,7 +67,7 @@ def start(s3_object_name: str):
     try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
         logger.info(
-            "Successfully retrieved dataset_id", data={"files_found": local_store.get_file_names(),
+            "Successfully retrieved source_id", data={"files_found": local_store.get_file_names(),
              "pattern_looked_for": "manifest.json"}
         )
     except Exception as err:
@@ -85,16 +85,16 @@ def start(s3_object_name: str):
         de_notifier.failure()
         raise err
 
-    # Get config details for the given dataset_id
+    # Get config details for the given source_id
     try:
         pipeline_config = get_pipeline_config(source_id)
         logger.info(
-            "Successfully retrieved config details for given dataset_id",
-            data={"pipeline_config": pipeline_config, "dataset_id": source_id},
+            "Successfully retrieved config details for given source_id",
+            data={"pipeline_config": pipeline_config, "source_id": source_id},
         )
     except Exception as err:
         logger.error(
-            "Failed to retrieve config details for given dataset_id",
+            "Failed to retrieve config details for given source_id",
             err,
             data={"source_id": source_id},
         )
