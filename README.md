@@ -31,7 +31,7 @@ s3_tar_received.start('my-bucket/my-data.tar')
 ```
 In this example, `my-bucket/my-data.tar` is the S3 object name of the tar file to be processed.
 
-The `CONFIGURATION` dictionary in this file contains the configuration details for each dataset and the function to be called after the main processing function (referred to as the "secondary function"). The `get_dataset_id()` function is used to extract the dataset id, and the `get_pipeline_config()` function is used to get the pipeline configuration details for the given dataset id.
+The `CONFIGURATION` dictionary in this file contains the configuration details for each dataset and the function to be called after the main processing function (referred to as the "secondary function"). The `get_source_id()` function is used to extract the dataset id, and the `get_pipeline_config()` function is used to get the pipeline configuration details for the given dataset id.
 
 The `s3_tar_received.start()` function performs the following steps:
 

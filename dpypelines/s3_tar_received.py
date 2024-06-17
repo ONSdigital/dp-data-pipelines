@@ -2,7 +2,7 @@ from dpytools.logging.logger import DpLogger
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 
-from dpypelines.pipeline.configuration import get_dataset_id, get_pipeline_config
+from dpypelines.pipeline.configuration import get_pipeline_config, get_source_id
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
@@ -64,30 +64,39 @@ def start(s3_object_name: str):
         de_notifier.failure()
         raise err
 
-    # get_dataset_id() currently empty - returns "not-specified"
-    # To be updated once we know where the dataset_id can be extracted from (not necessarily s3_object_name as suggested by argument name)
     try:
-        dataset_id = get_dataset_id(s3_object_name)
+        manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
         logger.info(
-            "Successfully retrieved dataset_id", data={"dataset_id": dataset_id}
+            "Successfully retrieved source_id", data={"files_found": local_store.get_file_names(),
+             "pattern_looked_for": "manifest.json"}
         )
     except Exception as err:
-        logger.error("Failed to retrieve dataset_id", err)
+        logger.error("Failed to to retrieve file: manifest.json", err)
+        de_notifier.failure()
+        raise err
+    
+    try:
+        source_id = get_source_id(manifest_dict)
+        logger.info(
+            "Successfully retrieved source_id", data={"source_id": source_id}
+        )
+    except Exception as err:
+        logger.error("Failed to retrieve source_id", err)
         de_notifier.failure()
         raise err
 
-    # Get config details for the given dataset_id
+    # Get config details for the given source_id
     try:
-        pipeline_config = get_pipeline_config(dataset_id)
+        pipeline_config = get_pipeline_config(source_id)
         logger.info(
-            "Successfully retrieved config details for given dataset_id",
-            data={"pipeline_config": pipeline_config, "dataset_id": dataset_id},
+            "Successfully retrieved config details for given source_id",
+            data={"pipeline_config": pipeline_config, "source_id": source_id},
         )
     except Exception as err:
         logger.error(
-            "Failed to retrieve config details for given dataset_id",
+            "Failed to retrieve config details for given source_id",
             err,
-            data={"dataset_id": dataset_id},
+            data={"source_id": source_id},
         )
         de_notifier.failure()
         raise err
