@@ -52,7 +52,7 @@ class PipelineNotifier(BasePipelineNotifier):
         self.notification_postfix = os.environ.get("NOTIFICATION_POSTFIX", "")
 
     def failure(self):
-        msg = f":boom: {self.notification_postfix}".strip()
+        msg = f":x: {self.notification_postfix}".strip()
         self.client.msg_str(msg)
 
     def success(self):
