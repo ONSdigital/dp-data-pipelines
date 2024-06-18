@@ -90,4 +90,4 @@ def test_notification_custom_postfix_failure():
     notifier.client = MagicMock()
     notifier.failure()
 
-    notifier.client.msg_str.assert_called_once_with(f":boom: {postfix_str}")
+    notifier.client.msg_str.assert_called_once_with(f":x: {postfix_str}")
