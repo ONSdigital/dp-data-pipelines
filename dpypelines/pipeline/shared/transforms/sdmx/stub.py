@@ -44,4 +44,3 @@ def smdx_default_v1(sdmx_file: Path):
 
 def sdmx_sanity_check_v1(sdmx_file: Path):
     stub_sdmx_sanity_check_v1()
-
