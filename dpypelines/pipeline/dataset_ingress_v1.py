@@ -150,6 +150,13 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 email_client.send(
                     submitter_email, email_content.subject, email_content.message
                 )
+                logger.info(
+                    "Email sent to submitter about missing required file",
+                    data={
+                        "submitter_email": submitter_email,
+                        "required_file": required_file,
+                    },
+                )
                 de_notifier.failure()
                 raise FileNotFoundError(
                     f"Could not find file matching pattern {required_file}"

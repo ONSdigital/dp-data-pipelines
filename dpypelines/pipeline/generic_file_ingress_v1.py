@@ -40,7 +40,29 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     try:
-        submitter_email = get_submitter_email()
+        local_store = LocalDirectoryStore(files_dir)
+        logger.info(
+            "Got LocalStore created",
+            data={"local_store": local_store},
+        )
+    except Exception as err:
+        logger.error("Error occurred when creating the Local Store", err)
+        de_notifier.failure()
+        raise err
+
+    try:
+        manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
+        logger.info(
+            "Got manifest.json dict output",
+            data={"manifest_dict": manifest_dict},
+        )
+    except Exception as err:
+        logger.error("Error occurred when getting manifest_dict", err)
+        de_notifier.failure()
+        raise err
+
+    try:
+        submitter_email = get_submitter_email(manifest_dict)
         logger.info(
             "Got submitter email",
             data={"submitter_email": submitter_email},
@@ -164,31 +186,33 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
     )
 
     if skip_data_upload is not True:
-
         # Upload output files to Upload Service
         try:
             # Create UploadClient from upload_url
             upload_client = UploadServiceClient(upload_url)
-            for required_file in required_file_patterns:
-                if "manifest.json" in required_file:
-                    continue
-                elif ".xml" in required_file:
-                    upload_client.upload_new_sdmx(files_dir)
-                    logger.info(
-                        "UploadClient created from upload_url",
-                        data={"upload_url": upload_url},
-                    )
-                elif ".csv" in required_file:
-                    upload_client.upload_new_csv(files_dir)
-
-                    logger.info(
-                        "UploadClient created from upload_url",
-                        data={"upload_url": upload_url},
-                    )
-                else:
-                    raise TypeError(
-                        f"File type of {required_file} currently not supported "
-                    )
+            logger.info(
+                "UploadClient created from upload_url", data={"upload_url": upload_url}
+            )
+            try:
+                for required_file in required_file_patterns:
+                    if "manifest.json" in required_file:
+                        continue
+                    elif ".xml" in required_file:
+                        required_file_path = local_store.save_lone_file_matching(
+                            required_file
+                        )
+                        upload_client.upload_new_sdmx(required_file_path)
+                    elif ".csv" in required_file:
+                        required_file_path = local_store.save_lone_file_matching(
+                            required_file
+                        )
+                        upload_client.upload_new_csv(required_file_path)
+            except Exception as err:
+                logger.error(
+                    f"Error uploading required file as {required_file} is currently not supported",
+                    err,
+                    data={"upload_url": upload_url},
+                )
         except Exception as err:
             logger.error(
                 "Error creating UploadClient", err, data={"upload_url": upload_url}

@@ -11,7 +11,7 @@ from dpypelines.pipeline.shared.transforms.sdmx.v21 import sdmx_generic_2_1_prot
 CONFIGURATION = {
     # This is an example of how to set configuration details for a generic source_id - ending with v2_0, v2_1 for sdmx 2.0 and 2.1 respectively, and
     # generic source_id - ending with move for an sdmx file to be moved
-    "^.*_v2_0$": {
+    "^.*_compact_sdmx_v2_0$": {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
@@ -20,7 +20,7 @@ CONFIGURATION = {
         "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
         "secondary_function": dataset_ingress_v1,
     },
-    "^.*_v2_1$": {
+    "^.*_generic_sdmx_v2_1$": {
         "config_version": 1,
         "transform": sdmx_generic_2_1_prototype_1,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
