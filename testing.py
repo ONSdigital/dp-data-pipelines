@@ -1,4 +1,6 @@
-from time import time_ns
+
+from cmath import exp
+from logging import exception
 import requests
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
@@ -60,11 +62,21 @@ def calculate_duration_in_nanoseconds(time_delta: timedelta, date: str)->int:
 
     duration = end_date - strp_time
     
-    return duration.microseconds * 1000  
+    return duration.microseconds * 1000 
+
+def get_content_length(res: Response)->int:
+    try:
+        content_length = res.headers["Content-Length"]
+        return int(content_length)
+    except KeyError:
+        return 0
+    
+    
+
 
 r: Response = requests.get("https://www.google.com")
 
-r_dict = {"method": r.request.method, "scheme": get_scheme(r.url), "host": get_domain(r.url), "port": get_port(r.url), "path": r.request.path_url, "status_code" : r.status_code,"started_at":start_date(r.headers["Date"]), "ended_at":get_end_date(r.elapsed, r.headers["Date"]), "duration": calculate_duration_in_nanoseconds(r.elapsed, r.headers["Date"])}
+r_dict = {"method": r.request.method, "scheme": get_scheme(r.url), "host": get_domain(r.url), "port": get_port(r.url), "path": r.request.path_url, "status_code" : r.status_code,"started_at":start_date(r.headers["Date"]), "ended_at":get_end_date(r.elapsed, r.headers["Date"]), "duration": calculate_duration_in_nanoseconds(r.elapsed, r.headers["Date"]), "response_content_length":get_content_length(r)}
 # so given theres a requests.Response object, you could potentially have a pattern of say
 
 logger.info("Some log message involving https", response=r)

@@ -2,7 +2,8 @@
 # package is being depreciate from the standard
 # library in python >3.12
 import os
-
+from datetime import datetime, timedelta
+from urllib.parse import urlparse
 from dpytools.email.ses.client import SesClient
 from dpytools.utilities.utilities import str_to_bool
 from email_validator import EmailNotValidError, validate_email
