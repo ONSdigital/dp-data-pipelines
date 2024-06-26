@@ -1,6 +1,4 @@
 
-from cmath import exp
-from logging import exception
 import requests
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
