@@ -66,6 +66,7 @@ def start(s3_object_name: str):
 
     try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
+        # TODO change logger.info message (got manifest not source_id)
         logger.info(
             "Successfully retrieved source_id",
             data={

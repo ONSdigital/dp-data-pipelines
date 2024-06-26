@@ -52,6 +52,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     try:
         local_store = LocalDirectoryStore(files_dir)
+        # TODO create files_in_directory here and remove all other declarations
         logger.info(
             "Got LocalStore vreated",
             data={"local_store": local_store},
@@ -79,6 +80,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             data={"submitter_email": submitter_email},
         )
     except Exception as err:
+        # TODO add manifest_dict to logger.error data dict
         logger.error("Error occurred when getting submitter email", err)
         de_notifier.failure()
         raise err
@@ -105,6 +107,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     # Attempt to access the local data store
+    # TODO local_store already created on L54 - delete this block
     try:
         local_store = LocalDirectoryStore(files_dir)
         files_in_directory = local_store.get_file_names()
@@ -143,6 +146,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     # Check for the existence of each required file
+    # TODO amend this to match the structure in L201
     for required_file in required_file_patterns:
         try:
             if not local_store.has_lone_file_matching(required_file):
@@ -158,6 +162,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     },
                 )
                 de_notifier.failure()
+                # TODO add logger.error
                 raise FileNotFoundError(
                     f"Could not find file matching pattern {required_file}"
                 )
@@ -210,6 +215,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     email_client.send(
                         submitter_email, email_content.subject, email_content.message
                     )
+                    # TODO add logging.error
                     de_notifier.failure()
                     raise err
         except Exception as err:

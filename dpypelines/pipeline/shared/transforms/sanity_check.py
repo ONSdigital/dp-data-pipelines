@@ -5,7 +5,7 @@ def sdmx_sanity_check_v1(sdmx_file: Path):
     """
     Sanity check that the recieved sdmx file is actually an sdmx file.
     """
-
+    # TODO use sdmx_path.suffix == ".xml" here
     assert sdmx_file.name.endswith(".xml"), "Invalid sdmx_file"
 
     try:

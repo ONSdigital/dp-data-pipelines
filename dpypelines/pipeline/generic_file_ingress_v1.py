@@ -41,6 +41,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
 
     try:
         local_store = LocalDirectoryStore(files_dir)
+        # TODO create files_in_directory here and remove any other declarations
         logger.info(
             "Got LocalStore created",
             data={"local_store": local_store},
@@ -68,6 +69,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
             data={"submitter_email": submitter_email},
         )
     except Exception as err:
+        # TODO add manifest_dict to logger.error data dict
         logger.error("Error occurred when getting submitter email", err)
         de_notifier.failure()
         raise err
@@ -94,6 +96,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     # Attempt to access the local data store
+    # TODO local_store already created on L43 - delete this block
     try:
         local_store = LocalDirectoryStore(files_dir)
         files_in_directory = local_store.get_file_names()
@@ -116,6 +119,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
     # Extract the patterns for required files from the pipeline configuration
     try:
         required_file_patterns = get_required_files_patterns(pipeline_config)
+        # TODO add pipeline_config to logger.info data dict
         logger.info(
             "Required file patterns retrieved from pipeline config",
             data={"required_file_patterns": required_file_patterns},
@@ -132,6 +136,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     # Check for the existence of each required file
+    # TODO amend this to match the structure in dataset_ingress_v1 L201
     for required_file in required_file_patterns:
         try:
             if not local_store.has_lone_file_matching(required_file):
@@ -146,6 +151,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                         "required_file": required_file,
                     },
                 )
+                # TODO add logger.error
                 de_notifier.failure()
                 raise FileNotFoundError(
                     f"Could not find file matching pattern {required_file}"
@@ -184,7 +190,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         "skip_data_upload set from SKIP_DATA_UPLOAD env var",
         data={"value": skip_data_upload},
     )
-
+    # TODO restructure this section
     if skip_data_upload is not True:
         # Upload output files to Upload Service
         try:
@@ -193,31 +199,90 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
             logger.info(
                 "UploadClient created from upload_url", data={"upload_url": upload_url}
             )
-            try:
-                for required_file in required_file_patterns:
-                    if "manifest.json" in required_file:
-                        continue
-                    elif ".xml" in required_file:
-                        required_file_path = local_store.save_lone_file_matching(
-                            required_file
-                        )
-                        upload_client.upload_new_sdmx(required_file_path)
-                    elif ".csv" in required_file:
-                        required_file_path = local_store.save_lone_file_matching(
-                            required_file
-                        )
-                        upload_client.upload_new_csv(required_file_path)
-            except Exception as err:
-                logger.error(
-                    f"Error uploading required file as {required_file} is currently not supported",
-                    err,
-                    data={"upload_url": upload_url},
-                )
         except Exception as err:
             logger.error(
                 "Error creating UploadClient", err, data={"upload_url": upload_url}
             )
             de_notifier.failure()
             raise err
+        for required_file in required_file_patterns:
+            try:
+                required_file_path = local_store.save_lone_file_matching(required_file)
+                logger.info(
+                    "Got file to be uploaded.", data={"file_path": required_file_path}
+                )
+            except Exception as err:
+                logger.error(
+                    "Error getting file to be uploaded.",
+                    err,
+                    data={"file_name": required_file},
+                )
+                de_notifier.failure()
+                raise err
+            if required_file_path.suffix == ".csv":
+                try:
+                    upload_client.upload_new_csv(required_file_path)
+                    logger.info(
+                        "File uploaded.", data={"file_path": required_file_path}
+                    )
+                except Exception as err:
+                    logger.error(
+                        "Error uploading file.",
+                        err,
+                        data={"file_path": required_file_path},
+                    )
+                    de_notifier.failure()
+                    raise err
+            elif required_file_path.suffix == ".xml":
+                try:
+                    upload_client.upload_new_sdmx(required_file_path)
+                    logger.info(
+                        "File uploaded.", data={"file_path": required_file_path}
+                    )
+                except Exception as err:
+                    logger.error(
+                        "Error uploading file.",
+                        err,
+                        data={"file_path": required_file_path},
+                    )
+                    de_notifier.failure()
+                    raise err
+            else:
+                # TODO add logging.error
+                raise NotImplementedError(
+                    f"Uploading file type {required_file_path.suffix} not currently supported."
+                )
+        # try:
+        #     # Create UploadClient from upload_url
+        #     upload_client = UploadServiceClient(upload_url)
+        #     logger.info(
+        #         "UploadClient created from upload_url", data={"upload_url": upload_url}
+        #     )
+        #     try:
+        #         for required_file in required_file_patterns:
+        #             if "manifest.json" in required_file:
+        #                 continue
+        #             elif ".xml" in required_file:
+        #                 required_file_path = local_store.save_lone_file_matching(
+        #                     required_file
+        #                 )
+        #                 upload_client.upload_new_sdmx(required_file_path)
+        #             elif ".csv" in required_file:
+        #                 required_file_path = local_store.save_lone_file_matching(
+        #                     required_file
+        #                 )
+        #                 upload_client.upload_new_csv(required_file_path)
+        #     except Exception as err:
+        #         logger.error(
+        #             f"Error uploading required file as {required_file} is currently not supported",
+        #             err,
+        #             data={"upload_url": upload_url},
+        #         )
+        # except Exception as err:
+        #     logger.error(
+        #         "Error creating UploadClient", err, data={"upload_url": upload_url}
+        #     )
+        #     de_notifier.failure()
+        #     raise err
 
     de_notifier.success()
