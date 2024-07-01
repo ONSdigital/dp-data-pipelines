@@ -21,7 +21,7 @@ def check_xml_type(data: dict):
     assert len(data.keys()) == 1, "xml format looks incorrect"
     assert (
         "message:GenericData" in data.keys()
-    ), "could not find 'GenericData' in xml data"
+    ), "could not find 'GenericData' in xml data; therefore, file is not sdmx v2.1"
 
 
 def check_header_info(header: dict):
