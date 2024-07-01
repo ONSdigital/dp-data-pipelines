@@ -77,11 +77,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             data={"manifest_dict": manifest_dict},
         )
     except Exception as err:
-        logger.error(
-            "Error occurred when getting manifest_dict",
-            err,
-            data={"manifest_dict": manifest_dict},
-        )
+        logger.error("Error occurred when getting manifest_dict", err)
         de_notifier.failure()
         raise err
 

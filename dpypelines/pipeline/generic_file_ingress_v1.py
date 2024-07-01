@@ -66,11 +66,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
             data={"manifest_dict": manifest_dict},
         )
     except Exception as err:
-        logger.error(
-            "Error occurred when getting manifest_dict",
-            err,
-            data={"manifest_dict": manifest_dict},
-        )
+        logger.error("Error occurred when getting manifest_dict", err)
         de_notifier.failure()
         raise err
 
@@ -241,17 +237,8 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                     de_notifier.failure()
                     raise err
             else:
-                # TODO add logging.error
-                try:
-                    raise NotImplementedError(
-                        f"Uploading file type {required_file_path.suffix} not currently supported."
-                    )
-                except NotImplementedError as err:
-                    logger.error(
-                        "Error occurred when implementing currently unsupported file",
-                        err,
-                        data={"file_path": required_file_path},
-                    )
-                    de_notifier.failure()
-                    raise err
+                raise NotImplementedError(
+                    f"Uploading file type {required_file_path.suffix} not currently supported."
+                )
+
     de_notifier.success()
