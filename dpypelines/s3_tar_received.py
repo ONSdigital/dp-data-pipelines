@@ -66,20 +66,22 @@ def start(s3_object_name: str):
 
     try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
+        # TODO change logger.info message (got manifest not source_id)
         logger.info(
-            "Successfully retrieved source_id", data={"files_found": local_store.get_file_names(),
-             "pattern_looked_for": "manifest.json"}
+            "Successfully retrieved source_id",
+            data={
+                "files_found": local_store.get_file_names(),
+                "pattern_looked_for": "manifest.json",
+            },
         )
     except Exception as err:
         logger.error("Failed to to retrieve file: manifest.json", err)
         de_notifier.failure()
         raise err
-    
+
     try:
         source_id = get_source_id(manifest_dict)
-        logger.info(
-            "Successfully retrieved source_id", data={"source_id": source_id}
-        )
+        logger.info("Successfully retrieved source_id", data={"source_id": source_id})
     except Exception as err:
         logger.error("Failed to retrieve source_id", err)
         de_notifier.failure()

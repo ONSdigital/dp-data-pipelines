@@ -5,6 +5,7 @@ import re
 from dpytools.http.upload import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
+from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.shared.email_template_message import (
     file_not_found_email,
@@ -23,13 +24,9 @@ from dpypelines.pipeline.shared.pipelineconfig.transform import (
     get_transform_inputs,
     get_transform_kwargs,
 )
-from dpypelines.pipeline.shared.utils import (
-    get_email_client,
-    get_submitter_email,
-    str_to_bool,
-)
+from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 
-logger = DpLogger("data-ingress-pipeline-v1")
+logger = DpLogger("data-ingress-pipelines")
 
 
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
@@ -55,12 +52,21 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     try:
         local_store = LocalDirectoryStore(files_dir)
+        files_in_directory = local_store.get_file_names()
         logger.info(
-            "Got LocalStore vreated",
-            data={"local_store": local_store},
+            "Local data store created",
+            data={
+                "local_store": local_store,
+                "local_store_dir": files_dir,
+                "files_in_directory": files_in_directory,
+            },
         )
     except Exception as err:
-        logger.error("Error occurred when creating the Local Store", err)
+        logger.error(
+            "Error occurred when creating local data store from files directory",
+            err,
+            data={"local_store_dir": files_dir},
+        )
         de_notifier.failure()
         raise err
 
@@ -82,7 +88,11 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             data={"submitter_email": submitter_email},
         )
     except Exception as err:
-        logger.error("Error occurred when getting submitter email", err)
+        logger.error(
+            "Error occurred when getting submitter email",
+            err,
+            data={"manifest_dict": manifest_dict},
+        )
         de_notifier.failure()
         raise err
 
@@ -107,40 +117,21 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
-    # Attempt to access the local data store
-    try:
-        local_store = LocalDirectoryStore(files_dir)
-        files_in_directory = local_store.get_file_names()
-        logger.info(
-            "Local data store created",
-            data={
-                "local_store_dir": files_dir,
-                "files_in_directory": files_in_directory,
-            },
-        )
-    except Exception as err:
-        logger.error(
-            "Error occurred when creating local data store from files directory",
-            err,
-            data={"local_store_dir": files_dir},
-        )
-        de_notifier.failure()
-        raise err
-
     # Extract the patterns for required files from the pipeline configuration
     try:
         required_file_patterns = get_required_files_patterns(pipeline_config)
         logger.info(
             "Required file patterns retrieved from pipeline config",
-            data={"required_file_patterns": required_file_patterns},
+            data={
+                "required_file_patterns": required_file_patterns,
+                "pipeline_config": pipeline_config,
+            },
         )
     except Exception as err:
-        files_in_directory = local_store.get_file_names()
         logger.error(
             "Error occurred when getting required file patterns",
             err,
             data={
-                "files_in_directory": files_in_directory,
                 "pipeline_config": pipeline_config,
             },
         )
@@ -151,14 +142,25 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for required_file in required_file_patterns:
         try:
             if not local_store.has_lone_file_matching(required_file):
-
-                email_content = file_not_found_email(required_file)
-                email_client.send(
-                    submitter_email, email_content.subject, email_content.message
-                )
-                de_notifier.failure()
+                try:
+                    raise FileNotFoundError(
+                        f"Could not find file found matching pattern {required_file}"
+                    )
+                except FileNotFoundError as err:
+                    email_content = file_not_found_email(required_file)
+                    email_client.send(
+                        submitter_email, email_content.subject, email_content.message
+                    )
+                    # TODO add logging.error
+                    logger.error(
+                        "Error occurred when looking for required file",
+                        err,
+                        data={"required_file": required_file},
+                    )
+                    de_notifier.failure()
+                    raise err
         except Exception as err:
-            files_in_directory = local_store.get_file_names()
+            # files_in_directory = local_store.get_file_names()
             logger.error(
                 "Error occurred when looking for required file",
                 err,
@@ -206,6 +208,14 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     email_client.send(
                         submitter_email, email_content.subject, email_content.message
                     )
+                    # TODO add logging.error
+                    logger.error(
+                        "Error occurred when looking for supplementary distribution",
+                        err,
+                        data={
+                            "supplementary_distribution": supp_dist_pattern,
+                        },
+                    )
                     de_notifier.failure()
                     raise err
         except Exception as err:
@@ -246,7 +256,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 },
             )
         except Exception as err:
-            files_in_directory = local_store.get_file_names()
             logger.error(
                 "Error occurred when looking for file matching pattern",
                 err,
@@ -270,7 +279,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 },
             )
         except Exception as err:
-            files_in_directory = local_store.get_file_names()
             logger.error(
                 "Error occurred when running sanity checker on input file path.",
                 err,
