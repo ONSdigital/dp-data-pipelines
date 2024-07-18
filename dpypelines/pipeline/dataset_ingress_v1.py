@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import re
 
-from dpytools.http.upload import UploadServiceClient
+from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
