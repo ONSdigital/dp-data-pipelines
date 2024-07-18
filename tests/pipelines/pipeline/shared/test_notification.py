@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
-
 from dpytools.logging.utility import get_commit_ID
+
 from dpypelines.pipeline.shared.notification import (
     NopNotifier,
     PipelineNotifier,
