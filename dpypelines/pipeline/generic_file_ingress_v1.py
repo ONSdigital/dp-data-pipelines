@@ -236,6 +236,22 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                     )
                     de_notifier.failure()
                     raise err
+            
+            elif required_file_path.suffix == ".json":
+                try:
+                    upload_client.upload_new_json(required_file_path)
+                    logger.info(
+                        "File uploaded.", data={"file_path": required_file_path}
+                    )
+                except Exception as err:
+                    logger.error(
+                        "Error uploading file.",
+                        err,
+                        data={"file_path": required_file_path},
+                    )
+                    de_notifier.failure()
+                    raise err
+                
             else:
                 raise NotImplementedError(
                     f"Uploading file type {required_file_path.suffix} not currently supported."
