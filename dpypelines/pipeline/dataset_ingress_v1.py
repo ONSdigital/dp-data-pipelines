@@ -2,8 +2,7 @@ import os
 import re
 from pathlib import Path
 
-from dpytools.http.upload import UploadServiceClient
-#from dpytools.http.upload.upload_service_client import UploadServiceClient
+from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
@@ -17,7 +16,6 @@ from dpypelines.pipeline.shared.notification import (
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
-
 from dpypelines.pipeline.shared.pipelineconfig.transform import (
     get_transform_function,
     get_transform_inputs,
@@ -175,7 +173,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Extract the patterns for supplementary distributions from the pipeline configuration
     try:
-        supp_dist_patterns = get_matching_pattern(pipeline_config, "supplementary_distributions")
+        supp_dist_patterns = get_matching_pattern(
+            pipeline_config, "supplementary_distributions"
+        )
         logger.info(
             "Supplementary distribution patterns retrieved from pipeline config",
             data={"supplementary_distribution_patterns": supp_dist_patterns},

@@ -7,6 +7,7 @@ from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
     sdmx_sanity_check_v1,
 )
 
+
 def test_get_matching_pattern_multiple_matches():
     config = {
         "config_version": 1,

@@ -1,7 +1,6 @@
 import os
 
-from dpytools.http.upload import UploadServiceClient
-#from dpytools.http.upload.upload_service_client import UploadServiceClient
+from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
@@ -12,7 +11,6 @@ from dpypelines.pipeline.shared.notification import (
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
-
 from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 
 logger = DpLogger("data-ingress-pipelines")
