@@ -95,7 +95,9 @@ def step_impl(context, source_id):
 @given("dataset_ingress_v1 starts using the temporary source directory")
 def step_impl(context):
     try:
-        dataset_ingress_v1(context.temporary_directory.absolute())
+        dataset_ingress_v1(
+            context.temporary_directory.absolute(), context.pipeline_config
+        )
         context.exception = None
     except Exception as exc:
         context.exception = exc
