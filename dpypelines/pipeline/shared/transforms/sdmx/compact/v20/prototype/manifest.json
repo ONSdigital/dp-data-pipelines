@@ -1,0 +1,11 @@
+{
+    "manifestVersion": 1,
+    "source_id": "source_id",
+    "fileAuthorEmail": "test@email.com",
+    "fileAuthorUsername": "Username",
+    "isPublishable": false,
+    "licence": "My licence",
+    "licenceUrl": "http://www.example.org/licence",
+    "title": "Title",
+    "aliasName": "Alias name"
+}

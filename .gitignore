@@ -1,0 +1,6 @@
+__pycache__
+.DS_Store
+.coverage
+behave_debug.py
+features/fixtures/data/
+data/*
