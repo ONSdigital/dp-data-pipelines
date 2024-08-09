@@ -1,8 +1,10 @@
-from pathlib import Path
+import json
+import pandas as pd
 
 from behave import *
-
 from dictdiffer import diff
+from pathlib import Path
+
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.generic_file_ingress_v1 import generic_file_ingress_v1
 from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
@@ -58,9 +60,6 @@ CONFIGURATION = {
         "secondary_function": dataset_ingress_v1,
     },
 }
-import json
-
-import pandas as pd
 
 
 @given("a temporary source directory of files")

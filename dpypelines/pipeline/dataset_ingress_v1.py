@@ -15,7 +15,10 @@ from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
 )
-from dpypelines.pipeline.shared.pipelineconfig import matching
+from dpypelines.pipeline.shared.pipelineconfig.matching import (
+    get_required_files_patterns,
+    get_supplementary_distribution_patterns,
+)
 from dpypelines.pipeline.shared.pipelineconfig.transform import (
     get_transform_function,
     get_transform_inputs,
@@ -49,9 +52,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     except Exception as err:
         logger.error("Error occurred when creating notifier", err)
         raise err
-
-    # just throw out an email to see if it works
-    email_client.send(submitter_email, "suitable subject", "suitable message body")
 
     try:
         local_store = LocalDirectoryStore(files_dir)
@@ -122,7 +122,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Extract the patterns for required files from the pipeline configuration
     try:
-        required_file_patterns = matching.get_required_files_patterns(pipeline_config)
+        required_file_patterns = get_required_files_patterns(pipeline_config)
         logger.info(
             "Required file patterns retrieved from pipeline config",
             data={
@@ -154,7 +154,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     email_client.send(
                         submitter_email, email_content.subject, email_content.message
                     )
-                    # TODO add logging.error
                     logger.error(
                         "Error occurred when looking for required file",
                         err,
@@ -163,7 +162,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     de_notifier.failure()
                     raise err
         except Exception as err:
-            # files_in_directory = local_store.get_file_names()
             logger.error(
                 "Error occurred when looking for required file",
                 err,
@@ -179,9 +177,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Extract the patterns for supplementary distributions from the pipeline configuration
     try:
-        supp_dist_patterns = matching.get_supplementary_distribution_patterns(
-            pipeline_config
-        )
+        supp_dist_patterns = get_supplementary_distribution_patterns(pipeline_config)
         logger.info(
             "Supplementary distribution patterns retrieved from pipeline config",
             data={"supplementary_distribution_patterns": supp_dist_patterns},
@@ -213,7 +209,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     email_client.send(
                         submitter_email, email_content.subject, email_content.message
                     )
-                    # TODO add logging.error
                     logger.error(
                         "Error occurred when looking for supplementary distribution",
                         err,
@@ -270,7 +265,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     "pipeline_config": pipeline_config,
                 },
             )
-
             de_notifier.failure()
             raise err
 
@@ -293,7 +287,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     "pipeline_config": pipeline_config,
                 },
             )
-
             de_notifier.failure()
             raise err
 
@@ -343,7 +336,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 "metadata_path": metadata_path,
             },
         )
-
     except Exception as err:
         logger.error(
             "Error occurred when running transform function",
@@ -383,7 +375,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     )
 
     if skip_data_upload is not True:
-
         # Upload output files to Upload Service
         try:
             # Create UploadClient from upload_url

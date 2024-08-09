@@ -1,10 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-import os
-from abc import ABC, abstractmethod
 
-from dpytools.logging.utility import get_commit_ID
-from dpytools.slack.slack import SlackMessenger
 from dpytools.logging.utility import get_commit_ID
 from dpytools.slack.slack import SlackMessenger
 

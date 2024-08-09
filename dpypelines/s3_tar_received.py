@@ -27,18 +27,16 @@ def start(s3_object_name: str):
         de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
             "DE_SLACK_WEBHOOK"
         )
-        logger.info(
-            "de_notifier successfully instantiated", data={"type": type(de_notifier)}
-        )
+        logger.info("Slack notifier created", data={"notifier": type(de_notifier)})
     except Exception as err:
-        logger.error("Failed to instanite de_notifier.", err)
+        logger.error("Failed to create Slack notifier", err)
         raise err
 
     # Decompress the tar file to the workspace
     try:
         decompress_s3_tar(s3_object_name, "input")
         logger.info(
-            "S3 tar recieved decompressed to ./input",
+            "S3 tar received decompressed to ./input",
             data={"s3_object_name": s3_object_name},
         )
     except Exception as err:
@@ -59,23 +57,21 @@ def start(s3_object_name: str):
         )
     except Exception as err:
         logger.error(
-            "failed to create local directory store using decompresed files", err
+            "failed to create local directory store using decompressed files", err
         )
         de_notifier.failure()
         raise err
 
     try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
-        # TODO change logger.info message (got manifest not source_id)
         logger.info(
-            "Successfully retrieved source_id",
+            "Successfully retrieved manifest.json as dict",
             data={
-                "files_found": local_store.get_file_names(),
-                "pattern_looked_for": "manifest.json",
+                "manifest_dict": manifest_dict,
             },
         )
     except Exception as err:
-        logger.error("Failed to to retrieve file: manifest.json", err)
+        logger.error("Failed to retrieve file: manifest.json", err)
         de_notifier.failure()
         raise err
 
