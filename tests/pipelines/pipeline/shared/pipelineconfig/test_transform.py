@@ -9,6 +9,10 @@ from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
 
 
 def test_get_transform_details_transform_function():
+    """
+    Checks that get_transform_details successfully retrieves the field 
+    containing the transform function from an input config dictionary.
+    """
     config = {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
@@ -23,6 +27,10 @@ def test_get_transform_details_transform_function():
 
 
 def test_get_transform_details_inputs():
+    """
+    Checks that get_transform_details successfully retrieves the 'transform_inputs'
+    field from an input config dictionary.
+    """
     config = {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
@@ -38,6 +46,10 @@ def test_get_transform_details_inputs():
 
 
 def test_get_transform_details_kwargs():
+    """
+    Checks that get_transform_details successfully retrieves the 'transform_kwargs'
+    field from an input config dictionary.
+    """
     config = {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
@@ -52,6 +64,10 @@ def test_get_transform_details_kwargs():
 
 
 def test_get_transform_details_missing():
+    """
+    Checks that get_transform_details returns the expected Assertion error when 
+    the given input field does not exist in the config dictionary.
+    """
     config = {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
@@ -65,6 +81,10 @@ def test_get_transform_details_missing():
     assert "'transform_inputs' not found in config dictionary" in str(err.value)
 
 def test_get_transform_details_invalid_config_version():
+    """
+    Checks that get_transform_details returns the expected error when the config 
+    version in the config dictionary is invalid/not recognised.
+    """
     config = {
         "config_version": 2,
         "transform": sdmx_compact_2_0_prototype_1,

@@ -3,6 +3,9 @@ from typing import Callable, Dict, Any
 
 def get_transform_details(config: Dict, transform_field: str) -> Any:
     """
+    Checks if the requested input field exists in the config dictionary,
+    and if it does, returns the details of that field. Used to retrieve 
+    the transform function, or input details/kwargs.
     """
     if config["config_version"] == 1:
         assert (
