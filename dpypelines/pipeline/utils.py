@@ -25,7 +25,7 @@ def upload_file(upload_url):
     # Upload output files to Upload Service
     try:
         # Create UploadClient from upload_url
-        upload_client = UploadServiceClient(upload_url)
+        UploadServiceClient(upload_url)
         logger.info(
             "UploadClient created from upload_url", data={"upload_url": upload_url}
         )

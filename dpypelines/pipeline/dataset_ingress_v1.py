@@ -10,10 +10,6 @@ from dpypelines.pipeline.shared.email_template_message import (
     file_not_found_email,
     supplementary_distribution_not_found_email,
 )
-from dpypelines.pipeline.shared.notification import (
-    BasePipelineNotifier,
-    notifier_from_env_var_webhook,
-)
 from dpypelines.pipeline.shared.pipelineconfig.matching import (
     get_required_files_patterns,
     get_supplementary_distribution_patterns,
