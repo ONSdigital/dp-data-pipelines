@@ -10,7 +10,7 @@ from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
 
 def test_get_transform_details_transform_function():
     """
-    Checks that get_transform_details successfully retrieves the field 
+    Checks that get_transform_details successfully retrieves the field
     containing the transform function from an input config dictionary.
     """
     config = {
@@ -65,7 +65,7 @@ def test_get_transform_details_kwargs():
 
 def test_get_transform_details_missing():
     """
-    Checks that get_transform_details returns the expected Assertion error when 
+    Checks that get_transform_details returns the expected Assertion error when
     the given input field does not exist in the config dictionary.
     """
     config = {
@@ -80,9 +80,10 @@ def test_get_transform_details_missing():
         get_transform_details(config, "transform_inputs")
     assert "'transform_inputs' not found in config dictionary" in str(err.value)
 
+
 def test_get_transform_details_invalid_config_version():
     """
-    Checks that get_transform_details returns the expected error when the config 
+    Checks that get_transform_details returns the expected error when the config
     version in the config dictionary is invalid/not recognised.
     """
     config = {
