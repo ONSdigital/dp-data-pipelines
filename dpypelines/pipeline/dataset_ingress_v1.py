@@ -15,10 +15,7 @@ from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
 )
-from dpypelines.pipeline.shared.pipelineconfig.matching import (
-    get_required_files_patterns,
-    get_supplementary_distribution_patterns,
-)
+from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
 from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 
@@ -115,7 +112,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Extract the patterns for required files from the pipeline configuration
     try:
-        required_file_patterns = get_required_files_patterns(pipeline_config)
+        required_file_patterns = get_matching_pattern(pipeline_config, "required_files")
         logger.info(
             "Required file patterns retrieved from pipeline config",
             data={
@@ -172,7 +169,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Extract the patterns for supplementary distributions from the pipeline configuration
     try:
-        supp_dist_patterns = get_supplementary_distribution_patterns(pipeline_config)
+        supp_dist_patterns = get_matching_pattern(
+            pipeline_config, "supplementary_distributions"
+        )
         logger.info(
             "Supplementary distribution patterns retrieved from pipeline config",
             data={"supplementary_distribution_patterns": supp_dist_patterns},

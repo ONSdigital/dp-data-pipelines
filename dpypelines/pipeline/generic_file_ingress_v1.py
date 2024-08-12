@@ -10,9 +10,7 @@ from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
 )
-from dpypelines.pipeline.shared.pipelineconfig.matching import (
-    get_required_files_patterns,
-)
+from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 
 logger = DpLogger("data-ingress-pipelines")
@@ -108,7 +106,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Extract the patterns for required files from the pipeline configuration
     try:
-        required_file_patterns = get_required_files_patterns(pipeline_config)
+        required_file_patterns = get_matching_pattern(pipeline_config, "required_files")
         logger.info(
             "Required file patterns retrieved from pipeline config",
             data={
