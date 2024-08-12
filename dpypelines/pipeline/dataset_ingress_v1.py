@@ -20,7 +20,7 @@ from dpypelines.pipeline.shared.pipelineconfig.transform import (
     get_transform_kwargs,
 )
 from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
-from dpypelines.pipeline.utils import notifier, upload_file
+from dpypelines.pipeline.utils import get_notifier, upload_file
 
 logger = DpLogger("data-ingress-pipelines")
 
@@ -36,6 +36,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     Raises:
         Exception: If any unexpected error occurs.
     """
+    notifier = get_notifier()
     try:
         local_store = LocalDirectoryStore(files_dir)
         files_in_directory = local_store.get_file_names()

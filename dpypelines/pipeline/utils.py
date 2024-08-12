@@ -9,13 +9,14 @@ from dpypelines.pipeline.shared.notification import (
 logger = DpLogger("data-ingress-pipelines")
 
 
-def notifier():
+def get_notifier():
     # Create notifier from webhook env var
     try:
         de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
             "DE_SLACK_WEBHOOK"
         )
         logger.info("Notifier created", data={"notifier": de_notifier})
+        return de_notifier
     except Exception as err:
         logger.error("Error occurred when creating notifier", err)
         raise err
@@ -34,5 +35,4 @@ def upload_file(upload_url):
         logger.error(
             "Error creating UploadClient", err, data={"upload_url": upload_url}
         )
-        notifier.failure()
         raise err
