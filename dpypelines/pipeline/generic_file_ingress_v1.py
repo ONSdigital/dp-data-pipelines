@@ -5,9 +5,7 @@ from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.shared.email_template_message import file_not_found_email
-from dpypelines.pipeline.shared.pipelineconfig.matching import (
-    get_required_files_patterns,
-)
+from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 from dpypelines.pipeline.utils import get_notifier, upload_file
 
@@ -95,7 +93,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Extract the patterns for required files from the pipeline configuration
     try:
-        required_file_patterns = get_required_files_patterns(pipeline_config)
+        required_file_patterns = get_matching_pattern(pipeline_config, "required_files")
         logger.info(
             "Required file patterns retrieved from pipeline config",
             data={
@@ -169,7 +167,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
     )
     if skip_data_upload is not True:
         # Upload output files to Upload Service
-        upload_client= upload_file(upload_url)
+        upload_client = upload_file(upload_url)
 
         for required_file in required_file_patterns:
             try:
