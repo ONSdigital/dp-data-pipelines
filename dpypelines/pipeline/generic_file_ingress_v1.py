@@ -169,7 +169,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
     )
     if skip_data_upload is not True:
         # Upload output files to Upload Service
-        upload_file(upload_url)
+        upload_client= upload_file(upload_url)
 
         for required_file in required_file_patterns:
             try:
@@ -187,7 +187,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                 raise err
             if required_file_path.suffix == ".csv":
                 try:
-                    upload_file.upload_new_csv(required_file_path)
+                    upload_client.upload_new_csv(required_file_path)
                     logger.info(
                         "File uploaded.", data={"file_path": required_file_path}
                     )
@@ -201,7 +201,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                     raise err
             elif required_file_path.suffix == ".xml":
                 try:
-                    upload_file.upload_new_sdmx(required_file_path)
+                    upload_client.upload_new_sdmx(required_file_path)
                     logger.info(
                         "File uploaded.", data={"file_path": required_file_path}
                     )

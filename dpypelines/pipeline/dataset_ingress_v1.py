@@ -365,11 +365,11 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     if skip_data_upload is not True:
         # Upload output files to Upload Service
-        upload_file(upload_url)
+        upload_client = upload_file(upload_url)
 
         try:
             # Upload CSV to Upload Service
-            upload_file.upload_new_csv(csv_path)
+            upload_client.upload_new_csv(csv_path)
             logger.info(
                 "Uploaded CSV to Upload Service",
                 data={
@@ -419,7 +419,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 # If the supplementary distribution is an XML file, upload to the Upload Service
                 if supp_dist_path.suffix == ".xml":
                     try:
-                        upload_file.upload_new_sdmx(supp_dist_path)
+                        upload_client.upload_new_sdmx(supp_dist_path)
                         logger.info(
                             "Uploaded supplementary distribution",
                             data={
