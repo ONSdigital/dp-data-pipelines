@@ -1,18 +1,14 @@
 import pytest
 
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
-from dpypelines.pipeline.shared.pipelineconfig.transform import (
-    get_transform_function,
-    get_transform_inputs,
-    get_transform_kwargs,
-)
+from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
 from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
     sdmx_compact_2_0_prototype_1,
     sdmx_sanity_check_v1,
 )
 
 
-def test_get_transform_function():
+def test_get_transform_details_transform_function():
     config = {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
@@ -22,40 +18,11 @@ def test_get_transform_function():
         "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
         "secondary_function": dataset_ingress_v1,
     }
-    result = get_transform_function(config)
+    result = get_transform_details(config, "transform")
     assert result.__name__ == "sdmx_compact_2_0_prototype_1"
 
 
-def test_get_transform_function_missing():
-    config = {
-        "config_version": 1,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
-        "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
-        "secondary_function": dataset_ingress_v1,
-    }
-    with pytest.raises(AssertionError) as err:
-        get_transform_function(config)
-    assert "'transform' not found in config dictionary" in str(err.value)
-
-
-def test_get_transform_function_invalid_config_version():
-    config = {
-        "config_version": 2,
-        "transform": sdmx_compact_2_0_prototype_1,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
-        "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
-        "secondary_function": dataset_ingress_v1,
-    }
-    with pytest.raises(NotImplementedError) as err:
-        get_transform_function(config)
-    assert "Config version 2 not recognised" in str(err.value)
-
-
-def test_get_transform_inputs():
+def test_get_transform_details_inputs():
     config = {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
@@ -65,41 +32,12 @@ def test_get_transform_inputs():
         "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
         "secondary_function": dataset_ingress_v1,
     }
-    result = get_transform_inputs(config)
+    result = get_transform_details(config, "transform_inputs")
     assert "^data.xml$" in result.keys()
     assert result["^data.xml$"].__name__ == "sdmx_sanity_check_v1"
 
 
-def test_get_transform_inputs_missing():
-    config = {
-        "config_version": 1,
-        "transform": sdmx_compact_2_0_prototype_1,
-        "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
-        "secondary_function": dataset_ingress_v1,
-    }
-    with pytest.raises(AssertionError) as err:
-        get_transform_inputs(config)
-    assert "'transform_inputs' not found in config dictionary" in str(err.value)
-
-
-def test_get_transform_inputs_invalid_config_version():
-    config = {
-        "config_version": 2,
-        "transform": sdmx_compact_2_0_prototype_1,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
-        "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
-        "secondary_function": dataset_ingress_v1,
-    }
-    with pytest.raises(NotImplementedError) as err:
-        get_transform_inputs(config)
-    assert "Config version 2 not recognised" in str(err.value)
-
-
-def test_get_transform_kwargs():
+def test_get_transform_details_kwargs():
     config = {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
@@ -109,25 +47,24 @@ def test_get_transform_kwargs():
         "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
         "secondary_function": dataset_ingress_v1,
     }
-    result = get_transform_kwargs(config)
+    result = get_transform_details(config, "transform_kwargs")
     assert result == {"kwarg1": "value1"}
 
 
-def test_get_transform_kwargs_missing():
+def test_get_transform_details_missing():
     config = {
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$", "count": "1"}],
         "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
         "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(AssertionError) as err:
-        get_transform_kwargs(config)
-    assert "'transform_kwargs' not found in config dictionary" in str(err.value)
+        get_transform_details(config, "transform_inputs")
+    assert "'transform_inputs' not found in config dictionary" in str(err.value)
 
-
-def test_get_transform_kwargs_invalid_config_version():
+def test_get_transform_details_invalid_config_version():
     config = {
         "config_version": 2,
         "transform": sdmx_compact_2_0_prototype_1,
@@ -138,5 +75,5 @@ def test_get_transform_kwargs_invalid_config_version():
         "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(NotImplementedError) as err:
-        get_transform_kwargs(config)
+        get_transform_details(config, "transform_inputs")
     assert "Config version 2 not recognised" in str(err.value)

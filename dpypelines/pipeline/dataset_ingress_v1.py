@@ -19,11 +19,7 @@ from dpypelines.pipeline.shared.pipelineconfig.matching import (
     get_required_files_patterns,
     get_supplementary_distribution_patterns,
 )
-from dpypelines.pipeline.shared.pipelineconfig.transform import (
-    get_transform_function,
-    get_transform_inputs,
-    get_transform_kwargs,
-)
+from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
 from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 
 logger = DpLogger("data-ingress-pipelines")
@@ -235,7 +231,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Get the transform inputs from the pipeline_config and run the specified sanity checker for it
     input_file_paths = []
     try:
-        transform_inputs = get_transform_inputs(pipeline_config)
+        transform_inputs = get_transform_details(pipeline_config, "transform_inputs")
         logger.info("Got transform inputs", data={"transform_inputs": transform_inputs})
     except Exception as err:
         logger.error(
@@ -296,7 +292,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Get the transform function from pipeline config
     try:
-        transform_function = get_transform_function(pipeline_config)
+        transform_function = get_transform_details(pipeline_config, "transform")
         logger.info(
             "Got transform function from pipeline config",
             data={
@@ -312,7 +308,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         )
     # Get transform keyword arguments (kwargs) from pipeline config
     try:
-        transform_kwargs = get_transform_kwargs(pipeline_config)
+        transform_kwargs = get_transform_details(pipeline_config, "transform_kwargs")
         logger.info(
             "Got transform kwargs from pipeline config",
             data={"transform_kwargs": transform_kwargs},

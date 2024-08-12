@@ -1,43 +1,16 @@
 import json
-from typing import Callable, Dict
+from typing import Callable, Dict, Any
 
-
-def get_transform_inputs(config: dict) -> Dict[str, Callable]:
+def get_transform_details(config: Dict, transform_field: str) -> Any:
+    """
+    """
     if config["config_version"] == 1:
         assert (
-            "transform_inputs" in config.keys()
-        ), f"""'transform_inputs' not found in config dictionary:
+            transform_field in config.keys()
+        ), f"""'{transform_field}' not found in config dictionary:
         {json.dumps(config, indent=2, default=lambda x: str(x))}"""
-        transform_inputs = config["transform_inputs"]
-        return transform_inputs
-    else:
-        raise NotImplementedError(
-            f"Config version {config['config_version']} not recognised"
-        )
-
-
-def get_transform_function(config: dict) -> Callable:
-    if config["config_version"] == 1:
-        assert (
-            "transform" in config.keys()
-        ), f"""'transform' not found in config dictionary:
-        {json.dumps(config, indent=2, default=lambda x: str(x))}"""
-        transform_function = config["transform"]
-        return transform_function
-    else:
-        raise NotImplementedError(
-            f"Config version {config['config_version']} not recognised"
-        )
-
-
-def get_transform_kwargs(config: dict) -> dict:
-    if config["config_version"] == 1:
-        assert (
-            "transform_kwargs" in config.keys()
-        ), f"""'transform_kwargs' not found in config dictionary:
-        {json.dumps(config, indent=2, default=lambda x: str(x))}"""
-        transform_kwargs = config["transform_kwargs"]
-        return transform_kwargs
+        transform_field_to_get = config[transform_field]
+        return transform_field_to_get
     else:
         raise NotImplementedError(
             f"Config version {config['config_version']} not recognised"
