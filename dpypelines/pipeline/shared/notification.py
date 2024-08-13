@@ -1,10 +1,10 @@
 import os
 from abc import ABC, abstractmethod
 
-from dpypelines.pipeline.shared.utils import get_commit_id
 from dpytools.slack.slack import SlackMessenger
+from dpytools.utilities.utilities import str_to_bool
 
-from dpypelines.pipeline.shared.utils import str_to_bool
+from dpypelines.pipeline.shared.utils import get_commit_id
 
 
 class BasePipelineNotifier(ABC):
