@@ -1,17 +1,13 @@
 import os
 
-from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.shared.email_template_message import file_not_found_email
-from dpypelines.pipeline.shared.notification import (
-    BasePipelineNotifier,
-    notifier_from_env_var_webhook,
-)
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
+from dpypelines.pipeline.utils import get_notifier, upload_file
 
 logger = DpLogger("data-ingress-pipelines")
 
@@ -27,16 +23,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
     Raises:
         Exception: If any unexpected error occurs.
     """
-    # Create notifier from webhook env var
-    try:
-        de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
-            "DE_SLACK_WEBHOOK"
-        )
-        logger.info("Notifier created", data={"notifier": de_notifier})
-    except Exception as err:
-        logger.error("Error occurred when creating notifier", err)
-        raise err
-
+    notifier = get_notifier()
     try:
         local_store = LocalDirectoryStore(files_dir)
         files_in_directory = local_store.get_file_names()
@@ -54,7 +41,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
             err,
             data={"local_store_dir": files_dir},
         )
-        de_notifier.failure()
+        notifier.failure()
         raise err
 
     try:
@@ -65,7 +52,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         )
     except Exception as err:
         logger.error("Error occurred when getting manifest_dict", err)
-        de_notifier.failure()
+        notifier.failure()
         raise err
 
     try:
@@ -80,7 +67,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
             err,
             data={"manifest_dict": manifest_dict},
         )
-        de_notifier.failure()
+        notifier.failure()
         raise err
 
     # Create email client from env var
@@ -89,7 +76,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         logger.info("Created email client", data={"email_client": email_client})
     except Exception as err:
         logger.error("Error occurred when creating email client", err)
-        de_notifier.failure()
+        notifier.failure()
         raise err
 
     # Get Upload Service URL from environment variable
@@ -101,7 +88,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         logger.info("Got Upload Service URL", data={"upload_url": upload_url})
     except Exception as err:
         logger.error("Error occurred when getting Upload Service URL", err)
-        de_notifier.failure()
+        notifier.failure()
         raise err
 
     # Extract the patterns for required files from the pipeline configuration
@@ -122,7 +109,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                 "pipeline_config": pipeline_config,
             },
         )
-        de_notifier.failure()
+        notifier.failure()
         raise err
 
     # Check for the existence of each required file
@@ -143,7 +130,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                         err,
                         data={"required_file": required_file},
                     )
-                    de_notifier.failure()
+                    notifier.failure()
                     raise err
         except Exception as err:
             logger.error(
@@ -156,7 +143,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                     "pipeline_config": pipeline_config,
                 },
             )
-            de_notifier.failure()
+            notifier.failure()
             raise err
 
     # Allow DE's to skip the upload to s3 part of the pipeline while
@@ -171,7 +158,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                 err,
                 data={"value": skip_data_upload},
             )
-            de_notifier.failure()
+            notifier.failure()
             raise err
 
     logger.info(
@@ -180,18 +167,8 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
     )
     if skip_data_upload is not True:
         # Upload output files to Upload Service
-        try:
-            # Create UploadClient from upload_url
-            upload_client = UploadServiceClient(upload_url)
-            logger.info(
-                "UploadClient created from upload_url", data={"upload_url": upload_url}
-            )
-        except Exception as err:
-            logger.error(
-                "Error creating UploadClient", err, data={"upload_url": upload_url}
-            )
-            de_notifier.failure()
-            raise err
+        upload_client = upload_file(upload_url)
+
         for required_file in required_file_patterns:
             try:
                 required_file_path = local_store.save_lone_file_matching(required_file)
@@ -204,7 +181,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                     err,
                     data={"file_name": required_file},
                 )
-                de_notifier.failure()
+                notifier.failure()
                 raise err
             if required_file_path.suffix == ".csv":
                 try:
@@ -218,7 +195,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                         err,
                         data={"file_path": required_file_path},
                     )
-                    de_notifier.failure()
+                    notifier.failure()
                     raise err
             elif required_file_path.suffix == ".xml":
                 try:
@@ -232,11 +209,11 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                         err,
                         data={"file_path": required_file_path},
                     )
-                    de_notifier.failure()
+                    notifier.failure()
                     raise err
             else:
                 raise NotImplementedError(
                     f"Uploading file type {required_file_path.suffix} not currently supported."
                 )
 
-    de_notifier.success()
+    notifier.success()

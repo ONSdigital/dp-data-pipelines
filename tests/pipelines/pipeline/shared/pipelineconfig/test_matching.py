@@ -66,6 +66,7 @@ def test_get_matching_pattern_single_match():
     assert len(results) == 1
     assert set(results) == {"^data.xml$"}
 
+
 def test_get_matching_pattern_supplementary_distributions():
     """
     Ensures get_matching_pattern can correctly return expected matched results from a config when the given pattern is "supplementary_distributions".
