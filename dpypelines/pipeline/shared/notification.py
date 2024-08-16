@@ -1,10 +1,10 @@
 import os
 from abc import ABC, abstractmethod
 
-from dpytools.logging.utility import get_commit_ID
 from dpytools.slack.slack import SlackMessenger
+from dpytools.utilities.utilities import str_to_bool
 
-from dpypelines.pipeline.shared.utils import str_to_bool
+from dpypelines.pipeline.shared.utils import get_commit_id
 
 
 class BasePipelineNotifier(ABC):
@@ -53,11 +53,11 @@ class PipelineNotifier(BasePipelineNotifier):
         self.notification_postfix = os.environ.get("NOTIFICATION_POSTFIX", "")
 
     def failure(self):
-        msg = f":x: {self.notification_postfix}, commit ID: {get_commit_ID()}".strip()
+        msg = f":x: {self.notification_postfix}, commit ID: {get_commit_id()}".strip()
         self.client.msg_str(msg)
 
     def success(self):
-        msg = f":white_check_mark: {self.notification_postfix}, commit ID: {get_commit_ID()}".strip()
+        msg = f":white_check_mark: {self.notification_postfix}, commit ID: {get_commit_id()}".strip()
         self.client.msg_str(msg)
 
     # TODO - remove me later

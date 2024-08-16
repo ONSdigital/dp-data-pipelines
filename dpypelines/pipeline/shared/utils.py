@@ -6,6 +6,7 @@ import os
 from dpytools.email.ses.client import SesClient
 from dpytools.utilities.utilities import str_to_bool
 from email_validator import EmailNotValidError, validate_email
+from git import Repo
 
 
 class NopEmailClient:
@@ -49,3 +50,8 @@ def get_submitter_email(manifest_dict: dict) -> str:
         raise ValueError(f"Invalid email address: {submitter_email}. Error: {str(e)}")
 
     return submitter_email
+
+
+def get_commit_id() -> str:
+    repo = Repo()
+    return str(repo.head.commit)

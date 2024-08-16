@@ -3,4 +3,4 @@ __pycache__
 .coverage
 behave_debug.py
 features/fixtures/data/
-data/*
+data
