@@ -2,13 +2,13 @@ from unittest.mock import MagicMock
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
-from dpytools.logging.utility import get_commit_ID
 
 from dpypelines.pipeline.shared.notification import (
     NopNotifier,
     PipelineNotifier,
     notifier_from_env_var_webhook,
 )
+from dpypelines.pipeline.shared.utils import get_commit_id
 
 
 def test_notification_constructor():
@@ -74,7 +74,7 @@ def test_notification_custom_postfix_success():
     notifier.success()
 
     notifier.client.msg_str.assert_called_once_with(
-        f":white_check_mark: {postfix_str}, commit ID: {get_commit_ID()}"
+        f":white_check_mark: {postfix_str}, commit ID: {get_commit_id()}"
     )
 
 
@@ -94,5 +94,5 @@ def test_notification_custom_postfix_failure():
     notifier.failure()
 
     notifier.client.msg_str.assert_called_once_with(
-        f":x: {postfix_str}, commit ID: {get_commit_ID()}"
+        f":x: {postfix_str}, commit ID: {get_commit_id()}"
     )
