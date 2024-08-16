@@ -73,9 +73,9 @@ def test_notification_custom_postfix_success():
     notifier.client = MagicMock()
     notifier.success()
 
-    notifier.client.msg_str.assert_called_once_with(
-        f":white_check_mark: {postfix_str}, commit ID: {get_commit_ID()}"
-    )
+    notifier.client.msg_str.assert_called_once()
+    assert f":white_check_mark: {postfix_str}, commit ID: {get_commit_ID()}, source ID: {None}, processing start time: {None}, processing end time:" in notifier.client.msg_str._calls_repr()
+    assert f"environment:" in notifier.client.msg_str._calls_repr()
 
 
 def test_notification_custom_postfix_failure():
@@ -93,6 +93,7 @@ def test_notification_custom_postfix_failure():
     notifier.client = MagicMock()
     notifier.failure()
 
-    notifier.client.msg_str.assert_called_once_with(
-        f":x: {postfix_str}, commit ID: {get_commit_ID()}"
-    )
+    notifier.client.msg_str.assert_called_once()
+    assert f":x: {postfix_str}, commit ID: {get_commit_ID()}, source ID: {None}, processing start time: {None}, processing end time:" in notifier.client.msg_str._calls_repr()
+    assert f"environment:" in notifier.client.msg_str._calls_repr()
+

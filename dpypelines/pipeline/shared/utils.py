@@ -49,3 +49,9 @@ def get_submitter_email(manifest_dict: dict) -> str:
         raise ValueError(f"Invalid email address: {submitter_email}. Error: {str(e)}")
 
     return submitter_email
+
+def get_source_id(manifest_dict: dict) -> str:
+    """
+    This function returns the `source_id` form the provided manifest_dict (which is the data in the manifest.json file).
+    """
+    return manifest_dict["source_id"]

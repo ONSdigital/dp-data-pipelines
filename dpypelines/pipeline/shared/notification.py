@@ -1,4 +1,6 @@
 import os
+import time
+from typing import Optional
 from abc import ABC, abstractmethod
 
 from dpytools.logging.utility import get_commit_ID
@@ -45,19 +47,36 @@ class NopNotifier(BasePipelineNotifier):
 
 
 class PipelineNotifier(BasePipelineNotifier):
-    def __init__(self, webhook_url):
+    def __init__(self, webhook_url, process_start_time=None, source_id=None):
         assert (
             webhook_url is not None
         ), "Unable to find required environment variable to populate webhook_url argument"
         self.client = SlackMessenger(webhook_url)
         self.notification_postfix = os.environ.get("NOTIFICATION_POSTFIX", "")
+        self.process_start_time = process_start_time
+        self.source_id = source_id
+        self.environment = 'unknown'
+        if type(source_id) == str:
+            if "sandbox" in source_id.lower():
+                self.environment = "sandbox"
+            elif "staging" in source_id.lower():
+                self.environment = "staging"
+            elif "production" in source_id.lower():
+                self.environment = "production"
+            else:
+                self.environment = "Unknown"
 
     def failure(self):
-        msg = f":x: {self.notification_postfix}, commit ID: {get_commit_ID()}".strip()
+        current_time = time.time()
+        process_end_time = time.strftime("%D %T", time.gmtime(current_time))
+        NOTIFICATION_WEBHOOK = os.environ.get("NOTIFICATION_WEBHOOK", None)
+        msg = f":x: {self.notification_postfix}, commit ID: {get_commit_ID()}, source ID: {self.source_id}, processing start time: {self.process_start_time}, processing end time: {process_end_time}, environment: {self.environment}".strip()
         self.client.msg_str(msg)
 
     def success(self):
-        msg = f":white_check_mark: {self.notification_postfix}, commit ID: {get_commit_ID()}".strip()
+        current_time = time.time()
+        process_end_time = time.strftime("%D %T", time.gmtime(current_time))
+        msg = f":white_check_mark: {self.notification_postfix}, commit ID: {get_commit_ID()}, source ID: {self.source_id}, processing start time: {self.process_start_time}, processing end time: {process_end_time}, environment: {self.environment}".strip()
         self.client.msg_str(msg)
 
     # TODO - remove me later
@@ -66,7 +85,7 @@ class PipelineNotifier(BasePipelineNotifier):
         self.client.msg_str(msg)
 
 
-def notifier_from_env_var_webhook(env_var: str) -> BasePipelineNotifier:
+def notifier_from_env_var_webhook(env_var: str, process_start_time = None, source_id = None) -> BasePipelineNotifier:
     """
     Create a variant of BasePipelineMessenger by passing in the name
     of an envionrment variable that will hold the required webhook.
@@ -85,4 +104,4 @@ def notifier_from_env_var_webhook(env_var: str) -> BasePipelineNotifier:
         web_hook is not None
     ), f"The specified env var {env_var} is not present on this system."
 
-    return PipelineNotifier(web_hook)
+    return PipelineNotifier(web_hook, process_start_time, source_id)

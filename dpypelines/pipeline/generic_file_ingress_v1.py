@@ -1,6 +1,7 @@
 import os
+import time
 
-from dpytools.http.upload.upload_service_client import UploadServiceClient
+from dpytools.http.upload import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
@@ -14,6 +15,7 @@ from dpypelines.pipeline.shared.pipelineconfig.matching import (
     get_required_files_patterns,
 )
 from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
+from dpypelines.pipeline.shared.utils import get_source_id
 
 logger = DpLogger("data-ingress-pipelines")
 
@@ -29,10 +31,15 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
     Raises:
         Exception: If any unexpected error occurs.
     """
+    current_time = time.time()
+    process_start_time = time.strftime("%D %T", time.gmtime(current_time))
+
+    source_id = get_source_id()
+
     # Create notifier from webhook env var
     try:
         de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
-            "DE_SLACK_WEBHOOK"
+            "DE_SLACK_WEBHOOK", process_start_time=process_start_time, source_id=source_id
         )
         logger.info("Notifier created", data={"notifier": de_notifier})
     except Exception as err:

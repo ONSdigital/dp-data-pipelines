@@ -1,12 +1,15 @@
+import time
+
 from dpytools.logging.logger import DpLogger
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 
-from dpypelines.pipeline.configuration import get_pipeline_config, get_source_id
+from dpypelines.pipeline.configuration import get_pipeline_config
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
 )
+from dpypelines.pipeline.shared.utils import get_source_id
 
 logger = DpLogger("data-ingress-pipeline")
 
@@ -22,10 +25,14 @@ def start(s3_object_name: str):
 
     """
 
+    current_time = time.time()
+    process_start_time = time.strftime("%D %T", time.gmtime(current_time))
+    source_id = get_source_id()
+
     # Create notifier from webhook env var
     try:
         de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
-            "DE_SLACK_WEBHOOK"
+            "DE_SLACK_WEBHOOK", process_start_time=process_start_time, source_id = source_id
         )
         logger.info(
             "de_notifier successfully instantiated", data={"type": type(de_notifier)}
