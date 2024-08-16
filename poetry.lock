@@ -417,7 +417,7 @@ websockets = ["websocket-client (>=1.3.0)"]
 
 [[package]]
 name = "dpytools"
-version = "0.4.0"
+version = "0.4.1"
 description = "Simple reusable python resources for digital publishing"
 optional = false
 python-versions = ">=3.9, <3.12"
@@ -435,8 +435,8 @@ structlog = "^23.2.0"
 [package.source]
 type = "git"
 url = "https://github.com/ONSdigital/dp-python-tools.git"
-reference = "v0.4.0"
-resolved_reference = "3527fe9353e4a9b02ee1d75d89ed6bf8d0ff10b0"
+reference = "v0.4.1"
+resolved_reference = "5f7155128d6e55a012259e8a94b04a52e6a0e44f"
 
 [[package]]
 name = "email-validator"
@@ -1189,4 +1189,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.0,<3.10.0"
-content-hash = "ceab467437b107efd8626520b89722de2a807e9b5501f9b6fb8a1a416e6ffc05"
+content-hash = "a77f46b115664fb62c287b6ebb2b6569f8f4de57cc9972739dc31aeac1f62b01"
