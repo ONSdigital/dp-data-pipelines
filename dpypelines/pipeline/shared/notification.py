@@ -2,7 +2,7 @@ import os
 import time
 from abc import ABC, abstractmethod
 
-from dpytools.logging.utility import get_commit_ID
+from dpypelines.pipeline.shared.utils import get_commit_id
 from dpytools.slack.slack import SlackMessenger
 
 from dpypelines.pipeline.shared.utils import str_to_bool
@@ -68,13 +68,13 @@ class PipelineNotifier(BasePipelineNotifier):
     def failure(self):
         current_time = time.time()
         process_end_time = time.strftime("%D %T", time.gmtime(current_time))
-        msg = f":x: {self.notification_postfix}, commit ID: {get_commit_ID()}, source ID: {self.source_id}, processing start time: {self.process_start_time}, processing end time: {process_end_time}, environment: {self.environment}".strip()
+        msg = f":x: {self.notification_postfix}, commit ID: {get_commit_id()}, source ID: {self.source_id}, processing start time: {self.process_start_time}, processing end time: {process_end_time}, environment: {self.environment}".strip()
         self.client.msg_str(msg)
 
     def success(self):
         current_time = time.time()
         process_end_time = time.strftime("%D %T", time.gmtime(current_time))
-        msg = f":white_check_mark: {self.notification_postfix}, commit ID: {get_commit_ID()}, source ID: {self.source_id}, processing start time: {self.process_start_time}, processing end time: {process_end_time}, environment: {self.environment}".strip()
+        msg = f":white_check_mark: {self.notification_postfix}, commit ID: {get_commit_id()}, source ID: {self.source_id}, processing start time: {self.process_start_time}, processing end time: {process_end_time}, environment: {self.environment}".strip()
         self.client.msg_str(msg)
 
     # TODO - remove me later
