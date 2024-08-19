@@ -68,7 +68,6 @@ class PipelineNotifier(BasePipelineNotifier):
     def failure(self):
         current_time = time.time()
         process_end_time = time.strftime("%D %T", time.gmtime(current_time))
-        NOTIFICATION_WEBHOOK = os.environ.get("NOTIFICATION_WEBHOOK", None)
         msg = f":x: {self.notification_postfix}, commit ID: {get_commit_ID()}, source ID: {self.source_id}, processing start time: {self.process_start_time}, processing end time: {process_end_time}, environment: {self.environment}".strip()
         self.client.msg_str(msg)
 
