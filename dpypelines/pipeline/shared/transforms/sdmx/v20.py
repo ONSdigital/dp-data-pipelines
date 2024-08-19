@@ -8,7 +8,6 @@ from dpypelines.pipeline.shared.transforms.sdmx.generate_versions_metadata impor
 )
 
 
-
 def sdmx_compact_2_0_prototype_1(input_file: Path):
 
     csv_out = Path("data.csv")
