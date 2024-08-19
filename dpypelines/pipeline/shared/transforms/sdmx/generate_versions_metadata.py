@@ -4,11 +4,7 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 import xmltodict
 
-from dpypelines.pipeline.shared.transforms.utils import (
-    pathify,
-    set_key,
-)
-
+from dpypelines.pipeline.shared.transforms.utils import pathify, set_key
 
 
 def generate_versions_metadata(
