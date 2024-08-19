@@ -2,7 +2,8 @@ from dpytools.logging.logger import DpLogger
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 
-from dpypelines.pipeline.configuration import get_pipeline_config, get_source_id
+from dpypelines.pipeline.configuration import get_pipeline_config
+from dpypelines.pipeline.utils import get_source_id
 from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,

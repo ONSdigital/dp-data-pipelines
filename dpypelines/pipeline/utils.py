@@ -1,3 +1,4 @@
+import time
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 
@@ -9,11 +10,21 @@ from dpypelines.pipeline.shared.notification import (
 logger = DpLogger("data-ingress-pipelines")
 
 
+def get_source_id(manifest_dict: dict) -> str:
+    """
+    This function returns the `source_id` form the provided manifest_dict (which is the data in the manifest.json file).
+    """
+    return manifest_dict["source_id"]
+
+
 def get_notifier():
     # Create notifier from webhook env var
+    current_time = time.time()
+    process_start_time = time.strftime("%D %T", time.gmtime(current_time))
+    source_id = get_source_id()
     try:
         de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
-            "DE_SLACK_WEBHOOK"
+            "DE_SLACK_WEBHOOK", process_start_time=process_start_time, source_id=source_id
         )
         logger.info("Notifier created", data={"notifier": de_notifier})
         return de_notifier

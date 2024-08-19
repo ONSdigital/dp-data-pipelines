@@ -41,13 +41,6 @@ CONFIGURATION = {
 }
 
 
-def get_source_id(manifest_dict: dict) -> str:
-    """
-    This function returns the `source_id` form the provided manifest_dict (which is the data in the manifest.json file).
-    """
-    return manifest_dict["source_id"]
-
-
 def get_pipeline_config(source_id: str) -> dict:
     """
     Get pipeline config details for the given source_id
