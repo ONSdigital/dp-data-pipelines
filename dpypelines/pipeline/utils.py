@@ -1,5 +1,6 @@
 import time
-from dpytools.http.upload.upload_service_client import UploadServiceClient
+
+from dpytools.http.upload import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 
 from dpypelines.pipeline.shared.notification import (
@@ -24,7 +25,9 @@ def get_notifier():
     source_id = get_source_id()
     try:
         de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
-            "DE_SLACK_WEBHOOK", process_start_time=process_start_time, source_id=source_id
+            "DE_SLACK_WEBHOOK",
+            process_start_time=process_start_time,
+            source_id=source_id,
         )
         logger.info("Notifier created", data={"notifier": de_notifier})
         return de_notifier

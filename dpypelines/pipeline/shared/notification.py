@@ -2,10 +2,9 @@ import os
 import time
 from abc import ABC, abstractmethod
 
-from dpypelines.pipeline.shared.utils import get_commit_id
 from dpytools.slack.slack import SlackMessenger
 
-from dpypelines.pipeline.shared.utils import str_to_bool
+from dpypelines.pipeline.shared.utils import get_commit_id, str_to_bool
 
 
 class BasePipelineNotifier(ABC):
@@ -54,7 +53,7 @@ class PipelineNotifier(BasePipelineNotifier):
         self.notification_postfix = os.environ.get("NOTIFICATION_POSTFIX", "")
         self.process_start_time = process_start_time
         self.source_id = source_id
-        self.environment = 'unknown'
+        self.environment = "unknown"
         if type(source_id) == str:
             if "sandbox" in source_id.lower():
                 self.environment = "sandbox"
@@ -83,7 +82,9 @@ class PipelineNotifier(BasePipelineNotifier):
         self.client.msg_str(msg)
 
 
-def notifier_from_env_var_webhook(env_var: str, process_start_time = None, source_id = None) -> BasePipelineNotifier:
+def notifier_from_env_var_webhook(
+    env_var: str, process_start_time=None, source_id=None
+) -> BasePipelineNotifier:
     """
     Create a variant of BasePipelineMessenger by passing in the name
     of an envionrment variable that will hold the required webhook.

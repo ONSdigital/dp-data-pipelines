@@ -2,13 +2,13 @@ from unittest.mock import MagicMock
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
-from dpypelines.pipeline.shared.utils import get_commit_id
 
 from dpypelines.pipeline.shared.notification import (
     NopNotifier,
     PipelineNotifier,
     notifier_from_env_var_webhook,
 )
+from dpypelines.pipeline.shared.utils import get_commit_id
 
 
 def test_notification_constructor():
@@ -74,7 +74,10 @@ def test_notification_custom_postfix_success():
     notifier.success()
 
     notifier.client.msg_str.assert_called_once()
-    assert f":white_check_mark: {postfix_str}, commit ID: {get_commit_id()}, source ID: {None}, processing start time: {None}, processing end time:" in notifier.client.msg_str._calls_repr()
+    assert (
+        f":white_check_mark: {postfix_str}, commit ID: {get_commit_id()}, source ID: {None}, processing start time: {None}, processing end time:"
+        in notifier.client.msg_str._calls_repr()
+    )
     assert f"environment:" in notifier.client.msg_str._calls_repr()
 
 
@@ -94,5 +97,8 @@ def test_notification_custom_postfix_failure():
     notifier.failure()
 
     notifier.client.msg_str.assert_called_once()
-    assert f":x: {postfix_str}, commit ID: {get_commit_id()}, source ID: {None}, processing start time: {None}, processing end time:" in notifier.client.msg_str._calls_repr()
+    assert (
+        f":x: {postfix_str}, commit ID: {get_commit_id()}, source ID: {None}, processing start time: {None}, processing end time:"
+        in notifier.client.msg_str._calls_repr()
+    )
     assert f"environment:" in notifier.client.msg_str._calls_repr()
