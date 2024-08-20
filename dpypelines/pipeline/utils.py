@@ -1,6 +1,6 @@
 import time
 
-from dpytools.http.upload import UploadServiceClient
+from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 
 from dpypelines.pipeline.shared.notification import (
