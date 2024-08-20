@@ -22,12 +22,10 @@ def get_notifier():
     # Create notifier from webhook env var
     current_time = time.time()
     process_start_time = time.strftime("%D %T", time.gmtime(current_time))
-    source_id = get_source_id()
     try:
         de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
             "DE_SLACK_WEBHOOK",
             process_start_time=process_start_time,
-            source_id=source_id,
         )
         logger.info("Notifier created", data={"notifier": de_notifier})
         return de_notifier

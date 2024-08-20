@@ -3,11 +3,7 @@ from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.configuration import get_pipeline_config
-from dpypelines.pipeline.shared.notification import (
-    BasePipelineNotifier,
-    notifier_from_env_var_webhook,
-)
-from dpypelines.pipeline.utils import get_source_id
+from dpypelines.pipeline.utils import get_notifier, get_source_id
 
 logger = DpLogger("data-ingress-pipeline")
 
@@ -23,17 +19,7 @@ def start(s3_object_name: str):
 
     """
 
-    # Create notifier from webhook env var
-    try:
-        de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
-            "DE_SLACK_WEBHOOK"
-        )
-        logger.info(
-            "de_notifier successfully instantiated", data={"type": type(de_notifier)}
-        )
-    except Exception as err:
-        logger.error("Failed to instanite de_notifier.", err)
-        raise err
+    notifier = get_notifier()
 
     # Decompress the tar file to the workspace
     try:
@@ -48,7 +34,7 @@ def start(s3_object_name: str):
             err,
             data={"s3_object_name": s3_object_name},
         )
-        de_notifier.failure()
+        notifier.failure()
         raise err
 
     # Create a local directory store using the decompressed files
@@ -62,7 +48,7 @@ def start(s3_object_name: str):
         logger.error(
             "failed to create local directory store using decompresed files", err
         )
-        de_notifier.failure()
+        notifier.failure()
         raise err
 
     try:
@@ -77,7 +63,7 @@ def start(s3_object_name: str):
         )
     except Exception as err:
         logger.error("Failed to to retrieve file: manifest.json", err)
-        de_notifier.failure()
+        notifier.failure()
         raise err
 
     try:
@@ -85,7 +71,7 @@ def start(s3_object_name: str):
         logger.info("Successfully retrieved source_id", data={"source_id": source_id})
     except Exception as err:
         logger.error("Failed to retrieve source_id", err)
-        de_notifier.failure()
+        notifier.failure()
         raise err
 
     # Get config details for the given source_id
@@ -101,7 +87,7 @@ def start(s3_object_name: str):
             err,
             data={"source_id": source_id},
         )
-        de_notifier.failure()
+        notifier.failure(source_id=source_id)
         raise err
 
     # Get the path to the directory
@@ -124,5 +110,5 @@ def start(s3_object_name: str):
             err,
             data={"pipeline_config": pipeline_config, "files_dir": files_dir},
         )
-        de_notifier.failure()
+        notifier.failure(source_id=source_id)
         raise err

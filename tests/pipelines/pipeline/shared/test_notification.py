@@ -78,7 +78,7 @@ def test_notification_custom_postfix_success():
         f":white_check_mark: {postfix_str}, commit ID: {get_commit_id()}, source ID: {None}, processing start time: {None}, processing end time:"
         in notifier.client.msg_str._calls_repr()
     )
-    assert f"environment:" in notifier.client.msg_str._calls_repr()
+    assert "environment:" in notifier.client.msg_str._calls_repr()
 
 
 def test_notification_custom_postfix_failure():
@@ -101,4 +101,4 @@ def test_notification_custom_postfix_failure():
         f":x: {postfix_str}, commit ID: {get_commit_id()}, source ID: {None}, processing start time: {None}, processing end time:"
         in notifier.client.msg_str._calls_repr()
     )
-    assert f"environment:" in notifier.client.msg_str._calls_repr()
+    assert "environment:" in notifier.client.msg_str._calls_repr()
