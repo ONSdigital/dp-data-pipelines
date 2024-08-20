@@ -63,10 +63,10 @@ def test_get_transform_details_kwargs():
     assert result == {"kwarg1": "value1"}
 
 
-def test_get_transform_details_missing():
+def test_get_transform_inputs_missing():
     """
     Checks that get_transform_details returns the expected Assertion error when
-    the given input field does not exist in the config dictionary.
+    the 'transform_inputs' field does not exist in the config dictionary.
     """
     config = {
         "config_version": 1,
@@ -79,6 +79,42 @@ def test_get_transform_details_missing():
     with pytest.raises(AssertionError) as err:
         get_transform_details(config, "transform_inputs")
     assert "'transform_inputs' not found in config dictionary" in str(err.value)
+
+
+def test_get_transform_missing():
+    """
+    Checks that get_transform_details returns the expected Assertion error when
+    the 'transform' field does not exist in the config dictionary.
+    """
+    config = {
+        "config_version": 1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    }
+    with pytest.raises(AssertionError) as err:
+        get_transform_details(config, "transform")
+    assert "'transform' not found in config dictionary" in str(err.value)
+
+
+def test_get_transform_kwargs_missing():
+    """
+    Checks that get_transform_details returns the expected Assertion error when
+    the 'transform_kwargs' field does not exist in the config dictionary.
+    """
+    config = {
+        "config_version": 1,
+        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform": sdmx_compact_2_0_prototype_1,
+        "required_files": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "secondary_function": dataset_ingress_v1,
+    }
+    with pytest.raises(AssertionError) as err:
+        get_transform_details(config, "transform_kwargs")
+    assert "'transform_kwargs' not found in config dictionary" in str(err.value)
 
 
 def test_get_transform_details_invalid_config_version():
