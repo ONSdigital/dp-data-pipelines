@@ -11,8 +11,10 @@ from pathlib import Path
 import pandas as pd
 
 from dpypelines.pipeline.shared.transforms.sdmx.compact.v20.prototype.v1 import (
-    generate_versions_metadata,
     xmlToCsvSDMX2_0,
+)
+from dpypelines.pipeline.shared.transforms.sdmx.generate_versions_metadata import (
+    generate_versions_metadata,
 )
 from dpypelines.pipeline.shared.transforms.sdmx.generic.v21.prototype.v1 import (
     xmlToCsvSDMX2_1,
