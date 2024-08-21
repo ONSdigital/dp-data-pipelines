@@ -2,6 +2,8 @@
 # package is being depreciate from the standard
 # library in python >3.12
 import os
+from datetime import datetime
+import pytz
 
 from dpytools.email.ses.client import SesClient
 from dpytools.utilities.utilities import str_to_bool
@@ -68,3 +70,17 @@ def get_environment() -> str:
         return "production"
     else:
         return "Environment is unknown"
+    
+
+def get_local_time():
+    # Get the timezone object for London
+    tz_London = pytz.timezone('Europe/London')
+
+    # Get the current time in London
+    datetime_London = datetime.now(tz_London)
+
+    # Format London date time into hours, minutes, and seconds
+    formatted_datetime_London = datetime_London.strftime("%H:%M:%S")
+
+    # Format the time as a string and print it
+    return formatted_datetime_London

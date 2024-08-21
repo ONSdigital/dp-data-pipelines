@@ -1,5 +1,3 @@
-import time
-
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 
@@ -7,6 +5,7 @@ from dpypelines.pipeline.shared.notification import (
     BasePipelineNotifier,
     notifier_from_env_var_webhook,
 )
+from dpypelines.pipeline.shared.utils import get_local_time
 
 logger = DpLogger("data-ingress-pipelines")
 
@@ -20,15 +19,14 @@ def get_source_id(manifest_dict: dict) -> str:
 
 def get_notifier():
     # Create notifier from webhook env var
-    current_time = time.time()
-    process_start_time = time.strftime("%D %T", time.gmtime(current_time))
     try:
-        de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
+        process_start_time = get_local_time()
+        notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
             "DE_SLACK_WEBHOOK",
             process_start_time=process_start_time,
         )
-        logger.info("Notifier created", data={"notifier": de_notifier})
-        return de_notifier
+        logger.info("Notifier created", data={"notifier": notifier})
+        return notifier
     except Exception as err:
         logger.error("Error occurred when creating notifier", err)
         raise err

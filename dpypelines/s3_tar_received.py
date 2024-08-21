@@ -18,7 +18,7 @@ def start(s3_object_name: str):
         Example: 'my-bucket/my-data.tar'
 
     """
-
+    # TODO: Keep eye out for this. Might need to be reverted back to try and except format if issues arise.
     notifier = get_notifier()
 
     # Decompress the tar file to the workspace

@@ -1,10 +1,9 @@
 import os
-import time
 from abc import ABC, abstractmethod
 
 from dpytools.slack.slack import SlackMessenger
 
-from dpypelines.pipeline.shared.utils import get_commit_id, get_environment, str_to_bool
+from dpypelines.pipeline.shared.utils import get_commit_id, get_environment, get_local_time, str_to_bool
 
 
 class BasePipelineNotifier(ABC):
@@ -55,14 +54,12 @@ class PipelineNotifier(BasePipelineNotifier):
         self.environment = get_environment()
 
     def failure(self, source_id=None):
-        current_time = time.time()
-        process_end_time = time.strftime("%D %T", time.gmtime(current_time))
+        process_end_time = get_local_time()
         msg = f":x: {self.notification_postfix}, commit ID: {get_commit_id()}, source ID: {source_id}, processing start time: {self.process_start_time}, processing end time: {process_end_time}, environment: {self.environment}".strip()
         self.client.msg_str(msg)
 
     def success(self, source_id=None):
-        current_time = time.time()
-        process_end_time = time.strftime("%D %T", time.gmtime(current_time))
+        process_end_time = get_local_time()
         msg = f":white_check_mark: {self.notification_postfix}, commit ID: {get_commit_id()}, source ID: {source_id}, processing start time: {self.process_start_time}, processing end time: {process_end_time}, environment: {self.environment}".strip()
         self.client.msg_str(msg)
 
