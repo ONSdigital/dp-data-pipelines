@@ -3,8 +3,8 @@
 # library in python >3.12
 import os
 from datetime import datetime
-import pytz
 
+import pytz
 from dpytools.email.ses.client import SesClient
 from dpytools.utilities.utilities import str_to_bool
 from email_validator import EmailNotValidError, validate_email
@@ -70,11 +70,11 @@ def get_environment() -> str:
         return "production"
     else:
         return "Environment is unknown"
-    
+
 
 def get_local_time():
     # Get the timezone object for London
-    tz_London = pytz.timezone('Europe/London')
+    tz_London = pytz.timezone("Europe/London")
 
     # Get the current time in London
     datetime_London = datetime.now(tz_London)
