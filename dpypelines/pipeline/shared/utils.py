@@ -2,7 +2,9 @@
 # package is being depreciate from the standard
 # library in python >3.12
 import os
+from datetime import datetime
 
+import pytz
 from dpytools.email.ses.client import SesClient
 from dpytools.utilities.utilities import str_to_bool
 from email_validator import EmailNotValidError, validate_email
@@ -38,7 +40,7 @@ def get_submitter_email(manifest_dict: dict) -> str:
 
     if manifest_dict["manifestVersion"] != 1:
         raise ValueError(
-            f'The manifest version does not match required version(whioch should be 1) suppllied version: {manifest_dict["manifestVersion"]}.'
+            f'The manifest version does not match required version(which should be 1) suppllied version: {manifest_dict["manifestVersion"]}.'
         )
 
     if submitter_email is None:
@@ -55,3 +57,30 @@ def get_submitter_email(manifest_dict: dict) -> str:
 def get_commit_id() -> str:
     repo = Repo()
     return str(repo.head.commit)
+
+
+def get_environment() -> str:
+    repo = Repo()
+    heads = repo.heads
+    if "sandbox" in str(heads):
+        return "sandbox"
+    elif "staging" in str(heads):
+        return "staging"
+    elif "production" in str(heads):
+        return "production"
+    else:
+        return "Environment is unknown"
+
+
+def get_local_time():
+    # Get the timezone object for London
+    tz_London = pytz.timezone("Europe/London")
+
+    # Get the current time in London
+    datetime_London = datetime.now(tz_London)
+
+    # Format London date time into hours, minutes, and seconds
+    formatted_datetime_London = datetime_London.strftime("%H:%M:%S")
+
+    # Format the time as a string and print it
+    return formatted_datetime_London
