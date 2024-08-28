@@ -3,7 +3,7 @@ from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.configuration import get_pipeline_config
-from dpypelines.pipeline.utils import get_notifier, get_source_id
+from dpypelines.pipeline.utils import get_notifier, get_source_id, get_secondary_function
 
 logger = DpLogger("data-ingress-pipeline")
 
@@ -95,7 +95,7 @@ def start(s3_object_name: str):
 
     # Call the secondary_function specified in pipeline_config
     try:
-        secondary_function = pipeline_config["secondary_function"]
+        secondary_function = get_secondary_function(pipeline_config)
         secondary_function(files_dir, pipeline_config)
         logger.info(
             "Successfully executed secondary function specified in pipeline_config",

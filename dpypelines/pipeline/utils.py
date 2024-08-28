@@ -46,3 +46,7 @@ def upload_file(upload_url):
             "Error creating UploadClient", err, data={"upload_url": upload_url}
         )
         raise err
+
+
+def get_secondary_function(config_dict: dict):
+    return config_dict["secondary_function"]
