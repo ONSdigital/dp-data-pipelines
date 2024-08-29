@@ -23,11 +23,11 @@ def before_all(context):
 
     # Set environment variable to not send notifications
     context.disable_notification_setting = os.environ.get("DISABLE_NOTIFICATIONS", None)
-    os.environ["DISABLE_NOTIFICATIONS"] = "true"
+    os.environ["DISABLE_NOTIFICATIONS"] = "True"
 
     # Don't skip the upload when testing
     context.skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", None)
-    os.environ["SKIP_DATA_UPLOAD"] = "false"
+    os.environ["SKIP_DATA_UPLOAD"] = "False"
 
     context.upload_service_url = os.environ.get("UPLOAD_SERVICE_URL", None)
     os.environ["UPLOAD_SERVICE_URL"] = "http://127.0.0.1:5001/upload-new"
