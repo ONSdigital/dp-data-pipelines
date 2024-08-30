@@ -1,7 +1,7 @@
-from typing import NamedTuple
+from dataclasses import dataclass
 
-
-class EmailContent(NamedTuple):
+@dataclass
+class EmailContent():
     subject: str
     message: str
 
