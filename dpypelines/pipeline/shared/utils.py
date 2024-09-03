@@ -55,12 +55,25 @@ def get_submitter_email(manifest_dict: dict) -> str:
 
 
 def get_commit_id() -> str:
-    repo = Repo()
+    if not os.path.exists("/tmp/dp-data-pipelines"):
+        repo = Repo.clone_from(
+            "https://github.com/ONSdigital/dp-data-pipelines.git",
+            "/tmp/dp-data-pipelines",
+        )
+    else:
+        repo = Repo("/tmp/dp-data-pipelines")
     return str(repo.head.commit)
 
 
 def get_environment() -> str:
-    repo = Repo()
+    if not os.path.exists("/tmp/dp-data-pipelines"):
+        repo = Repo.clone_from(
+            "https://github.com/ONSdigital/dp-data-pipelines.git",
+            "/tmp/dp-data-pipelines",
+        )
+    else:
+        repo = Repo("/tmp/dp-data-pipelines")
+
     heads = repo.heads
     if "sandbox" in str(heads):
         return "sandbox"

@@ -45,8 +45,15 @@ def get_pipeline_config(source_id: str) -> dict:
     """
     Get pipeline config details for the given source_id
     """
+    pipeline_config = (
+        None  # hacky way to make global variable and check if it has been populated
+    )
     for key in CONFIGURATION.keys():
         if re.match(key, source_id):
             pipeline_config = CONFIGURATION[key]
             break
-    return pipeline_config
+
+    if pipeline_config is None:
+        raise KeyError(f"{source_id} not matched in CONFIGURATION")
+    else:
+        return pipeline_config

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class EmailContent():
+class EmailContent:
     subject: str
     message: str
 
