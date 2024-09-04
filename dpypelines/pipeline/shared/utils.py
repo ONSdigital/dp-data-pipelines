@@ -55,34 +55,39 @@ def get_submitter_email(manifest_dict: dict) -> str:
 
 
 def get_commit_id() -> str:
-    if not os.path.exists("/tmp/dp-data-pipelines"):
-        repo = Repo.clone_from(
-            "https://github.com/ONSdigital/dp-data-pipelines.git",
-            "/tmp/dp-data-pipelines",
-        )
-    else:
-        repo = Repo("/tmp/dp-data-pipelines")
+    try:
+        repo = Repo()
+    except Exception:
+        environment = os.environ["ENVIRONMENT"]
+        if not os.path.exists("/tmp/dp-data-pipelines"):
+            repo = Repo.clone_from(
+                "https://github.com/ONSdigital/dp-data-pipelines.git",
+                "/tmp/dp-data-pipelines",
+                branch=environment,
+            )
+        else:
+            repo = Repo("/tmp/dp-data-pipelines")
+
     return str(repo.head.commit)
 
 
 def get_environment() -> str:
-    if not os.path.exists("/tmp/dp-data-pipelines"):
-        repo = Repo.clone_from(
-            "https://github.com/ONSdigital/dp-data-pipelines.git",
-            "/tmp/dp-data-pipelines",
-        )
-    else:
-        repo = Repo("/tmp/dp-data-pipelines")
+    try:
+        repo = Repo()
+        heads = repo.heads
+        if "sandbox" in str(heads):
+            return "sandbox"
+        elif "staging" in str(heads):
+            return "staging"
+        elif "production" in str(heads):
+            return "production"
+        else:
+            return "Environment is unknown"
 
-    heads = repo.heads
-    if "sandbox" in str(heads):
-        return "sandbox"
-    elif "staging" in str(heads):
-        return "staging"
-    elif "production" in str(heads):
-        return "production"
-    else:
-        return "Environment is unknown"
+    except Exception:
+        # found in env variables
+        environment = os.environ["ENVIRONMENT"]
+        return environment
 
 
 def get_local_time():
