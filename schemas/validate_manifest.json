@@ -1,0 +1,39 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "manifestVersion": {
+        "type": "integer"
+      },
+      "source_id": {
+        "type": "string"
+      },
+      "fileAuthorEmail": {
+        "type": "string"
+      },
+      "fileAuthorUsername": {
+        "type": "string"
+      },
+      "isPublishable": {
+        "type": "boolean"
+      },
+      "licence": {
+        "type": "string"
+      },
+      "licenceUrl": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      },
+      "aliasName": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "manifestVersion",
+      "source_id",
+      "fileAuthorEmail",
+      "fileAuthorUsername"
+    ]
+  }

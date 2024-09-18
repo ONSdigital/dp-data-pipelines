@@ -3,6 +3,7 @@ from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.configuration import get_pipeline_config
+from dpytools.validation.json.validation import validate_json_schema
 from dpypelines.pipeline.utils import (
     get_notifier,
     get_secondary_function,
@@ -67,6 +68,21 @@ def start(s3_object_name: str):
         )
     except Exception as err:
         logger.error("Failed to to retrieve file: manifest.json", err)
+        notifier.failure()
+        raise err
+
+    #This method will use a schema to validate the manifest.json 
+    try:
+        schema_path = "schemas/validate_manifest.json"
+        validate_json_schema(schema_path=schema_path,data_dict=manifest_dict)
+        logger.info(
+            "Successfully validated manifest.json",
+            data={
+                "pattern_looked_for": "manifest.json",
+            },
+        )
+    except Exception as err:
+        logger.error("Failed to validate: manifest.json", err)
         notifier.failure()
         raise err
 
