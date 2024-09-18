@@ -1,9 +1,9 @@
 from dpytools.logging.logger import DpLogger
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
+from dpytools.validation.json.validation import validate_json_schema
 
 from dpypelines.pipeline.configuration import get_pipeline_config
-from dpytools.validation.json.validation import validate_json_schema
 from dpypelines.pipeline.utils import (
     get_notifier,
     get_secondary_function,
