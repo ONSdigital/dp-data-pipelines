@@ -73,12 +73,12 @@ def start(s3_object_name: str):
 
     #This method will use a schema to validate the manifest.json 
     try:
-        schema_path = "schemas/validate_manifest.json"
-        validate_json_schema(schema_path=schema_path,data_dict=manifest_dict)
+        schema_path = "schemas/manifest_v1_schema.json"
+        validate_json_schema(schema_path=schema_path,data_dict=manifest_dict, error_msg="Invalid manifest")
         logger.info(
             "Successfully validated manifest.json",
             data={
-                "pattern_looked_for": "manifest.json",
+                "manifest_dict": manifest_dict,
             },
         )
     except Exception as err:
