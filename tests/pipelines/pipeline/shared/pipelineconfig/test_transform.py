@@ -18,8 +18,8 @@ def test_get_transform_details_transform_function():
         "transform": sdmx_compact_2_0_prototype_1,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "required_files": [{"matches": "^data.xml$"}],
+        "supplementary_distributions": [{"matches": "^data.xml$"}],
         "secondary_function": dataset_ingress_v1,
     }
     result = get_transform_details(config, "transform")
@@ -36,8 +36,8 @@ def test_get_transform_details_inputs():
         "transform": sdmx_compact_2_0_prototype_1,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "required_files": [{"matches": "^data.xml$"}],
+        "supplementary_distributions": [{"matches": "^data.xml$"}],
         "secondary_function": dataset_ingress_v1,
     }
     result = get_transform_details(config, "transform_inputs")
@@ -55,8 +55,8 @@ def test_get_transform_details_kwargs():
         "transform": sdmx_compact_2_0_prototype_1,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {"kwarg1": "value1"},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "required_files": [{"matches": "^data.xml$"}],
+        "supplementary_distributions": [{"matches": "^data.xml$"}],
         "secondary_function": dataset_ingress_v1,
     }
     result = get_transform_details(config, "transform_kwargs")
@@ -72,8 +72,8 @@ def test_get_transform_inputs_missing():
         "config_version": 1,
         "transform": sdmx_compact_2_0_prototype_1,
         "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "required_files": [{"matches": "^data.xml$"}],
+        "supplementary_distributions": [{"matches": "^data.xml$"}],
         "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(AssertionError) as err:
@@ -90,8 +90,8 @@ def test_get_transform_missing():
         "config_version": 1,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "required_files": [{"matches": "^data.xml$"}],
+        "supplementary_distributions": [{"matches": "^data.xml$"}],
         "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(AssertionError) as err:
@@ -108,8 +108,8 @@ def test_get_transform_kwargs_missing():
         "config_version": 1,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform": sdmx_compact_2_0_prototype_1,
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "required_files": [{"matches": "^data.xml$"}],
+        "supplementary_distributions": [{"matches": "^data.xml$"}],
         "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(AssertionError) as err:
@@ -127,8 +127,8 @@ def test_get_transform_details_invalid_config_version():
         "transform": sdmx_compact_2_0_prototype_1,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "required_files": [{"matches": "^data.xml$"}],
+        "supplementary_distributions": [{"matches": "^data.xml$"}],
         "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(NotImplementedError) as err:

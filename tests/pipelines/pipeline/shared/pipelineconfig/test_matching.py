@@ -18,11 +18,11 @@ def test_get_matching_pattern_multiple_matches():
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
         "required_files": [
-            {"matches": "^data.xml$", "count": "1"},
-            {"matches": "^data.csv$", "count": "1"},
-            {"matches": "^data.xls$", "count": "1"},
+            {"matches": "^data.xml$"},
+            {"matches": "^data.csv$"},
+            {"matches": "^data.xls$"},
         ],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$"}],
         "secondary_function": dataset_ingress_v1,
     }
     results = get_matching_pattern(config, "required_files")
@@ -40,7 +40,7 @@ def test_get_matching_no_match():
         "transform": sdmx_compact_2_0_prototype_1,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "supplementary_distributions": [{"matches": "^data.xml$"}],
         "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(AssertionError) as err:
@@ -57,8 +57,8 @@ def test_get_matching_pattern_single_match():
         "transform": sdmx_compact_2_0_prototype_1,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "required_files": [{"matches": "^data.xml$"}],
+        "supplementary_distributions": [{"matches": "^data.xml$"}],
         "secondary_function": dataset_ingress_v1,
     }
     results = get_matching_pattern(config, "required_files")
@@ -76,8 +76,8 @@ def test_get_matching_pattern_supplementary_distributions():
         "transform": sdmx_compact_2_0_prototype_1,
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$", "count": "1"}],
-        "supplementary_distributions": [{"matches": "^data.xml$", "count": "1"}],
+        "required_files": [{"matches": "^data.xml$"}],
+        "supplementary_distributions": [{"matches": "^data.xml$"}],
         "secondary_function": dataset_ingress_v1,
     }
     results = get_matching_pattern(config, "supplementary_distributions")
