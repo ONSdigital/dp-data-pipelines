@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from dpytools.logging.logger import DpLogger
 from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
@@ -9,8 +11,6 @@ from dpypelines.pipeline.utils import (
     get_secondary_function,
     get_source_id,
 )
-
-from pathlib import Path
 
 logger = DpLogger("data-ingress-pipeline")
 
@@ -73,11 +73,15 @@ def start(s3_object_name: str):
         notifier.failure()
         raise err
 
-    #This method will use a schema to validate the manifest.json 
+    # This method will use a schema to validate the manifest.json
     try:
         file_path = Path(__file__).parent
         schema_path = Path(file_path / "schemas/manifest_v1_schema.json")
-        validate_json_schema(schema_path=schema_path, data_dict=manifest_dict, error_msg="Invalid manifest")
+        validate_json_schema(
+            schema_path=schema_path,
+            data_dict=manifest_dict,
+            error_msg="Invalid manifest",
+        )
         logger.info(
             "Successfully validated manifest.json",
             data={
