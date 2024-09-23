@@ -10,6 +10,8 @@ from dpypelines.pipeline.utils import (
     get_source_id,
 )
 
+from pathlib import Path
+
 logger = DpLogger("data-ingress-pipeline")
 
 
@@ -73,8 +75,9 @@ def start(s3_object_name: str):
 
     #This method will use a schema to validate the manifest.json 
     try:
-        schema_path = "schemas/manifest_v1_schema.json"
-        validate_json_schema(schema_path=schema_path,data_dict=manifest_dict, error_msg="Invalid manifest")
+        file_path = Path(__file__).parent
+        schema_path = Path(file_path / "schemas/manifest_v1_schema.json")
+        validate_json_schema(schema_path=schema_path, data_dict=manifest_dict, error_msg="Invalid manifest")
         logger.info(
             "Successfully validated manifest.json",
             data={
