@@ -32,9 +32,6 @@ def before_all(context):
     context.upload_service_url = os.environ.get("UPLOAD_SERVICE_URL", None)
     os.environ["UPLOAD_SERVICE_URL"] = "http://127.0.0.1:5001/upload-new"
 
-    context.upload_service_s3_bucket = os.environ.get("UPLOAD_SERVICE_S3_BUCKET", None)
-    os.environ["UPLOAD_SERVICE_S3_BUCKET"] = "my-bucket/my.tar"
-
     context.service_token_for_upload = os.environ.get("SERVICE_TOKEN_FOR_UPLOAD", None)
     os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = "not-a-real-token"
 
@@ -132,9 +129,6 @@ def after_all(context):
 
     if context.upload_service_url is not None:
         os.environ["UPLOAD_SERVICE_URL"] = context.upload_service_url
-
-    if context.upload_service_s3_bucket is not None:
-        os.environ["UPLOAD_SERVICE_S3_BUCKET"] = context.upload_service_s3_bucket
 
     if context.service_token_for_upload is not None:
         os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = context.service_token_for_upload
