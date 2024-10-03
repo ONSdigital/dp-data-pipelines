@@ -83,7 +83,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
     try:
         upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
         assert (
-            upload_url is not None and os.environ["SKIP_DATA_UPLOAD"] is not False
+            upload_url is not None and os.environ["SKIP_DATA_UPLOAD"] is False
         ), "UPLOAD_SERVICE_URL environment variable not set."
         logger.info("Got Upload Service URL", data={"upload_url": upload_url})
     except Exception as err:
