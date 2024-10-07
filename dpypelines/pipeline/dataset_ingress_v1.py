@@ -108,6 +108,8 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             logger.error("Error occurred when getting Upload Service URL", err)
             de_notifier.failure()
             raise err
+    else:
+        upload_url = None
 
     # Extract the patterns for required files from the pipeline configuration
     try:
