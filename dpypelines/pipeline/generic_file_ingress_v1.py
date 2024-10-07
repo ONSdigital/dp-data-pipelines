@@ -80,7 +80,8 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     # Get Upload Service URL from environment variable
-    if os.environ["SKIP_DATA_UPLOAD"] is False:
+    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", False)
+    if skip_data_upload is False:
         try:
             upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
             assert (upload_url is not None), "UPLOAD_SERVICE_URL environment variable not set"
@@ -89,8 +90,6 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
             logger.error("Error occurred when getting Upload Service URL", err)
             notifier.failure()
             raise err
-    else:
-        upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
 
     # Extract the patterns for required files from the pipeline configuration
     try:
@@ -149,7 +148,6 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Allow DE's to skip the upload to s3 part of the pipeline while
     # developing code locally.
-    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", False)
     if skip_data_upload is not False:
         try:
             skip_data_upload = str_to_bool(skip_data_upload)
