@@ -99,19 +99,15 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     # Get Upload Service URL from environment variable
-    try:
-        if os.environ["SKIP_DATA_UPLOAD"] is False:
+    if os.environ["SKIP_DATA_UPLOAD"] is False:
+        try:
             upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
-            assert (
-                upload_url is not None
-            ), "UPLOAD_SERVICE_URL environment variable not set."
+            assert (upload_url is not None), "UPLOAD_SERVICE_URL environment variable not set"
             logger.info("Got Upload Service URL", data={"upload_url": upload_url})
-        else:
-            upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
-    except Exception as err:
-        logger.error("Error occurred when getting Upload Service URL", err)
-        de_notifier.failure()
-        raise err
+        except Exception as err:
+            logger.error("Error occurred when getting Upload Service URL", err)
+            de_notifier.failure()
+            raise err
 
     # Extract the patterns for required files from the pipeline configuration
     try:
