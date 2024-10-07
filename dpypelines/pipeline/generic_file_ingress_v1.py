@@ -90,7 +90,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
             notifier.failure()
             raise err
     else:
-        upload_url = None
+        upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
 
     # Extract the patterns for required files from the pipeline configuration
     try:
