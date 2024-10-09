@@ -255,7 +255,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     for pattern, sanity_checker in transform_inputs.items():
         try:
-            input_file_path: Path = local_store.save_lone_file_matching(pattern)
+            input_file_path: Path = local_store.get_pathlike_of_file_matching(pattern)
             logger.info(
                 "Saved input file that matches pattern",
                 data={
