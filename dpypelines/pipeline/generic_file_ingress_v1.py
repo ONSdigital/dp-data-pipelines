@@ -80,16 +80,29 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     # Get Upload Service URL from environment variable
-    try:
-        upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
-        assert (
-            upload_url is not None
-        ), "UPLOAD_SERVICE_URL environment variable not set."
-        logger.info("Got Upload Service URL", data={"upload_url": upload_url})
-    except Exception as err:
-        logger.error("Error occurred when getting Upload Service URL", err)
-        notifier.failure()
-        raise err
+    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", False)
+
+    if skip_data_upload is not False:
+        try:
+            skip_data_upload = str_to_bool(skip_data_upload)
+        except Exception as err:
+            logger.error(
+                "Unable to cast SKIP_DATA_UPLOAD to boolean",
+                err,
+                data={"value": skip_data_upload},
+            )
+            notifier.failure()
+            raise err
+            
+    if skip_data_upload is False:
+        try:
+            upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
+            assert (upload_url is not None), "UPLOAD_SERVICE_URL environment variable not set"
+            logger.info("Got Upload Service URL", data={"upload_url": upload_url})
+        except Exception as err:
+            logger.error("Error occurred when getting Upload Service URL", err)
+            notifier.failure()
+            raise err
 
     # Extract the patterns for required files from the pipeline configuration
     try:
@@ -148,18 +161,6 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Allow DE's to skip the upload to s3 part of the pipeline while
     # developing code locally.
-    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", False)
-    if skip_data_upload is not False:
-        try:
-            skip_data_upload = str_to_bool(skip_data_upload)
-        except Exception as err:
-            logger.error(
-                "Unable to cast SKIP_DATA_UPLOAD to boolean",
-                err,
-                data={"value": skip_data_upload},
-            )
-            notifier.failure()
-            raise err
 
     logger.info(
         "skip_data_upload set from SKIP_DATA_UPLOAD env var",
