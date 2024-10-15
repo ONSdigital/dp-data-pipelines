@@ -427,8 +427,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 ), f"Error finding file matching pattern {supp_dist_pattern}: matching files are {supp_dist_matching_files}"
 
                 # Create a directory to save supplementary distribution
-                if not os.path.exists("supplementary_distributions"):
-                    os.mkdir("supplementary_distributions")
                 supp_dist_path = local_store.get_pathlike_of_file_matching(supp_dist_pattern)
                 logger.info(
                     "Got supplementary distribution",
