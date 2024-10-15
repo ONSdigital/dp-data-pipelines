@@ -255,9 +255,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     for pattern, sanity_checker in transform_inputs.items():
         try:
-            input_file_path: Path = local_store.save_lone_file_matching(pattern)
+            input_file_path: Path = local_store.get_pathlike_of_file_matching(pattern)
             logger.info(
-                "Saved input file that matches pattern",
+                "Got input file that matches pattern.",
                 data={
                     "input_file_path": input_file_path,
                     "pattern": pattern,
@@ -427,11 +427,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 ), f"Error finding file matching pattern {supp_dist_pattern}: matching files are {supp_dist_matching_files}"
 
                 # Create a directory to save supplementary distribution
-                if not os.path.exists("supplementary_distributions"):
-                    os.mkdir("supplementary_distributions")
-                supp_dist_path = local_store.save_lone_file_matching(
-                    supp_dist_pattern, "supplementary_distributions"
-                )
+                supp_dist_path = local_store.get_pathlike_of_file_matching(supp_dist_pattern)
                 logger.info(
                     "Got supplementary distribution",
                     data={
