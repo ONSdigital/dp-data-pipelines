@@ -438,6 +438,7 @@ url = "https://github.com/ONSdigital/dp-python-tools.git"
 reference = "v0.4.4"
 resolved_reference = "61f961689bd13479df18f4e0479ef8d8cf8aa5b1"
 
+
 [[package]]
 name = "email-validator"
 version = "2.2.0"

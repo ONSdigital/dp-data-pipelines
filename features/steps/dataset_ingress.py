@@ -124,10 +124,9 @@ def step_impl(context):
 def step_impl(context, csv_output):
     context.csv_output = pd.read_csv(csv_output)
 
-
 @then("I read the xml output '{xml_output}'")
 def step_impl(context, xml_output):
-    with open(xml_output, "r") as f:
+    with open(context.temporary_directory / xml_output, "r") as f:
         context.xml_content = f.read()
 
 
