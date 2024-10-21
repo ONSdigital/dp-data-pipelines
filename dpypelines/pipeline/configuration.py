@@ -5,6 +5,7 @@ from dpypelines.pipeline.generic_file_ingress_v1 import generic_file_ingress_v1
 from dpypelines.pipeline.shared.transforms.sanity_check import sdmx_sanity_check_v1
 from dpypelines.pipeline.shared.transforms.sdmx.v20 import sdmx_compact_2_0_prototype_1
 from dpypelines.pipeline.shared.transforms.sdmx.v21 import sdmx_generic_2_1_prototype_1
+from dpypelines.pipeline.shared.transforms.csv.v1 import csv_join_prototype_1
 
 # Set a regex pattern matching the `source_id` as `CONFIGURATION` dictionary key
 # All fields are required in order for a pipeline transform to run successfully
@@ -27,6 +28,15 @@ CONFIGURATION = {
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [{"matches": "^data.xml$"}],
+        "secondary_function": dataset_ingress_v1,
+    },
+    "^.*_join_csv$": {
+        "config_version": 1,
+        "transform": csv_join_prototype_1,
+        "transform_inputs": {}, # todo add csv sanity check
+        "transform_kwargs": {},
+        "required_files": [{"matches": "^data.csv$"}],
+        "supplementary_distributions": [{"matches": "^data.csv$"}],
         "secondary_function": dataset_ingress_v1,
     },
     "^.*_move$": {
