@@ -84,7 +84,7 @@ def _dataframe_has_no_duplicates(df: pd.DataFrame):
     ), "Found duplicate rows in the dataframe, failed validation"
 
 
-def generated_dataframe_slices(csv_path: Path, chunk_size: Optional[int] = 5000):
+def _generated_dataframe_slices(csv_path: Path, chunk_size: Optional[int] = 5000):
     """
     is a generator function - can iterate through slices of the dataframe
     this way only one slice at a time will be in the memory
@@ -121,15 +121,10 @@ def validate_csv(csv_path: Path, columns: List[str]):
     Validate a csv
     """
 
-    # this function could look something like the below
+    _read_in_csv_check(csv_path)
 
-    # check that csv_path can be read in
-    # _read_in_csv_check(csv_path)
+    _correct_columns_exist(csv_path, columns)
 
-    # check correct columns in data
-    # _dataframe_correct_columns_exist(csv_path, columns)
-
-    # validate of the dataframe as slices
-    # for df_slice in generated_dataframe_slices(csv_path)
-    #   _dataframe_has_no_duplicates(df_slice)
-    #   _dataframe_column_has_no_blanks(df_slice)
+    for df_slice in _generated_dataframe_slices(csv_path):
+        _dataframe_has_no_duplicates(df_slice)
+        _dataframe_has_no_blanks(df_slice)
