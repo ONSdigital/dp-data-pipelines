@@ -114,7 +114,7 @@ def start(s3_object_name: str):
             err,
             data={"source_id": source_id},
         )
-        notifier.failure(source_id=source_id)
+        notifier.failure()
         raise err
 
     # Get the path to the directory
@@ -137,5 +137,5 @@ def start(s3_object_name: str):
             err,
             data={"pipeline_config": pipeline_config, "files_dir": files_dir},
         )
-        notifier.failure(source_id=source_id)
+        notifier.failure()
         raise err

@@ -1,18 +1,21 @@
-#from dpypelines import s3_tar_received
+import os
+from csvcubed.cli.buildcsvw.build import build_csvw
+from csvcubed.cli.inspectcsvw.inspect import inspect
+from pathlib import Path
 
-#s3_tar_received.start('joes-bucket-will-be-deleted/config-no-options.tar')
+from dpypelines.pipeline.configuration import get_pipeline_config
+from dpypelines.pipeline.csvcubed_ingress_v1 import csvcubed_ingress_v1
+from dpypelines.s3_tar_received import start
 
-import sys
-from behave.__main__ import run_behave
-from behave.configuration import Configuration
+# inspect(Path("out/4g-coverage.csv-metadata.json"))
+# pipeline_config = get_pipeline_config("4g_coverage_csvcubed")
+# csvcubed_ingress_v1("data", pipeline_config)
 
-if __name__ == "__main__":
-    # args = sys.argv[1:] if len(sys.argv) > 1 else []
-    args = [
-        "--verbose",
-        "features/dataset_ingress.feature",  # Feature file path
-        "-n",
-        "Generic ingress runs without errors",  # Scenario text
-    ]
-    configuration = Configuration(args)
-    sys.exit(run_behave(configuration))
+os.environ["DISABLE_NOTIFICATIONS"] = "true"
+os.environ["AWS_PROFILE"] = "dp-sandbox"
+# os.environ["SKIP_DATA_UPLOAD"] = "true"
+os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = (
+    "eyJraWQiOiJqeFlva3pnVER5UVVNb1VTM0c0ODNoa0VjY3hFSklKdCtHVjAraHVSRUpBPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiI4ODkwYjY4NC02NzU4LTRiN2YtODFkOS1jYjkyYTMyODJiZjMiLCJjb2duaXRvOmdyb3VwcyI6WyJyb2xlLXB1Ymxpc2hlciJdLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuZXUtd2VzdC0yLmFtYXpvbmF3cy5jb21cL2V1LXdlc3QtMl9XU0Q5RWNBc3ciLCJjbGllbnRfaWQiOiI0ZXZsOTFnNHRzNWlzbXVkaHJjYmI0ZGFvYyIsIm9yaWdpbl9qdGkiOiJkZGRlYTA5YS1mNzc2LTRhMzYtYTU3ZS02ZDkyOTJhYzk0YzAiLCJldmVudF9pZCI6Ijk0ZjMxNTRiLWU5YjctNDkzNS04NmUyLWIxMjY1YWExN2IxNCIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjE3MjkyNDA1NzUsImV4cCI6MTcyOTI0MTQ3NSwiaWF0IjoxNzI5MjQwNTc1LCJqdGkiOiI0MDFmOGU3Ny04OGJlLTQxNzAtYTJhZi04ZDhjNzVlZGIyOWIiLCJ1c2VybmFtZSI6IjdkNTEzOWJjLTUyZGEtNDgxZi1hOTY0LTQ5MTkwYzRkZWNmMyJ9.qwnbsG0cYasPkI-mmnmLSwObyY5rNRnj4PGeSy8Img21jYhkkzZQjtUqw2TN0q_j0zlXJ1XuPwHyn8s4-a4AhYeiKeIaVzLD3edjlmd3hjIzSozK5XQ8MrOcae8LJggVCJ2OCP0eGL3EsBd_eBH2K6QOlZa5LgZFukqcXqsu0H9v80s2gTIy55jDs9gz1XOyL_YaQAd7e9LPPoszTBLNqPuBmxkhJ01vxMEinbU1ooPZ1WuzNjhxnMyzmg6RSlxreq-wsqcn-95bnJqpWfuBosDsHT8183O-7sfle5eXpiANzKgesRXTBv1YPa49_z_NVRit7e21QUwYv1EZ8nP3_w"
+)
+os.environ["UPLOAD_SERVICE_URL"] = "http://localhost:11850/upload-new"
+start("dp-sandbox-ingest-submission-bucket/csvcubed.tar")
