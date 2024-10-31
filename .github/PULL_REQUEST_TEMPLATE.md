@@ -1,3 +1,11 @@
+## What type of PR is this? (check all applicable)
+
+- [ ] Refactor
+- [ ] Feature
+- [ ] Bug Fix
+- [ ] Optimization
+- [ ] Documentation Update
+
 ### What
 
 Describe what you have changed and why.
@@ -23,12 +31,8 @@ Please write a brief description of why documentation is not necessary here.
 
 ### Related issues
 
-Provide links to any related issues, describe the relation if necessary.
+Provide links to any related issues.
 
 ### How to review
 
 Describe the steps required to test the changes.
-
-### Who can review
-
-Describe who worked on the changes, so that other people can review.
