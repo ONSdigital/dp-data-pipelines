@@ -21,6 +21,10 @@ as new code is added, rather than leaving it for the future.
 Please write a brief description of why documentation is not necessary here.
 - [ ] Not as part of this ticket. (Could be done at a later point)
 
+### Related issues
+
+Provide links to any related issues, describe the relation if necessary.
+
 ### How to review
 
 Describe the steps required to test the changes.
