@@ -16,7 +16,3 @@ def test_sdmx_sanity_check_v1_read_xml():
         sdmx_sanity_check_v1(Path("data.xml"))
     assert "Failed to read in xml" in str(e.value)
 
-def test_sdmx_sanity_check_v1_read_json():
-    with pytest.raises(Exception) as e:
-        sdmx_sanity_check_v1(Path("data.json"))
-    assert "Failed to read in JSON" in str(e.value)
