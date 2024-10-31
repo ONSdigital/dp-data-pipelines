@@ -457,6 +457,28 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                         )
                         de_notifier.failure()
                         raise err
+                # If the supplementary distribution is a JSON file, upload to the Upload Service
+                elif supp_dist_path.suffix == ".json":
+                    try:
+                        upload_client.upload_new_json(supp_dist_path)
+                        logger.info(
+                            "Uploaded supplementary distribution",
+                            data={
+                                "supplementary_distribution": supp_dist_path,
+                                "upload_url": upload_url,
+                            },
+                        )
+                    except Exception as err:
+                        logger.error(
+                            "Error uploading JSON file to Upload Service",
+                            err,
+                            data={
+                                "supplementary_distribution": supp_dist_path,
+                                "upload_url": upload_url,
+                            },
+                        )
+                        de_notifier.failure()
+                        raise err
                 else:
                     raise NotImplementedError(
                         f"Uploading files of type {supp_dist_path.suffix} not supported."
