@@ -40,7 +40,7 @@ Set the required environment variables by opening your terminal and entering the
 ```bash
 export DISABLE_NOTIFICATIONS=true
 export SKIP_DATA_UPLOAD=true
-export UPLOAD_SERVICE_URL=not-used/not-required
+export UPLOAD_SERVICE_URL=not-used
 ```
 
 Then run `myscript.py` as [described above](#running-locally). This will run the full transform but will stop short of uploading outputs to the [dp-upload-service](https://github.com/ONSdigital/dp-upload-service).

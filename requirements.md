@@ -4,7 +4,7 @@ This document outlines the [input requirements](#inputs) for files to be submitt
 
 ## Inputs
 
-The DTV pipeline is triggered when a single or multiple `.tar` file/files is uploaded to the designated AWS S3 bucket. This `.tar` file should contain the file(s) to be transformed, any supplementary distribution files, and a `manifest.json` file for configuring the pipeline.
+The DTV pipeline is triggered when one or more .tar files is uploaded to the designated AWS S3 bucket. Each .tar file should contain the file(s) to be transformed, any supplementary distribution files, and a manifest.json file for configuring the pipeline.
 
 Business areas wishing to submit datasets to the DTV pipeline will add the relevant files to an MS Sharepoint app/folder. The primary issue to be resolved is how the pipeline will be triggered when multiple files to be processed in one submission are added to Sharepoint.
 
