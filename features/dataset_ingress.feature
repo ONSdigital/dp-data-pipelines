@@ -54,6 +54,17 @@ Feature: Data Ingress v1
     And the xml output should have length '3895'
     And the xml output contains 'ESA2010 Table T1500 Transmission'
 
+  Scenario: Generic ingress runs without errors for JSON
+    Given a temporary source directory of files
+        | file          | fixture                        |
+        | data.json     | test_data.json                 |
+        | manifest.json | valid_manifest.json            |
+    And a dataset id of 'valid_generic_file_ingress_json'
+    And generic_file_ingress_v1 starts using the temporary source directory
+    Then the pipeline should generate no errors
+    Then I read the json output 'data.json'
+    And the json output contains 'test'
+
   Scenario: Pipeline runs with an expected error
     Given a temporary source directory of files
         | file          | fixture               |

@@ -1,0 +1,11 @@
+{
+    "test": "this is a test",
+    "array": [
+        "array1",
+        "array2"
+    ],
+    "object": {
+        "one": 1,
+        "two": 2
+    }
+}
