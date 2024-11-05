@@ -63,7 +63,7 @@ Feature: Data Ingress v1
     And generic_file_ingress_v1 starts using the temporary source directory
     Then the pipeline should generate no errors
     Then I read the json output 'data.json'
-    And the json output contains 'expected_key'
+    And the json output contains 'test'
 
   Scenario: Pipeline runs with an expected error
     Given a temporary source directory of files
