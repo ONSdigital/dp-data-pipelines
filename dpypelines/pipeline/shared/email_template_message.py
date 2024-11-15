@@ -34,37 +34,37 @@ def submission_processed_email() -> EmailContent:
     return EmailContent(subject, message)
 
 
-def successful_dataset_upload_email(dataset_id: str) -> EmailContent:
+def successful_dataset_upload_email(dataset: str) -> EmailContent:
     """
     Create a subject and message to confirm a successful dataset upload.
     """
     subject = "Dataset Upload: Completed Successfully"
-    message = f"The uploaded dataset {dataset_id} has been loaded successfully."
+    message = f"The uploaded dataset {dataset} has been loaded successfully."
     return EmailContent(subject, message)
 
 
-def failed_dataset_upload_email(dataset_id: str, error_info: str) -> EmailContent:
+def failed_dataset_upload_email(dataset: str, error_info: str) -> EmailContent:
     """
     Create a subject and message to report a dataset upload failure.
     """
     subject = "Dataset Upload: Failed"
-    message = f"The upload for dataset {dataset_id} has failed. Error details: {error_info}"
+    message = f"The upload for dataset {dataset} has failed. Error details: {error_info}"
     return EmailContent(subject, message)
 
 
-def successful_validation_email(dataset_id: str) -> EmailContent:
+def successful_validation_email(dataset: str) -> EmailContent:
     """
     Create a subject and message to confirm a dataset passing validation successfully.
     """
     subject = "Dataset Ingest: Validation Successful"
-    message = f"The validation for dataset {dataset_id} has passed successfully."
+    message = f"The validation for dataset {dataset} has passed successfully."
     return EmailContent(subject, message)
 
 
-def failed_validation_email(dataset_id: str, validation_info) -> EmailContent:
+def failed_validation_email(dataset: str, validation_info: str) -> EmailContent:
     """
     Create a subject and message to report failed validation on dataset ingest.
     """
     subject = "Dataset Ingest: Validation Failed"
-    message = f"The validation for dataset {dataset_id} has failed. Failure details: {validation_info}"
+    message = f"The validation for dataset {dataset} has failed. Failure details: {validation_info}"
     return EmailContent(subject, message)
