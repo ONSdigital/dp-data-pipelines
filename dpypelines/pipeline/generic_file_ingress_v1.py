@@ -21,7 +21,8 @@ def files_size_not_0(files_dir):
 
 def metadata_json_is_parseable(files_dir):
     try:
-        json.loads(files_dir)
+        with open(files_dir, 'r') as is_files_dir_parseable:
+            json.load(is_files_dir_parseable)
         logger.info(f'{files_dir} is parseable')
     except Exception as err:
         raise Exception(f'{files_dir} is not parseable') from err
@@ -59,23 +60,24 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         notifier.failure()
         raise err
     
-    try:
-        does_file_exist = local_store.has_lone_file_matching(files_dir)
-        if does_file_exist == False:
-            raise Exception(f'{files_dir} does not exist')
-        
-        files_size_not_0(files_dir)
+    for files in files_in_directory:
+        try:
+            does_file_exist = local_store.has_lone_file_matching(files)
+            if does_file_exist == False:
+                raise Exception(f'{files} does not exist')
+            
+            files_size_not_0(files)
 
-        if "metadata.json" in files_dir:
-            metadata_json_is_parseable(files_dir)
-    except Exception as err:
-        logger.error(
-            "Input file failed to validate",
-            err,
-            data={"local_store_dir": files_dir},
-        )
-        notifier.failure()
-        raise err
+            if "metadata.json" in files:
+                metadata_json_is_parseable(files)
+        except Exception as err:
+            logger.error(
+                "Input file failed to validate",
+                err,
+                data={"local_store_dir": files_dir},
+            )
+            notifier.failure()
+            raise err
 
     try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
