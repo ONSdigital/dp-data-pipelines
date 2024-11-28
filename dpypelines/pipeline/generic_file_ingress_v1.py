@@ -1,5 +1,6 @@
 import os
 import json
+from typing import List
 
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
@@ -66,10 +67,11 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
             if does_file_exist == False:
                 raise Exception(f'{files} does not exist')
             
-            files_size_not_0(files)
+            file = os.path.join(files_dir, files)
+            files_size_not_0(file)
 
-            if "metadata.json" in files:
-                metadata_json_is_parseable(files)
+            if "metadata.json" in file:
+                metadata_json_is_parseable(file)
         except Exception as err:
             logger.error(
                 "Input file failed to validate",
