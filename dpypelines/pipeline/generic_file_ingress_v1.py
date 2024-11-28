@@ -1,4 +1,5 @@
 import os
+import json
 
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
@@ -10,6 +11,20 @@ from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_ema
 from dpypelines.pipeline.utils import get_notifier, upload_file
 
 logger = DpLogger("data-ingress-pipelines")
+
+def files_size_not_0(files_dir):
+    is_file_empty = os.stat(files_dir).st_size==0
+    if is_file_empty == True:
+        raise Exception(f'{files_dir} is empty')
+    else:
+        logger.info(f'{files_dir} is not empty')
+
+def metadata_json_is_parseable(files_dir):
+    try:
+        json.loads(files_dir)
+        logger.info(f'{files_dir} is parseable')
+    except Exception as err:
+        raise Exception(f'{files_dir} is not parseable') from err
 
 
 def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
@@ -38,6 +53,24 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
     except Exception as err:
         logger.error(
             "Error occurred when creating local data store from files directory",
+            err,
+            data={"local_store_dir": files_dir},
+        )
+        notifier.failure()
+        raise err
+    
+    try:
+        does_file_exist = local_store.has_lone_file_matching(files_dir)
+        if does_file_exist == False:
+            raise Exception(f'{files_dir} does not exist')
+        
+        files_size_not_0(files_dir)
+
+        if "metadata.json" in files_dir:
+            metadata_json_is_parseable(files_dir)
+    except Exception as err:
+        logger.error(
+            "Input file failed to validate",
             err,
             data={"local_store_dir": files_dir},
         )
