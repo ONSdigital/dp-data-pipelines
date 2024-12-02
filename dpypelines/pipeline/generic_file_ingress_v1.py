@@ -10,23 +10,9 @@ from dpypelines.pipeline.shared.email_template_message import file_not_found_ema
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 from dpypelines.pipeline.utils import get_notifier, upload_file
+from dpypelines.pipeline.validate_dataset_ingress_v1 import files_size_not_0, metadata_json_is_parseable
 
 logger = DpLogger("data-ingress-pipelines")
-
-def files_size_not_0(files_dir):
-    is_file_empty = os.stat(files_dir).st_size==0
-    if is_file_empty == True:
-        raise Exception(f'{files_dir} is empty')
-    else:
-        logger.info(f'{files_dir} is not empty')
-
-def metadata_json_is_parseable(files_dir):
-    try:
-        with open(files_dir, 'r') as is_files_dir_parseable:
-            json.load(is_files_dir_parseable)
-        logger.info(f'{files_dir} is parseable')
-    except Exception as err:
-        raise Exception(f'{files_dir} is not parseable') from err
 
 
 def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
