@@ -196,12 +196,8 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
 
         for required_file in required_file_patterns:
             try:
-                required_file_path = local_store.get_pathlike_of_file_matching(
-                    required_file
-                )
-                logger.info(
-                    "Got file to be uploaded.", data={"file_path": required_file_path}
-                )
+                required_file_path = local_store.get_pathlike_of_file_matching(required_file)
+                logger.info("File to be uploaded retrieved", data={"file_path": required_file_path})
             except Exception as err:
                 logger.error(
                     "Error getting file to be uploaded.",
