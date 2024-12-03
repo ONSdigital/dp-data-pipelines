@@ -37,7 +37,7 @@ CONFIGURATION = {
         "required_files": [
             {"matches": "^(?!manifest.json$)"},
             {"matches": "^data.csv$"},
-            {"matches": "^metadata.json$"}
+            {"matches": "^metadata.json$"},
         ],
         "supplementary_distributions": {},
         "secondary_function": generic_file_ingress_v1,
