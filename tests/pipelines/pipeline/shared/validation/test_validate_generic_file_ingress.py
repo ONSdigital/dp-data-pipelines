@@ -1,10 +1,14 @@
 from pathlib import Path
 import pytest
 
-from dpypelines.pipeline.validate_dataset_ingress_v1 import files_size_not_0, metadata_json_is_parseable
+from dpypelines.pipeline.validate_dataset_ingress_v1 import (
+    files_size_not_0,
+    metadata_json_is_parseable,
+)
 
 test_dir = Path(__file__).parents[4]
 fixtures_files_dir = Path(test_dir / "fixtures/test-cases")
+
 
 def test_import_files_size_not_0():
     """
@@ -26,7 +30,7 @@ def test_import_files_size_not_0_error():
 
     with pytest.raises(AssertionError) as err:
         files_size_not_0(test_file)
-    
+
     assert str(err.value) == f"{test_file} is empty"
 
 
@@ -50,7 +54,5 @@ def test_metadata_json_is_parseable_error():
 
     with pytest.raises(Exception) as err:
         test_result = metadata_json_is_parseable(test_file)
-        
-    
-    assert str(err.value) == f"{test_file} is not parseable"
 
+    assert str(err.value) == f"{test_file} is not parseable"
