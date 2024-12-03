@@ -48,28 +48,27 @@ def start(s3_object_name: str):
     try:
         local_store = LocalDirectoryStore("input")
         logger.info(
-            "local directory store successfully set up using decompressed files",
-            data={"local store": local_store.get_file_names()},
+            "Local directory store successfully set up using decompressed files",
+            data={"local_store": local_store.get_file_names()},
         )
     except Exception as err:
         logger.error(
-            "failed to create local directory store using decompresed files", err
+            "Failed to create local directory store using decompressed files", err
         )
         notifier.failure()
         raise err
 
     try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
-        # TODO change logger.info message (got manifest not source_id)
         logger.info(
-            "Successfully retrieved source_id",
+            "Successfully retrieved manifest.json",
             data={
                 "files_found": local_store.get_file_names(),
                 "pattern_looked_for": "manifest.json",
             },
         )
     except Exception as err:
-        logger.error("Failed to to retrieve file: manifest.json", err)
+        logger.error("Failed to retrieve file: manifest.json", err)
         notifier.failure()
         raise err
 
