@@ -54,6 +54,6 @@ def test_metadata_json_is_parseable_error():
     test_file = Path(fixtures_files_dir / "test_validate_csv_data.csv")
 
     with pytest.raises(Exception) as err:
-        test_result = metadata_json_is_parseable(test_file)
+        metadata_json_is_parseable(test_file)
 
     assert str(err.value) == f"{test_file} is not parseable"

@@ -1,6 +1,4 @@
-import json
 import os
-from typing import List
 
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
@@ -53,7 +51,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
     for files in files_in_directory:
         try:
             does_file_exist = local_store.has_lone_file_matching(files)
-            if does_file_exist == False:
+            if not does_file_exist:
                 raise Exception(f"{files} does not exist")
 
             file = os.path.join(files_dir, files)
