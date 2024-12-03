@@ -111,7 +111,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             )
             de_notifier.failure()
             raise err
-
+        
     # Retrieve Upload Service URL from environment variable
     if not skip_data_upload:
         try:
