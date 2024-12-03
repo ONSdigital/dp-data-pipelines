@@ -47,6 +47,7 @@ Feature: Data Ingress v1
         | file          | fixture                        |
         | data.xml      | esa2010_test_data_short.xml    |
         | manifest.json | valid_manifest.json            |
+        | metadata.json | test_metadata.json             |
     And a dataset id of 'valid_generic_file_ingress'
     And generic_file_ingress_v1 starts using the temporary source directory
     Then the pipeline should generate no errors
