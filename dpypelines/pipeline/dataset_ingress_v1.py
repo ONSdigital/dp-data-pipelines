@@ -118,8 +118,8 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
             assert (upload_url is not None), "UPLOAD_SERVICE_URL environment variable not set"
             logger.info(
-                "Retrieved Upload Service URL",
-                data={"upload_url": upload_url},                
+                "Retrieved Upload Service URL", 
+                data={"upload_url": upload_url},
             )
         except Exception as err:
             logger.error("Failed to retrieve Upload Service URL", err)
