@@ -1,32 +1,37 @@
 from pathlib import Path
+
 import pytest
 
-from dpypelines.pipeline.validate_dataset_ingress_v1 import files_size_not_0, metadata_json_is_parseable
+from dpypelines.pipeline.validate_ingest_files import (
+    file_size_not_0,
+    metadata_json_is_parseable,
+)
 
 test_dir = Path(__file__).parents[4]
 fixtures_files_dir = Path(test_dir / "fixtures/test-cases")
 
-def test_import_files_size_not_0():
+
+def test_import_file_size_not_0():
     """
     Checks that a given file with a size that is not 0 can be validated.
     """
     test_file = Path(fixtures_files_dir / "test_validate_csv_data.csv")
 
-    test_result = files_size_not_0(test_file)
+    test_result = file_size_not_0(test_file)
 
     # Validation function will raise nothing if it passes
-    assert not test_result
+    assert test_result is None
 
 
-def test_import_files_size_not_0_error():
+def test_import_file_size_not_0_error():
     """
     Checks that a given file with a size that is 0 raises the expected error.
     """
     test_file = Path(fixtures_files_dir / "test_validate_file_size_0.txt")
 
     with pytest.raises(AssertionError) as err:
-        files_size_not_0(test_file)
-    
+        file_size_not_0(test_file)
+
     assert str(err.value) == f"{test_file} is empty"
 
 
@@ -34,12 +39,12 @@ def test_metadata_json_is_parseable():
     """
     Checks that the given metadata.json file can be loaded.
     """
-    test_file = Path(fixtures_files_dir / "test_manifest.json")
+    test_file = Path(fixtures_files_dir / "test_metadata.json")
 
     test_result = metadata_json_is_parseable(test_file)
 
     # Validation function will raise nothing if it passes
-    assert not test_result
+    assert test_result is None
 
 
 def test_metadata_json_is_parseable_error():
@@ -49,8 +54,6 @@ def test_metadata_json_is_parseable_error():
     test_file = Path(fixtures_files_dir / "test_validate_csv_data.csv")
 
     with pytest.raises(Exception) as err:
-        test_result = metadata_json_is_parseable(test_file)
-        
-    
-    assert str(err.value) == f"{test_file} is not parseable"
+        metadata_json_is_parseable(test_file)
 
+    assert str(err.value) == f"{test_file} is not parseable"

@@ -98,7 +98,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
-
     skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", False)
 
     if skip_data_upload is not False:
@@ -112,15 +111,20 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             )
             de_notifier.failure()
             raise err
-            
-    # Get Upload Service URL from environment variable
-    if skip_data_upload is False:
+
+    # Retrieve Upload Service URL from environment variable
+    if not skip_data_upload:
         try:
             upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
-            assert (upload_url is not None), "UPLOAD_SERVICE_URL environment variable not set"
-            logger.info("Got Upload Service URL", data={"upload_url": upload_url})
+            assert (
+                upload_url is not None
+            ), "UPLOAD_SERVICE_URL environment variable not set"
+            logger.info(
+                "Retrieved Upload Service URL",
+                data={"upload_url": upload_url},
+            )
         except Exception as err:
-            logger.error("Error occurred when getting Upload Service URL", err)
+            logger.error("Failed to retrieve Upload Service URL", err)
             de_notifier.failure()
             raise err
 
@@ -427,7 +431,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 ), f"Error finding file matching pattern {supp_dist_pattern}: matching files are {supp_dist_matching_files}"
 
                 # Create a directory to save supplementary distribution
-                supp_dist_path = local_store.get_pathlike_of_file_matching(supp_dist_pattern)
+                supp_dist_path = local_store.get_pathlike_of_file_matching(
+                    supp_dist_pattern
+                )
                 logger.info(
                     "Got supplementary distribution",
                     data={

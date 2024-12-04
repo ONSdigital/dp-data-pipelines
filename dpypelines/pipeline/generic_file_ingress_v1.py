@@ -10,7 +10,10 @@ from dpypelines.pipeline.shared.email_template_message import file_not_found_ema
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 from dpypelines.pipeline.utils import get_notifier, upload_file
-from dpypelines.pipeline.validate_dataset_ingress_v1 import files_size_not_0, metadata_json_is_parseable
+from dpypelines.pipeline.validate_ingest_files import (
+    file_size_not_0,
+    metadata_json_is_parseable,
+)
 
 logger = DpLogger("data-ingress-pipelines")
 
@@ -46,18 +49,18 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         )
         notifier.failure()
         raise err
-    
-    for files in files_in_directory:
-        try:
-            does_file_exist = local_store.has_lone_file_matching(files)
-            if does_file_exist == False:
-                raise Exception(f'{files} does not exist')
-            
-            file = os.path.join(files_dir, files)
-            files_size_not_0(file)
 
-            if "metadata.json" in file:
-                metadata_json_is_parseable(file)
+    for file in files_in_directory:
+        try:
+            does_file_exist = local_store.has_lone_file_matching(file)
+            if not does_file_exist:
+                raise Exception(f"{file} does not exist")
+
+            filepath = os.path.join(files_dir, file)
+            file_size_not_0(filepath)
+
+            if "metadata.json" in filepath:
+                metadata_json_is_parseable(filepath)
         except Exception as err:
             logger.error(
                 "Input file failed to validate",
@@ -116,12 +119,12 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
             )
             notifier.failure()
             raise err
-            
-    if skip_data_upload is False:
+
+    if not skip_data_upload:
         try:
-            upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
-            assert (upload_url is not None), "UPLOAD_SERVICE_URL environment variable not set"
-            logger.info("Got Upload Service URL", data={"upload_url": upload_url})
+            upload_url = os.environ.get("UPLOAD_SERVICE_URL")
+            assert upload_url, "UPLOAD_SERVICE_URL environment variable not set"
+            logger.info("Retrieved Upload Service URL", data={"upload_url": upload_url})
         except Exception as err:
             logger.error("Error occurred when getting Upload Service URL", err)
             notifier.failure()
@@ -195,7 +198,9 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
 
         for required_file in required_file_patterns:
             try:
-                required_file_path = local_store.get_pathlike_of_file_matching(required_file)
+                required_file_path = local_store.get_pathlike_of_file_matching(
+                    required_file
+                )
                 logger.info(
                     "Got file to be uploaded.", data={"file_path": required_file_path}
                 )
