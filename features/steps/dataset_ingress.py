@@ -44,7 +44,11 @@ CONFIGURATION = {
         "transform": None,
         "transform_inputs": {},
         "transform_kwargs": {},
-        "required_files": [{"matches": "^(?!manifest.json$)"}],
+        "required_files": [
+            {"matches": "^manifest.json$"},
+            {"matches": "^data.xml$"},
+            {"matches": "^metadata.json$"},
+        ],
         "supplementary_distributions": [],
         "secondary_function": generic_file_ingress_v1,
     },

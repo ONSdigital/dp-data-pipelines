@@ -8,6 +8,10 @@ from dpypelines.pipeline.shared.email_template_message import file_not_found_ema
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
 from dpypelines.pipeline.utils import get_notifier, upload_file
+from dpypelines.pipeline.validate_ingest_files import (
+    file_size_not_0,
+    metadata_json_is_parseable,
+)
 
 logger = DpLogger("data-ingress-pipelines")
 
@@ -43,6 +47,26 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
         )
         notifier.failure()
         raise err
+
+    for file in files_in_directory:
+        try:
+            does_file_exist = local_store.has_lone_file_matching(file)
+            if not does_file_exist:
+                raise Exception(f"{file} does not exist")
+
+            filepath = os.path.join(files_dir, file)
+            file_size_not_0(filepath)
+
+            if "metadata.json" in filepath:
+                metadata_json_is_parseable(filepath)
+        except Exception as err:
+            logger.error(
+                "Input file failed to validate",
+                err,
+                data={"local_store_dir": files_dir},
+            )
+            notifier.failure()
+            raise err
 
     try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
