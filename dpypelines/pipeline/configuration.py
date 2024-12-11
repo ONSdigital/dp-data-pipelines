@@ -35,7 +35,6 @@ CONFIGURATION = {
         "transform_inputs": {},
         "transform_kwargs": {},
         "required_files": [
-            {"matches": "^manifest.json$"},
             {"matches": "^data.csv$"},
             {"matches": "^metadata.json$"},
         ],

@@ -25,7 +25,7 @@ def test_read_in_csv_check_invalid_csv_path():
 
 
 def test_validate_csv_invalid_file():
-    csv_path = Path("data.csv")
+    csv_path = Path("does-not-exist.csv")
 
     with pytest.raises(Exception) as err:
         _read_in_csv_check(csv_path)

@@ -1,9 +1,7 @@
 from pathlib import Path
 
-import pytest
-
 from dpypelines.pipeline.validate_ingest_files import (
-    file_size_not_0,
+    file_size_0,
     metadata_json_is_parseable,
 )
 
@@ -17,10 +15,7 @@ def test_import_file_size_not_0():
     """
     test_file = Path(fixtures_files_dir / "test_validate_csv_data.csv")
 
-    test_result = file_size_not_0(test_file)
-
-    # Validation function will raise nothing if it passes
-    assert test_result is None
+    assert file_size_0(test_file) is False
 
 
 def test_import_file_size_not_0_error():
@@ -29,10 +24,7 @@ def test_import_file_size_not_0_error():
     """
     test_file = Path(fixtures_files_dir / "test_validate_file_size_0.txt")
 
-    with pytest.raises(AssertionError) as err:
-        file_size_not_0(test_file)
-
-    assert str(err.value) == f"{test_file} is empty"
+    assert file_size_0(test_file) is True
 
 
 def test_metadata_json_is_parseable():
@@ -41,10 +33,7 @@ def test_metadata_json_is_parseable():
     """
     test_file = Path(fixtures_files_dir / "test_metadata.json")
 
-    test_result = metadata_json_is_parseable(test_file)
-
-    # Validation function will raise nothing if it passes
-    assert test_result is None
+    assert metadata_json_is_parseable(test_file) is True
 
 
 def test_metadata_json_is_parseable_error():
@@ -53,7 +42,4 @@ def test_metadata_json_is_parseable_error():
     """
     test_file = Path(fixtures_files_dir / "test_validate_csv_data.csv")
 
-    with pytest.raises(Exception) as err:
-        metadata_json_is_parseable(test_file)
-
-    assert str(err.value) == f"{test_file} is not parseable"
+    assert metadata_json_is_parseable(test_file) is False

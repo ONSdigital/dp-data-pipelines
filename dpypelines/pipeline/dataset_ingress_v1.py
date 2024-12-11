@@ -7,17 +7,23 @@ from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
 
-from dpypelines.pipeline.shared.email_template_message import (
-    file_not_found_email,
+from dpypelines.pipeline.shared.email_templates import (
+    failed_file_upload_email,
+    failed_validation_email,
+    required_file_not_found_email,
+    submission_processed_email,
+    successful_file_upload_email,
+    successful_validation_email,
     supplementary_distribution_not_found_email,
-)
-from dpypelines.pipeline.shared.notification import (
-    BasePipelineNotifier,
-    notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
 from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
+from dpypelines.pipeline.utils import get_notifier
+from dpypelines.pipeline.validate_ingest_files import (
+    file_size_0,
+    metadata_json_is_parseable,
+)
 
 logger = DpLogger("data-ingress-pipelines")
 
@@ -34,14 +40,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         Exception: If any unexpected error occurs.
     """
     # Create notifier from webhook env var
-    try:
-        de_notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
-            "DE_SLACK_WEBHOOK"
-        )
-        logger.info("Notifier created", data={"notifier": de_notifier})
-    except Exception as err:
-        logger.error("Failed to create notifier", err)
-        raise err
+    de_notifier = get_notifier()
 
     # Create local data store from files directory
     try:
@@ -59,16 +58,16 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         logger.error(
             "Failed to create local data store from files directory",
             err,
-            data={"local_store_dir": files_dir},
+            data={"files_directory": files_dir},
         )
         de_notifier.failure()
         raise err
 
-    # Retrieve manifest.json from local store
+    # Retrieve manifest.json as dict from local store
     try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
         logger.info(
-            "Retrieved manifest.json", 
+            "Retrieved manifest.json",
             data={"manifest_dict": manifest_dict},
         )
     except Exception as err:
@@ -76,7 +75,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
-    # Retrieve submitter email from manifest.json
+    # Retrieve submitter email from manifest_dict
     try:
         submitter_email = get_submitter_email(manifest_dict)
         logger.info(
@@ -85,7 +84,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         )
     except Exception as err:
         logger.error(
-            "Failed to retrieve submitter email", 
+            "Failed to retrieve submitter email",
             err,
             data={"manifest_dict": manifest_dict},
         )
@@ -96,7 +95,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     try:
         email_client = get_email_client()
         logger.info(
-            "Email client created", 
+            "Email client created",
             data={"email_client": email_client},
         )
     except Exception as err:
@@ -104,26 +103,99 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
-    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", False)
-    if skip_data_upload:
+    # Validate existence of each file in the directory and that it is not empty
+    for file in files_in_directory:
         try:
-            skip_data_upload = str_to_bool(skip_data_upload)
+            if not local_store.has_lone_file_matching(file):
+                try:
+                    # Catch a trivial raise as we need the stack trace of the error for the logger, so it needs to be a raised error.
+                    raise FileNotFoundError(f"{file} does not exist")
+                except FileNotFoundError as err:
+                    email_content = required_file_not_found_email(file)
+                    email_client.send(
+                        submitter_email, email_content.subject, email_content.message
+                    )
+                    logger.error("Input file not found", err, data={"file": file})
+                    de_notifier.failure()
+                    raise err
+
+            filepath = os.path.join(files_dir, file)
+            if file_size_0(filepath):
+                try:
+                    raise ValueError(f"'{file}' is empty")
+                except ValueError as err:
+                    email_content = failed_validation_email(
+                        file, f"File '{file}' is empty"
+                    )
+                    email_client.send(
+                        submitter_email, email_content.subject, email_content.message
+                    )
+                    logger.error("Input file is empty", err, data={"file": file})
+                    de_notifier.failure()
+                    raise err
+
+            # Validate that metadata.json is parseable as JSON
+            if "metadata.json" in filepath:
+                if metadata_json_is_parseable(filepath):
+                    logger.info(
+                        "metadata.json is parseable as JSON", data={"file": file}
+                    )
+                else:
+                    try:
+                        raise ValueError("metadata.json is not parseable")
+                    except ValueError as err:
+                        email_content = failed_validation_email(
+                            file, "metadata.json is not parseable as JSON"
+                        )
+                        email_client.send(
+                            submitter_email,
+                            email_content.subject,
+                            email_content.message,
+                        )
+                        logger.error("metadata.json is not parseable as JSON", err)
+                        de_notifier.failure()
+                        raise err
+            logger.info("File exists and is not empty", data={"file": file})
+            email_content = successful_validation_email(file)
+            email_client.send(
+                submitter_email, email_content.subject, email_content.message
+            )
         except Exception as err:
             logger.error(
-                "Failed to cast SKIP_DATA_UPLOAD to boolean",
+                "Failed to validate input file",
                 err,
-                data={"value": skip_data_upload},
+                data={"local_store_dir": files_dir, "file": file},
             )
             de_notifier.failure()
             raise err
-        
+
+    # Allow DE's to skip uploading to S3 while developing code locally.
+    # Retrieve SKIP_DATA_UPLOAD value from environment variable
+    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
+    try:
+        skip_data_upload = str_to_bool(skip_data_upload)
+    except Exception as err:
+        logger.error(
+            "Failed to cast SKIP_DATA_UPLOAD to boolean",
+            err,
+            data={"value": skip_data_upload},
+        )
+        de_notifier.failure()
+        raise err
+    logger.info(
+        "skip_data_upload set from SKIP_DATA_UPLOAD env var",
+        data={"value": skip_data_upload},
+    )
+
     # Retrieve Upload Service URL from environment variable
     if not skip_data_upload:
         try:
             upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
-            assert (upload_url is not None), "UPLOAD_SERVICE_URL environment variable not set"
+            assert (
+                upload_url is not None
+            ), "UPLOAD_SERVICE_URL environment variable not set"
             logger.info(
-                "Retrieved Upload Service URL", 
+                "Retrieved Upload Service URL",
                 data={"upload_url": upload_url},
             )
         except Exception as err:
@@ -135,7 +207,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     try:
         required_file_patterns = get_matching_pattern(pipeline_config, "required_files")
         logger.info(
-            "Required file patterns retrieved from pipeline config",
+            "Retrieved required file patterns from pipeline config",
             data={
                 "required_file_patterns": required_file_patterns,
                 "pipeline_config": pipeline_config,
@@ -143,11 +215,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         )
     except Exception as err:
         logger.error(
-            "Failed to retrieve required file patterns",
+            "Failed to retrieve required file patterns from pipeline config",
             err,
-            data={
-                "pipeline_config": pipeline_config
-            },
+            data={"pipeline_config": pipeline_config},
         )
         de_notifier.failure()
         raise err
@@ -161,7 +231,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                         f"No file found matching pattern {required_file}"
                     )
                 except FileNotFoundError as err:
-                    email_content = file_not_found_email(required_file)
+                    email_content = required_file_not_found_email(required_file)
                     email_client.send(
                         submitter_email, email_content.subject, email_content.message
                     )
@@ -192,13 +262,13 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             pipeline_config, "supplementary_distributions"
         )
         logger.info(
-            "Retrieved supplementary distribution patterns from pipeline config", 
+            "Retrieved supplementary distribution patterns from pipeline config",
             data={"supplementary_distribution_patterns": supp_dist_patterns},
         )
     except Exception as err:
         files_in_directory = local_store.get_file_names()
         logger.error(
-            "Failed to retrieve supplementary distribution patterns", 
+            "Failed to retrieve supplementary distribution patterns",
             err,
             data={"pipeline_config": pipeline_config},
         )
@@ -209,8 +279,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for supp_dist_pattern in supp_dist_patterns:
         try:
             if not local_store.has_lone_file_matching(supp_dist_pattern):
-                # Catch a trivial raise as we need the stack trace of the
-                # error for the logger, so it needs to be a raised error.
                 try:
                     raise FileNotFoundError(
                         f"No file found matching pattern {supp_dist_pattern}"
@@ -250,7 +318,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     try:
         transform_inputs = get_transform_details(pipeline_config, "transform_inputs")
         logger.info(
-            "Retrieved transform inputs", 
+            "Retrieved transform inputs",
             data={"transform_inputs": transform_inputs},
         )
     except Exception as err:
@@ -266,7 +334,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         try:
             input_file_path: Path = local_store.get_pathlike_of_file_matching(pattern)
             logger.info(
-                "Retrieved input file that matches pattern", 
+                "Retrieved input file that matches pattern",
                 data={
                     "input_file_path": input_file_path,
                     "pattern": pattern,
@@ -316,7 +384,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     try:
         transform_function = get_transform_details(pipeline_config, "transform")
         logger.info(
-            "Retrieved transform function from piepline config", 
+            "Retrieved transform function from piepline config",
             data={
                 "transform_function": transform_function,
                 "input_file_paths": input_file_paths,
@@ -324,8 +392,8 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         )
     except Exception as err:
         logger.error(
-            "Failed to retrieve transform function from pipeline config", 
-            err, 
+            "Failed to retrieve transform function from pipeline config",
+            err,
             data={"pipeline_config": pipeline_config},
         )
         de_notifier.failure()
@@ -335,13 +403,13 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     try:
         transform_kwargs = get_transform_details(pipeline_config, "transform_kwargs")
         logger.info(
-            "Retrieved transform kwargs  from pipeline cofig", 
+            "Retrieved transform kwargs  from pipeline cofig",
             data={"transform_kwargs": transform_kwargs},
         )
     except Exception as err:
         logger.error(
-            "Failed to retrieve transform kwargs", 
-            err, 
+            "Failed to retrieve transform kwargs",
+            err,
             data={"pipeline_config": pipeline_config},
         )
         de_notifier.failure()
@@ -364,7 +432,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     except Exception as err:
         logger.error(
-            "Transform function execution failed", 
+            "Transform function execution failed",
             err,
             data={
                 "transform_function": transform_function,
@@ -380,25 +448,19 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # TODO - validate the csv once we know what we're validating
 
-    # Allow DE's to skip the upload to s3 part of the pipeline while
-    # developing code locally.
-    logger.info(
-        "skip_data_upload set from SKIP_DATA_UPLOAD env var", 
-        data={"value": skip_data_upload},
-    )
     if not skip_data_upload:
         # Upload output files to Upload Service
         try:
             # Create UploadClient from upload_url
             upload_client = UploadServiceClient(upload_url)
             logger.info(
-                "UploadClient created", 
+                "UploadClient created",
                 data={"upload_url": upload_url},
             )
         except Exception as err:
             logger.error(
-                "Failed to create UploadClient", 
-                err, 
+                "Failed to create UploadClient",
+                err,
                 data={"upload_url": upload_url},
             )
             de_notifier.failure()
@@ -408,23 +470,30 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             # Upload CSV to Upload Service
             upload_client.upload_new_csv(csv_path)
             logger.info(
-                "CSV uploaded to Upload Service", 
+                "CSV uploaded to Upload Service",
                 data={
-                    "csv_path": csv_path, 
+                    "csv_path": csv_path,
                     "upload_url": upload_url,
                 },
             )
+            email_content = successful_file_upload_email(csv_path.name)
+            email_client.send(
+                submitter_email, email_content.subject, email_content.message
+            )
         except Exception as err:
             logger.error(
-                "Failed to upload CSV file to Upload Service", 
-                err, 
+                "Failed to upload CSV file to Upload Service",
+                err,
                 data={
-                    "csv_path": csv_path, 
+                    "csv_path": csv_path,
                     "upload_url": upload_url,
-                    
-                },    
+                },
             )
             de_notifier.failure()
+            email_content = failed_file_upload_email(csv_path.name, str(err))
+            email_client.send(
+                submitter_email, email_content.subject, email_content.message
+            )
             raise err
 
         # Check for supplementary distributions to upload
@@ -432,7 +501,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             # Get all files in local store
             all_files = local_store.get_file_names()
             logger.info(
-                "Retrieved all files in local store", 
+                "Retrieved all files in local store",
                 data={"files": all_files},
             )
             for supp_dist_pattern in supp_dist_patterns:
@@ -453,35 +522,49 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     data={
                         "supplementary_distribution": supp_dist_path,
                         "file_extension": supp_dist_path.suffix,
-                        },
-                    )
-                
+                    },
+                )
+
                 # Upload supplementary distribution to Upload Service
                 try:
                     if supp_dist_path.suffix == ".xml":
                         upload_client.upload_new_sdmx(supp_dist_path)
-                    
+
                     elif supp_dist_path.suffix == ".json":
                         upload_client.upload_new_json(supp_dist_path)
                     else:
-                        raise NotImplementedError(f"Uploading files of type {supp_dist_path.suffix} not supported.")
+                        raise NotImplementedError(
+                            f"Uploading files of type {supp_dist_path.suffix} not supported."
+                        )
                     logger.info(
-                        "Supplementary distribution uploaded", 
+                        "Supplementary distribution uploaded",
                         data={
-                            "supplementary_distribution": supp_dist_path, 
+                            "supplementary_distribution": supp_dist_path,
                             "upload_url": upload_url,
                         },
                     )
+                    email_content = successful_file_upload_email(supp_dist_path.name)
+                    email_client.send(
+                        submitter_email, email_content.subject, email_content.message
+                    )
                 except Exception as err:
                     logger.error(
-                        "Failed to upload supplementary distribution", 
-                        err, 
+                        "Failed to upload supplementary distribution",
+                        err,
                         data={
-                            "supplementary_distribution": supp_dist_path, 
+                            "supplementary_distribution": supp_dist_path,
                             "upload_url": upload_url,
                         },
                     )
                     de_notifier.failure()
+                    email_content = failed_file_upload_email(
+                        supp_dist_path.name, str(err)
+                    )
+                    email_client.send(
+                        submitter_email, email_content.subject, email_content.message
+                    )
                     raise err
 
+    email_content = submission_processed_email()
+    email_client.send(submitter_email, email_content.subject, email_content.message)
     de_notifier.success()

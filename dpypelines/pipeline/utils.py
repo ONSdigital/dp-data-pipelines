@@ -2,7 +2,7 @@ from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 
 from dpypelines.pipeline.shared.notification import (
-    BasePipelineNotifier,
+    PipelineNotifier,
     notifier_from_env_var_webhook,
 )
 from dpypelines.pipeline.shared.utils import get_local_time
@@ -21,7 +21,7 @@ def get_notifier():
     # Create notifier from webhook env var
     try:
         process_start_time = get_local_time()
-        notifier: BasePipelineNotifier = notifier_from_env_var_webhook(
+        notifier: PipelineNotifier = notifier_from_env_var_webhook(
             "DE_SLACK_WEBHOOK",
             process_start_time=process_start_time,
         )
@@ -32,7 +32,7 @@ def get_notifier():
         raise err
 
 
-def upload_file(upload_url):
+def get_upload_client(upload_url):
     # Upload output files to Upload Service
     try:
         # Create UploadClient from upload_url
