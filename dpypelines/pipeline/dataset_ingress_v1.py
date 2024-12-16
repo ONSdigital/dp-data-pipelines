@@ -27,6 +27,8 @@ from dpypelines.pipeline.validate_ingest_files import (
 
 logger = DpLogger("data-ingress-pipelines")
 
+print("I am a change!")
+
 
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     """
