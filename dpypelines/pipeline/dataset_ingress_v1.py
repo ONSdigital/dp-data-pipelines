@@ -18,7 +18,11 @@ from dpypelines.pipeline.shared.email_templates import (
 )
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
-from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
+from dpypelines.pipeline.shared.utils import (
+    get_email_client,
+    get_mimetype,
+    get_submitter_email,
+)
 from dpypelines.pipeline.utils import get_notifier
 from dpypelines.pipeline.validate_ingest_files import (
     file_size_0,
@@ -26,8 +30,6 @@ from dpypelines.pipeline.validate_ingest_files import (
 )
 
 logger = DpLogger("data-ingress-pipelines")
-
-print("I am a change!")
 
 
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
@@ -470,7 +472,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
         try:
             # Upload CSV to Upload Service
-            upload_client.upload_new_csv(csv_path)
+            upload_client.upload_new(csv_path, "text/csv")
             logger.info(
                 "CSV uploaded to Upload Service",
                 data={
@@ -529,11 +531,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
                 # Upload supplementary distribution to Upload Service
                 try:
-                    if supp_dist_path.suffix == ".xml":
-                        upload_client.upload_new_sdmx(supp_dist_path)
-
-                    elif supp_dist_path.suffix == ".json":
-                        upload_client.upload_new_json(supp_dist_path)
+                    mimetype = get_mimetype(supp_dist_path.suffix)
+                    if mimetype:
+                        upload_client.upload_new(supp_dist_path, mimetype)
                     else:
                         raise NotImplementedError(
                             f"Uploading files of type {supp_dist_path.suffix} not supported."

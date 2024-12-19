@@ -3,12 +3,21 @@
 # library in python >3.12
 import os
 from datetime import datetime
+from typing import Optional
 
 import pytz
 from dpytools.email.ses.client import SesClient
 from dpytools.utilities.utilities import str_to_bool
 from email_validator import EmailNotValidError, validate_email
 from git import Repo
+
+MIMETYPES = {
+    ".csv": "text/csv",
+    ".xml": "application/xml",
+    ".json": "application/json",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".csdb": "application/octet-stream",
+}
 
 
 class NopEmailClient:
@@ -31,7 +40,7 @@ def get_email_client():
 
 def get_submitter_email(manifest_dict: dict) -> str:
     """
-    This function returns the subbmiter email form the provided manifest_dict (which is the data in the manifest.json file)
+    This function returns the submitter email from the provided manifest_dict (which is generated from the manifest.json file)
     """
 
     # Temporary email address for testing purposes
@@ -44,7 +53,7 @@ def get_submitter_email(manifest_dict: dict) -> str:
         )
 
     if submitter_email is None:
-        raise NotImplementedError("Submitter email address cannot yet be acquired.")
+        raise NotImplementedError("Submitter email address not found.")
 
     try:
         validate_email(submitter_email)
@@ -102,3 +111,8 @@ def get_local_time():
 
     # Format the time as a string and print it
     return formatted_datetime_London
+
+
+def get_mimetype(file: str) -> Optional[str]:
+    # TODO Set default to "application/octet-stream"?
+    return MIMETYPES.get(file, None)

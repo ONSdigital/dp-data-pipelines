@@ -4,6 +4,7 @@ from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
 
+
 from dpypelines.pipeline.shared.email_templates import (
     failed_file_upload_email,
     failed_validation_email,
@@ -13,7 +14,11 @@ from dpypelines.pipeline.shared.email_templates import (
     successful_validation_email,
 )
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
-from dpypelines.pipeline.shared.utils import get_email_client, get_submitter_email
+from dpypelines.pipeline.shared.utils import (
+    get_email_client,
+    get_submitter_email,
+    get_mimetype,
+)
 from dpypelines.pipeline.utils import get_notifier, get_upload_client
 from dpypelines.pipeline.validate_ingest_files import (
     file_size_0,
@@ -269,12 +274,9 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                 raise err
 
             try:
-                if required_file_path.suffix == ".csv":
-                    upload_client.upload_new_csv(required_file_path)
-                elif required_file_path.suffix == ".xml":
-                    upload_client.upload_new_sdmx(required_file_path)
-                elif required_file_path.suffix == ".json":
-                    upload_client.upload_new_json(required_file_path)
+                mimetype = get_mimetype(required_file_path.suffix)
+                if mimetype:
+                    upload_client.upload_new(required_file_path, mimetype)
                 else:
                     raise NotImplementedError(
                         f"Uploading file type {required_file_path.suffix} not currently supported."
