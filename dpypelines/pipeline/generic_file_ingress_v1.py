@@ -4,7 +4,6 @@ from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
 
-
 from dpypelines.pipeline.shared.email_templates import (
     failed_file_upload_email,
     failed_validation_email,
@@ -16,8 +15,8 @@ from dpypelines.pipeline.shared.email_templates import (
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.utils import (
     get_email_client,
-    get_submitter_email,
     get_mimetype,
+    get_submitter_email,
 )
 from dpypelines.pipeline.utils import get_notifier, get_upload_client
 from dpypelines.pipeline.validate_ingest_files import (
