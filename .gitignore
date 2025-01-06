@@ -4,3 +4,4 @@ __pycache__
 behave_debug.py
 features/fixtures/data/
 data
+.env
