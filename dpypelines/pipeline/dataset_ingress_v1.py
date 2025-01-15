@@ -32,6 +32,22 @@ from dpypelines.pipeline.validate_ingest_files import (
 logger = DpLogger("data-ingress-pipelines")
 
 
+"""
+under the `for file in files_in_directory:` I do think modularising
+the block and making a function that would handle the errors for each
+indiciual case would be more beneficial  and would make the code more
+readable. There could be a function that does the validation part and
+possible convert the errors for each expected error type into a function
+and call them in the validation function. This would make it more readable
+and clear which part does exactly what.The upload Service block could also
+be in a function in a similar fashion. if this would be implemented across
+the ingress function it would make it much more clear and reduce code repetition.
+The modular code can stay in this file or could be moved and that way possibly
+used at other tasks in the future (but I see a slim chance for that due to how
+specific tasks these function do)
+"""
+
+
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     """
     Version 1 of the dataset ingress pipeline.
@@ -46,6 +62,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Create notifier from webhook env var
     de_notifier = get_notifier()
 
+    # TODO This could be made into a function
     # Create local data store from files directory
     try:
         local_store = LocalDirectoryStore(files_dir)
@@ -67,6 +84,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
+    #TODO this also could be made into a function
     # Retrieve manifest.json as dict from local store
     try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
@@ -106,6 +124,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         logger.error("Failed to create email client", err)
         de_notifier.failure()
         raise err
+
+    #TODO This part could be separated into multiple specific error functions and then make a function to check all the errors
+    # This would just make the code more clean and readable
 
     # Validate existence of each file in the directory and that it is not empty
     for file in files_in_directory:
@@ -173,6 +194,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             de_notifier.failure()
             raise err
 
+    #TODO each `try` block could be made into a function so the overall process would be more clean 
     # Allow DE's to skip uploading to S3 while developing code locally.
     # Retrieve SKIP_DATA_UPLOAD value from environment variable
     skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")

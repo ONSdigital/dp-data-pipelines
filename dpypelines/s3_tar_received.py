@@ -15,6 +15,14 @@ from dpypelines.pipeline.utils import (
 logger = DpLogger("data-ingress-pipeline")
 
 
+"""
+I don’t see any opportunity for modularity or reduce complexity since all the step call 
+ a function (and then either use the result for another function call) then log the success
+ or the failure. The steps are clear and readable and the function we are using there are tested
+  on the `dpytools` repo, so that does ensure good test coverage.
+"""
+
+
 def start(s3_object_name: str):
     """
     Handles the required behaviour when receiving a `.tar` file indicated by an s3 object name.
