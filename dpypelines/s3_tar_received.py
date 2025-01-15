@@ -26,6 +26,7 @@ def start(s3_object_name: str):
     """
     # TODO: Keep eye out for this. Might need to be reverted back to try and except format if issues arise.
     notifier = get_notifier()
+    # DIS-2334 TODO: create a new function for error handling (consolidate logging, notification, and exceptions)
 
     # Decompress the tar file to the workspace
     try:
@@ -70,6 +71,7 @@ def start(s3_object_name: str):
         notifier.failure()
         raise err
 
+    # DIS-2334 TODO: Extract manifest validation into a dedicated function for clarity/reusability
     # This method will use a schema to validate the manifest.json
     try:
         file_path = Path(__file__).parent

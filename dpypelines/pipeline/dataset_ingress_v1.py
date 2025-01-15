@@ -46,6 +46,8 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Create notifier from webhook env var
     de_notifier = get_notifier()
 
+    # DIS-2334 TODO: Create a helper function for error handling to reduce repetition
+    
     # Create local data store from files directory
     try:
         local_store = LocalDirectoryStore(files_dir)
@@ -108,6 +110,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     # Validate existence of each file in the directory and that it is not empty
+    # DIS-2334 TODO: Extract file validation into separate functions
     for file in files_in_directory:
         try:
             if not local_store.has_lone_file_matching(file):
@@ -173,6 +176,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             de_notifier.failure()
             raise err
 
+    # DIS-2334 TODO: Create a helper function for environment variable retrieval and parsing
     # Allow DE's to skip uploading to S3 while developing code locally.
     # Retrieve SKIP_DATA_UPLOAD value from environment variable
     skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
@@ -226,6 +230,8 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
+    # DIS-2334 TODO: Extract required file checking into a separate function/block
+    # DIS-2334 TODO: unnecessary complexity with  sending email we shouldmodulise the emailclient code
     # Check that all required files are present in the local store
     for required_file in required_file_patterns:
         try:
@@ -280,6 +286,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     # Check for the existence of each supplementary distribution
+    # DIS-2334 TODO: potentially we can create a helper function for sending emails  and checks if email is sent or not
     for supp_dist_pattern in supp_dist_patterns:
         try:
             if not local_store.has_lone_file_matching(supp_dist_pattern):
@@ -318,6 +325,8 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             raise err
 
     # Get the transform inputs from the pipeline_config and run the specified sanity checker for it
+    # DIS-2334 TODO: Extract transform input retrieval and sanity checking into separate functions
+    # DIS-2334 TODO: this would remove complexity around the code
     input_file_paths = []
     try:
         transform_inputs = get_transform_details(pipeline_config, "transform_inputs")
@@ -499,7 +508,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 submitter_email, email_content.subject, email_content.message
             )
             raise err
-
+        
+        # DIS-2334 TODO: Extract supplementary distribution upload into a separate function/block
+        # DIS-2334 TODO: we can potenitally break this code down further which could remove complexity
         # Check for supplementary distributions to upload
         if supp_dist_patterns:
             # Get all files in local store
@@ -567,6 +578,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     )
                     raise err
 
+    # DIS-2334 TODO: Extract submission processing into a separate function
     email_content = submission_processed_email()
     email_client.send(submitter_email, email_content.subject, email_content.message)
     de_notifier.success()
