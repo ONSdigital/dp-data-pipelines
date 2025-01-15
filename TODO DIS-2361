@@ -1,0 +1,11 @@
+DIS-2361
+
+For the `s3_tar_recieved.py`
+
+I don’t see any opportunity for modularity or reduce complexity since all the step call  a function (and then either use the result for another function call) then log the success or the failure. The steps are clear and readable and the function we are using there are tested on the `dpytools` repo, so that does ensure good test coverage.
+
+
+For the `data_ingres_v1.py`
+
+
+under the `for file in files_in_directory:` I do think modularising the block and making a function that would handle the errors for each indiciual case would be more beneficial  and would make the code more readable. There could be a function that does the validation part and possible convert the errors for each expected error type into a function and call them in the validation function. This would make it more readable and clear which part does exactly what.The upload Service block could also be in a function in a similar fashion. if this would be implemented across the ingress function it would make it much more clear and reduce code repetition. The modular code can stay in this file or could be moved and that way possibly used at other tasks in the future (but I see a slim chance for that due to how specific tasks these function do)
