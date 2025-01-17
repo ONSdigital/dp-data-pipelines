@@ -11,7 +11,14 @@ def error_handler(section: str, error: str, data: Optional[dict],
 ):
     """
         This funciton handles the errors.
-        TODO: fill this out!
+        
+        Arguments:
+        section (str): The section of the ETL pipeline where the error occurred.
+        error (str): The error message to log and process.
+        data (dict, optional): Additional data to include in the logs.
+        surpress_logs (bool): If True, logging is surpressed.
+        surpress_email (bool): If True, email notifications are surpressed.
+        surpress_notification (bool): If True, system notifications are surpressed.
     
     """
 
@@ -41,3 +48,4 @@ def error_handler(section: str, error: str, data: Optional[dict],
             notifier.failure()
         except Exception as notification_err:
             logger.error(f"Failed to trigger system notifications", notification_err)
+            

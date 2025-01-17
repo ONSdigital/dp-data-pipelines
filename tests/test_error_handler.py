@@ -11,7 +11,7 @@ def test_error_handler_fail():
         error_handler(section='1.1')
     
 def test_error_handler_success_with_data():
-    """TODO: fill this out"""
+    """Testing if all arguments provided the then the function works as intended."""
     with patch("dpypelines.pipeline.shared.error_handler_module.logger") as mock_logger, \
          patch("dpypelines.pipeline.shared.error_handler_module.get_email_client", return_value=MagicMock()) as mock_email_client, \
          patch("dpypelines.pipeline.shared.error_handler_module.get_notifier", return_value=MagicMock()) as mock_notifier:
@@ -43,7 +43,7 @@ def test_error_handler_success_with_data():
         mock_notifier.return_value.failure.asser_called_once()
 
 def test_error_handler_success_without_data():
-    """TODO: fill this out"""
+    """Testing if not providing `data` which is optional, the function still works as intended."""
     with patch("dpypelines.pipeline.shared.error_handler_module.logger") as mock_logger, \
          patch("dpypelines.pipeline.shared.error_handler_module.get_email_client", return_value=MagicMock()) as mock_email_client, \
          patch("dpypelines.pipeline.shared.error_handler_module.get_notifier", return_value=MagicMock()) as mock_notifier:
