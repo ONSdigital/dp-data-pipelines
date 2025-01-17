@@ -1,0 +1,43 @@
+from dpytools.logging.logger import DpLogger
+from typing import Optional
+from dpypelines.pipeline.shared.utils import get_email_client
+from dpypelines.pipeline.utils import get_notifier
+
+logger = DpLogger("data-ingress-pipelines")
+
+def error_handler(section: str, error: str, data: Optional[dict], 
+                 submitter_email : str, surpress_logs: bool,
+                 surpress_email: bool, surpress_notification: bool 
+):
+    """
+        This funciton handles the errors.
+        TODO: fill this out!
+    
+    """
+
+    #Log errors if the `surpress_logs is set to false
+    if not surpress_logs:
+        if data:
+            logger.error(f"Error in section {section}: {error}", data=data)
+        else:
+            logger.error(f"Error in section {section}: {error}")
+
+    #Send email notification if `surpress_email` is set to false
+    if not surpress_email:
+        try:
+            email_client = get_email_client()
+            email_subject = f"ETL Pipeline error has occured in Section: {section}"
+            email_message = f"An error has occured in section: {section}: \n\n{error}"
+            if data:
+                email_message +=f"\n\n Additional Data: {data}"
+            email_client.send(submitter_email, email_subject, email_message)
+        except Exception as email_err:
+            logger.error("Failed to send error email notification", email_err) 
+
+    #Send system notifiations if `surpress_notification` is set to false
+    if not surpress_notification:
+        try:
+            notifier = get_notifier()
+            notifier.failure()
+        except Exception as notification_err:
+            logger.error(f"Failed to trigger system notifications", notification_err)
