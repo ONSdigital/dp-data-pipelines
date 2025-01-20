@@ -1,0 +1,11 @@
+{
+    "manifestVersion": 1,
+    "source_id": "esa_2010_compact_sdmx_v2_0",
+    "fileAuthorEmail": "sarah@email.com",
+    "fileAuthorUsername": "Sarah",
+    "isPublishable": false,
+    "licence": "My licence",
+    "licenceUrl": "http://www.example.org/licence-url",
+    "title": "SDMX v2.0",
+    "aliasName": "sdmx_v2_0"
+}

@@ -1,0 +1,21 @@
+{
+    "dataset_id": "dataset_identifier",
+    "title": "title",
+    "description": "description",
+    "qmi": "quality_and_methodology_information",
+    "edition": {
+        "@id": "?",
+        "@type": "dcat:Dataset",
+        "identifier": "edition_identifier",
+        "usage_notes": {
+            "title": "usage_notes_title",
+            "note": "usage_notes_note"
+        },
+        "distribution": [
+            {
+                "title": "distribution_title",
+                "mediaType": "distribution_media_type"
+            }
+        ]
+    }
+}
