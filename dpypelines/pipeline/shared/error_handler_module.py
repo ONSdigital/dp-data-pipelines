@@ -41,7 +41,7 @@ def error_handler(section: str, error: str, data: Optional[dict],
             notifier = get_notifier()
             notifier.failure()
         except Exception as notification_err:
-            logger.error(f"Failed to trigger system notifications", notification_err)
+            logger.error("Failed to trigger system notifications", notification_err)
 
 def send_error_email(section: str, error: str, submitter_email : str, data: Optional[dict]):
     try:
