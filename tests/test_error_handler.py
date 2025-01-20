@@ -102,6 +102,10 @@ def test_send_error_email_failure():
 
     with patch("dpypelines.pipeline.shared.error_handler_module.get_email_client", side_effect=Exception("Email client error")) as mock_email_client, \
          patch("dpypelines.pipeline.shared.error_handler_module.logger") as mock_logger:
+
+        # Simulate failure in the send method
+        mock_email_client.return_value.send.side_effect = Exception("Send failure")
+
         # Call the function with proper arguments
         send_error_email(
             section="2.2",
