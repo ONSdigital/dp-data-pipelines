@@ -166,16 +166,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Allow DE's to skip uploading to S3 while developing code locally.
     # Retrieve SKIP_DATA_UPLOAD value from environment variable
     skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
-    try:
-        skip_data_upload = str_to_bool(skip_data_upload)
-    except Exception as err:
-        logger.error(
-            "Failed to cast SKIP_DATA_UPLOAD to boolean",
-            err,
-            data={"value": skip_data_upload},
-        )
-        de_notifier.failure()
-        raise err
+    skip_data_upload = str_to_bool(skip_data_upload)
 
     # Retrieve Upload Service URL from environment variable
     if not skip_data_upload:
@@ -412,10 +403,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         try:
             # Create UploadClient from upload_url
             upload_client = UploadServiceClient(upload_url)
-            logger.info(
-                "UploadClient created",
-                data={"upload_url": upload_url},
-            )
         except Exception as err:
             logger.error(
                 "Failed to create UploadClient",
