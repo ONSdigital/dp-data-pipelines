@@ -25,21 +25,13 @@ def error_handler(section: str, error: str, data: Optional[dict],
     #Log errors if the `surpress_logs is set to false
     if not surpress_logs:
         if data:
-            logger.error(f"Error in section {section}: {error}", data=data)
+            logger.error(f"Error in section: {section} {error}", data=data)
         else:
-            logger.error(f"Error in section {section}: {error}")
+            logger.error(f"Error in section: {section} {error}")
 
     #Send email notification if `surpress_email` is set to false
     if not surpress_email:
-        try:
-            email_client = get_email_client()
-            email_subject = f"ETL Pipeline error has occured in Section: {section}"
-            email_message = f"An error has occured in section: {section}: \n\n{error}"
-            if data:
-                email_message +=f"\n\n Additional Data: {data}"
-            email_client.send(submitter_email, email_subject, email_message)
-        except Exception as email_err:
-            logger.error("Failed to send error email notification", email_err) 
+        send_error_email(section,error,submitter_email,data)
 
     #Send system notifiations if `surpress_notification` is set to false
     if not surpress_notification:
@@ -48,4 +40,14 @@ def error_handler(section: str, error: str, data: Optional[dict],
             notifier.failure()
         except Exception as notification_err:
             logger.error(f"Failed to trigger system notifications", notification_err)
-            
+
+def send_error_email(section: str, error: str, submitter_email : str, data: Optional[dict]):
+    try:
+        email_client = get_email_client()
+        email_subject = f"ETL Pipeline error has occurred in Section: {section}"
+        email_message = f"An error has occurred in section: {section} \n\n{error}"
+        if data:
+            email_message +=f"\n\n Additional Data: {data}"
+        email_client.send(submitter_email, email_subject, email_message)
+    except Exception as email_err:
+        logger.error("Failed to send error email notification", email_err) 
