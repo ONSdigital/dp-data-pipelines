@@ -1,10 +1,10 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from dpypelines.pipeline.shared.error_handler_module import (
     error_handler,
-    send_error_email
+    send_error_email,
 )
 
 def test_error_handler_fail():
