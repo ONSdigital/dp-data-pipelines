@@ -103,7 +103,7 @@ def test_send_error_email_failure():
     with patch("dpypelines.pipeline.shared.error_handler_module.get_email_client", side_effect=Exception("Email client error")) as mock_email_client, \
          patch("dpypelines.pipeline.shared.error_handler_module.logger") as mock_logger:
 
-        # Simulate failure in the send method
+        # Simulate failure in the send method (also git was complaining that the variable wasn't used)
         mock_email_client.return_value.send.side_effect = Exception("Send failure")
 
         # Call the function with proper arguments
@@ -114,8 +114,15 @@ def test_send_error_email_failure():
             data={"info": "test"}
         )
 
-        # Validate that logger.error is called when email client fails
-        mock_logger.error.assert_called_once_with(
-            "Failed to send error email notification",
-            Exception("Email client error")
-        )
+        # Validate that logger.error was called
+        mock_logger.error.assert_called()
+
+        # Extract the actual call arguments
+        log_call_args = mock_logger.error.call_args
+
+        # Validate the first argument (message)
+        assert log_call_args[0][0] == "Failed to send error email notification"
+
+        # Validate the second argument (exception)
+        assert isinstance(log_call_args[0][1], Exception)
+        assert str(log_call_args[0][1]) == "Email client error"
