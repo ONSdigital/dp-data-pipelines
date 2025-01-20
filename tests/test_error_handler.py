@@ -7,6 +7,7 @@ from dpypelines.pipeline.shared.error_handler_module import (
     send_error_email,
 )
 
+
 def test_error_handler_fail():
     """Testing that `error handler` raises a `TypeError` when argument/arguments are missing"""
 
