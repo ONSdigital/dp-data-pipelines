@@ -1,8 +1,11 @@
-import pytest
-
 from unittest.mock import patch, MagicMock
 
-from dpypelines.pipeline.shared.error_handler_module import error_handler, send_error_email
+import pytest
+
+from dpypelines.pipeline.shared.error_handler_module import (
+    error_handler,
+    send_error_email
+)
 
 def test_error_handler_fail():
     """Testing that `error handler` raises a `TypeError` when argument/arguments are missing"""
