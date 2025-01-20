@@ -27,3 +27,9 @@ symlink:
 	poetry install	
 
 
+unlink:
+	# Switch to production version
+	sed -i '' 's|{path = "../dp-python-tools",  develop = true}|{ git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "v0.5.0" }|' pyproject.toml
+	poetry lock
+	poetry install	
+

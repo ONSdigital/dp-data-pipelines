@@ -5,4 +5,4 @@ behave_debug.py
 features/fixtures/data/
 data
 .env
-.venv
+.venv*
