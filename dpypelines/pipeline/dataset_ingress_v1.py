@@ -80,20 +80,11 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         raise err
 
     # Retrieve submitter email from manifest_dict
-    try:
-        submitter_email = get_submitter_email(manifest_dict)
-        logger.info(
-            "Retrieved submitter email",
-            data={"submitter_email": submitter_email},
-        )
-    except Exception as err:
-        logger.error(
-            "Failed to retrieve submitter email",
-            err,
-            data={"manifest_dict": manifest_dict},
-        )
-        de_notifier.failure()
-        raise err
+    submitter_email = get_submitter_email(manifest_dict)
+    logger.info(
+        "Retrieved submitter email",
+        data={"submitter_email": submitter_email},
+    )
 
     # Create email client from env var
     try:
@@ -159,7 +150,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                         logger.error("metadata.json is not parseable as JSON", err)
                         de_notifier.failure()
                         raise err
-            logger.info("File exists and is not empty", data={"file": file})
             email_content = successful_validation_email(file)
             email_client.send(
                 submitter_email, email_content.subject, email_content.message
@@ -186,10 +176,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         )
         de_notifier.failure()
         raise err
-    logger.info(
-        "skip_data_upload set from SKIP_DATA_UPLOAD env var",
-        data={"value": skip_data_upload},
-    )
 
     # Retrieve Upload Service URL from environment variable
     if not skip_data_upload:
@@ -319,20 +305,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Get the transform inputs from the pipeline_config and run the specified sanity checker for it
     input_file_paths = []
-    try:
-        transform_inputs = get_transform_details(pipeline_config, "transform_inputs")
-        logger.info(
-            "Retrieved transform inputs",
-            data={"transform_inputs": transform_inputs},
-        )
-    except Exception as err:
-        logger.error(
-            "Failed to retrieve transform inputs from pipeline config",
-            err,
-            data={"pipeline_config": pipeline_config},
-        )
-        de_notifier.failure()
-        raise err
+    transform_inputs = get_transform_details(pipeline_config, "transform_inputs")
 
     for pattern, sanity_checker in transform_inputs.items():
         try:
@@ -385,39 +358,21 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         input_file_paths.append(input_file_path)
 
     # Get the transform function from pipeline config
-    try:
-        transform_function = get_transform_details(pipeline_config, "transform")
-        logger.info(
-            "Retrieved transform function from piepline config",
-            data={
-                "transform_function": transform_function,
-                "input_file_paths": input_file_paths,
-            },
-        )
-    except Exception as err:
-        logger.error(
-            "Failed to retrieve transform function from pipeline config",
-            err,
-            data={"pipeline_config": pipeline_config},
-        )
-        de_notifier.failure()
-        raise err
+    transform_function = get_transform_details(pipeline_config, "transform")
+    logger.info(
+        "Retrieved transform function from piepline config",
+        data={
+            "transform_function": transform_function,
+            "input_file_paths": input_file_paths,
+        },
+    )
 
     # Get transform keyword arguments (kwargs) from pipeline config
-    try:
-        transform_kwargs = get_transform_details(pipeline_config, "transform_kwargs")
-        logger.info(
-            "Retrieved transform kwargs  from pipeline cofig",
-            data={"transform_kwargs": transform_kwargs},
-        )
-    except Exception as err:
-        logger.error(
-            "Failed to retrieve transform kwargs",
-            err,
-            data={"pipeline_config": pipeline_config},
-        )
-        de_notifier.failure()
-        raise err
+    transform_kwargs = get_transform_details(pipeline_config, "transform_kwargs")
+    logger.info(
+        "Retrieved transform kwargs  from pipeline cofig",
+        data={"transform_kwargs": transform_kwargs},
+    )
 
     try:
         csv_path, metadata_path = transform_function(
@@ -504,10 +459,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         if supp_dist_patterns:
             # Get all files in local store
             all_files = local_store.get_file_names()
-            logger.info(
-                "Retrieved all files in local store",
-                data={"files": all_files},
-            )
+
             for supp_dist_pattern in supp_dist_patterns:
                 # Get supplementary distribution filename matching pattern from local store
                 supp_dist_matching_files = [
