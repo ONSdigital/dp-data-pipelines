@@ -70,27 +70,17 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Retrieve manifest.json as dict from local store
     try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
-        logger.info(
-            "Retrieved manifest.json",
-            data={"manifest_dict": manifest_dict},
-        )
     except Exception as err:
         logger.error("Failed to retrieve manifest.json", err)
         de_notifier.failure()
         raise err
 
-    # Retrieve submitter email from manifest_dict
-    submitter_email = get_submitter_email(manifest_dict)
-    logger.info(
-        "Retrieved submitter email",
-        data={"submitter_email": submitter_email},
-    )
-
-    # Create email client from env var
+    # Retrieve submitter email from manifest_dict and create email client from env var
     try:
+        submitter_email = get_submitter_email(manifest_dict)
         email_client = get_email_client()
         logger.info(
-            "Email client created",
+            "Submitter email received, email client created",
             data={"email_client": email_client},
         )
     except Exception as err:
@@ -100,68 +90,25 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Validate existence of each file in the directory and that it is not empty
     for file in files_in_directory:
-        try:
-            if not local_store.has_lone_file_matching(file):
-                try:
-                    # Catch a trivial raise as we need the stack trace of the error for the logger, so it needs to be a raised error.
-                    raise FileNotFoundError(f"{file} does not exist")
-                except FileNotFoundError as err:
-                    email_content = required_file_not_found_email(file)
-                    email_client.send(
-                        submitter_email, email_content.subject, email_content.message
-                    )
-                    logger.error("Input file not found", err, data={"file": file})
-                    de_notifier.failure()
-                    raise err
-
-            filepath = os.path.join(files_dir, file)
-            if file_size_0(filepath):
-                try:
-                    raise ValueError(f"'{file}' is empty")
-                except ValueError as err:
-                    email_content = failed_validation_email(
-                        file, f"File '{file}' is empty"
-                    )
-                    email_client.send(
-                        submitter_email, email_content.subject, email_content.message
-                    )
-                    logger.error("Input file is empty", err, data={"file": file})
-                    de_notifier.failure()
-                    raise err
-
-            # Validate that metadata.json is parseable as JSON
-            if "metadata.json" in filepath:
-                if metadata_json_is_parseable(filepath):
-                    logger.info(
-                        "metadata.json is parseable as JSON", data={"file": file}
-                    )
-                else:
-                    try:
-                        raise ValueError("metadata.json is not parseable")
-                    except ValueError as err:
-                        email_content = failed_validation_email(
-                            file, "metadata.json is not parseable as JSON"
-                        )
-                        email_client.send(
-                            submitter_email,
-                            email_content.subject,
-                            email_content.message,
-                        )
-                        logger.error("metadata.json is not parseable as JSON", err)
-                        de_notifier.failure()
-                        raise err
-            email_content = successful_validation_email(file)
-            email_client.send(
-                submitter_email, email_content.subject, email_content.message
-            )
-        except Exception as err:
-            logger.error(
-                "Failed to validate input file",
-                err,
-                data={"local_store_dir": files_dir, "file": file},
-            )
+        if not local_store.has_lone_file_matching(file):
+            err = FileNotFoundError(f"{file} does not exist")
+            logger.error("Input file not found", err, data={"file": file})
             de_notifier.failure()
             raise err
+
+        filepath = os.path.join(files_dir, file)
+
+        # Make sure file is not empty
+        file_size_0(filepath, give_error=True)
+
+        # Validate that metadata.json is parseable as JSON
+        if "metadata.json" in filepath:
+            metadata_json_is_parseable(filepath, give_error=True)
+
+        email_content = successful_validation_email(file)
+        email_client.send(
+            submitter_email, email_content.subject, email_content.message
+        )
 
     # Allow DE's to skip uploading to S3 while developing code locally.
     # Retrieve SKIP_DATA_UPLOAD value from environment variable
@@ -185,47 +132,27 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             raise err
 
     # Extract the patterns for required files from the pipeline configuration
-    try:
-        required_file_patterns = get_matching_pattern(pipeline_config, "required_files")
-        logger.info(
-            "Retrieved required file patterns from pipeline config",
-            data={
-                "required_file_patterns": required_file_patterns,
-                "pipeline_config": pipeline_config,
-            },
-        )
-    except Exception as err:
-        logger.error(
-            "Failed to retrieve required file patterns from pipeline config",
-            err,
-            data={"pipeline_config": pipeline_config},
-        )
-        de_notifier.failure()
-        raise err
+    required_file_patterns = get_matching_pattern(pipeline_config, "required_files")
+    logger.info(
+        "Retrieved required file patterns from pipeline config",
+        data={
+            "required_file_patterns": required_file_patterns,
+            "pipeline_config": pipeline_config,
+        },
+    )
 
     # Check that all required files are present in the local store
     for required_file in required_file_patterns:
-        try:
-            if not local_store.has_lone_file_matching(required_file):
-                try:
-                    raise FileNotFoundError(
-                        f"No file found matching pattern {required_file}"
-                    )
-                except FileNotFoundError as err:
-                    email_content = required_file_not_found_email(required_file)
-                    email_client.send(
-                        submitter_email, email_content.subject, email_content.message
-                    )
-                    logger.error(
-                        "Required file not found",
-                        err,
-                        data={"required_file": required_file},
-                    )
-                    de_notifier.failure()
-                    raise err
-        except Exception as err:
+        if not local_store.has_lone_file_matching(required_file):
+            email_content = required_file_not_found_email(required_file)
+            email_client.send(
+                submitter_email, email_content.subject, email_content.message
+            )
+            err = FileNotFoundError(
+                    f"No file found matching pattern {required_file}"
+                )
             logger.error(
-                "Error occurred when looking for required file",
+                "Required file not found",
                 err,
                 data={
                     "required_file": required_file,
@@ -238,51 +165,28 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             raise err
 
     # Extract the patterns for supplementary distributions from the pipeline configuration
-    try:
-        supp_dist_patterns = get_matching_pattern(
-            pipeline_config, "supplementary_distributions"
-        )
-        logger.info(
-            "Retrieved supplementary distribution patterns from pipeline config",
-            data={"supplementary_distribution_patterns": supp_dist_patterns},
-        )
-    except Exception as err:
-        files_in_directory = local_store.get_file_names()
-        logger.error(
-            "Failed to retrieve supplementary distribution patterns",
-            err,
-            data={"pipeline_config": pipeline_config},
-        )
-        de_notifier.failure()
-        raise err
+    supp_dist_patterns = get_matching_pattern(
+        pipeline_config, "supplementary_distributions"
+    )
+    logger.info(
+        "Retrieved supplementary distribution patterns from pipeline config",
+        data={"supplementary_distribution_patterns": supp_dist_patterns},
+    )
 
     # Check for the existence of each supplementary distribution
     for supp_dist_pattern in supp_dist_patterns:
-        try:
-            if not local_store.has_lone_file_matching(supp_dist_pattern):
-                try:
-                    raise FileNotFoundError(
-                        f"No file found matching pattern {supp_dist_pattern}"
-                    )
-                except FileNotFoundError as err:
-                    email_content = supplementary_distribution_not_found_email(
-                        supp_dist_pattern
-                    )
-                    email_client.send(
-                        submitter_email, email_content.subject, email_content.message
-                    )
-                    logger.error(
-                        "Supplementary distribution not found.",
-                        err,
-                        data={
-                            "supplementary_distribution": supp_dist_pattern,
-                        },
-                    )
-                    de_notifier.failure()
-                    raise err
-        except Exception as err:
+        if not local_store.has_lone_file_matching(supp_dist_pattern):
+            err = FileNotFoundError(
+                    f"No file found matching pattern {supp_dist_pattern}"
+                )
+            email_content = supplementary_distribution_not_found_email(
+                supp_dist_pattern
+            )
+            email_client.send(
+                submitter_email, email_content.subject, email_content.message
+            )
             logger.error(
-                "Error occurred when looking for supplementary distribution",
+                "Supplementary distribution not found.",
                 err,
                 data={
                     "supplementary_distribution": supp_dist_pattern,
@@ -350,19 +254,15 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Get the transform function from pipeline config
     transform_function = get_transform_details(pipeline_config, "transform")
-    logger.info(
-        "Retrieved transform function from piepline config",
-        data={
-            "transform_function": transform_function,
-            "input_file_paths": input_file_paths,
-        },
-    )
-
     # Get transform keyword arguments (kwargs) from pipeline config
     transform_kwargs = get_transform_details(pipeline_config, "transform_kwargs")
     logger.info(
-        "Retrieved transform kwargs  from pipeline cofig",
-        data={"transform_kwargs": transform_kwargs},
+        "Retrieved transform function and transform_kwargs from pipeline config",
+        data={
+            "transform_function": transform_function,
+            "transform_kwargs": transform_kwargs,
+            "input_file_paths": input_file_paths,
+        },
     )
 
     try:
