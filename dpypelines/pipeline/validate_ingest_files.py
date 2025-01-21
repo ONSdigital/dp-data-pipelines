@@ -1,8 +1,8 @@
 import json
 import os
+from typing import Optional
 
 from dpytools.logging.logger import DpLogger
-from typing import Optional
 
 logger = DpLogger("data-ingress-pipelines")
 

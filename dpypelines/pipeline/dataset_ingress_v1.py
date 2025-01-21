@@ -110,6 +110,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             submitter_email, email_content.subject, email_content.message
         )
 
+    
     # Allow DE's to skip uploading to S3 while developing code locally.
     # Retrieve SKIP_DATA_UPLOAD value from environment variable
     skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")

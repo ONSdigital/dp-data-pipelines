@@ -15,7 +15,7 @@ def test_import_file_size_not_0():
     """
     test_file = Path(fixtures_files_dir / "test_validate_csv_data.csv")
 
-    assert file_size_0(test_file) is False
+    assert file_size_0(test_file, False) is False
 
 
 def test_import_file_size_not_0_error():
@@ -24,7 +24,7 @@ def test_import_file_size_not_0_error():
     """
     test_file = Path(fixtures_files_dir / "test_validate_file_size_0.txt")
 
-    assert file_size_0(test_file) is True
+    assert file_size_0(test_file, False) is True
 
 
 def test_metadata_json_is_parseable():
@@ -33,7 +33,7 @@ def test_metadata_json_is_parseable():
     """
     test_file = Path(fixtures_files_dir / "test_metadata.json")
 
-    assert metadata_json_is_parseable(test_file) is True
+    assert metadata_json_is_parseable(test_file, False) is True
 
 
 def test_metadata_json_is_parseable_error():
@@ -42,4 +42,4 @@ def test_metadata_json_is_parseable_error():
     """
     test_file = Path(fixtures_files_dir / "test_validate_csv_data.csv")
 
-    assert metadata_json_is_parseable(test_file) is False
+    assert metadata_json_is_parseable(test_file, False) is False
