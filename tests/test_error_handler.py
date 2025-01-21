@@ -39,9 +39,9 @@ class TestErrorHandler:
             error = "This is a Test Error",
             data={"TestKey":"Test value"},
             submitter_email="test@gmail.com",
-            surpress_email=False,
-            surpress_logs=False,
-            surpress_notification=False 
+            surpress_email=True,
+            surpress_logs=True,
+            surpress_notification=True 
         )
 
         #Test logger usage
@@ -68,9 +68,9 @@ class TestErrorHandler:
             error = "This is a Test Error",
             data=None,
             submitter_email="test@gmail.com",
-            surpress_email=False,
-            surpress_logs=False,
-            surpress_notification=False 
+            surpress_email=True,
+            surpress_logs=True,
+            surpress_notification=True 
         )
 
         #Test logger usage
