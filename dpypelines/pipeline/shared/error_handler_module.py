@@ -8,8 +8,8 @@ from dpypelines.pipeline.utils import get_notifier
 logger = DpLogger("data-ingress-pipelines")
 
 def error_handler(section: str, error: str, data: Optional[dict], 
-                 submitter_email : str, surpress_logs: bool = False,
-                 surpress_email: bool= False, surpress_notification: bool= False 
+                 submitter_email : str, surpress_logs: bool = True,
+                 surpress_email: bool= True, surpress_notification: bool= True 
 ):
     """
         This funciton handles the errors.
@@ -25,18 +25,18 @@ def error_handler(section: str, error: str, data: Optional[dict],
     """
 
     #Log errors if the `surpress_logs is set to false
-    if not surpress_logs:
+    if surpress_logs:
         if data:
             logger.error(f"Error in section: {section} {error}", data=data)
         else:
             logger.error(f"Error in section: {section} {error}")
 
     #Send email notification if `surpress_email` is set to false
-    if not surpress_email:
+    if surpress_email:
         send_error_email(section,error,submitter_email,data)
 
     #Send system notifiations if `surpress_notification` is set to false
-    if not surpress_notification:
+    if surpress_notification:
         try:
             notifier = get_notifier()
             notifier.failure()

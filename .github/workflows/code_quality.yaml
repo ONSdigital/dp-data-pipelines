@@ -21,7 +21,7 @@ jobs:
         run: poetry install
 
       - name: Check black has been ran (make fmt)
-        run: poetry run black dpypelines tests --diff
+        run: poetry run black dpypelines tests --check
 
       - name: Check isort has been ran (make fmt)
         run: poetry run isort dpypelines tests --diff --check-only
