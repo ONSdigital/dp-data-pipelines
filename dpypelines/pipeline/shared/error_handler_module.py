@@ -8,8 +8,8 @@ from dpypelines.pipeline.utils import get_notifier
 logger = DpLogger("data-ingress-pipelines")
 
 def error_handler(section: str, error: str, data: Optional[dict], 
-                 submitter_email : str, surpress_logs: bool,
-                 surpress_email: bool, surpress_notification: bool 
+                 submitter_email : str, surpress_logs: bool = False,
+                 surpress_email: bool= False, surpress_notification: bool= False 
 ):
     """
         This funciton handles the errors.
