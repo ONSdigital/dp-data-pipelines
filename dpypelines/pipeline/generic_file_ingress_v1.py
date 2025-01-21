@@ -118,7 +118,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                     raise err
 
             filepath = os.path.join(files_dir, file)
-            if file_size_0(filepath):
+            if file_size_0(filepath, False):
                 try:
                     raise ValueError(f"'{file}' is empty")
                 except ValueError as err:
@@ -134,7 +134,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
 
             # Validate that metadata.json is parseable as JSON
             if "metadata.json" in filepath:
-                if metadata_json_is_parseable(filepath):
+                if metadata_json_is_parseable(filepath, False):
                     logger.info(
                         "metadata.json is parseable as JSON", data={"file": file}
                     )

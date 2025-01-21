@@ -9,7 +9,6 @@ from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.shared.email_templates import (
     failed_file_upload_email,
-    failed_validation_email,
     required_file_not_found_email,
     submission_processed_email,
     successful_file_upload_email,
@@ -110,7 +109,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             submitter_email, email_content.subject, email_content.message
         )
 
-    
     # Allow DE's to skip uploading to S3 while developing code locally.
     # Retrieve SKIP_DATA_UPLOAD value from environment variable
     skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
