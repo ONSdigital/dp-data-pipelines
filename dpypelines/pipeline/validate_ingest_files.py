@@ -2,28 +2,21 @@ import json
 import os
 from typing import Optional
 
-from dpytools.logging.logger import DpLogger
-
-logger = DpLogger("data-ingress-pipelines")
-
-
-def file_size_0(filepath, give_error: Optional[bool]) -> bool:
+def file_size_0(filepath, give_error: bool=False) -> bool:
     """
     Checks the given file to ensure it is not empty. If it is, return True.
-    Optional variable allows an error to be raised instead.
+    give_error argument allows an error to be raised instead.
     """
     if give_error and os.stat(filepath).st_size == 0:
-        err = ValueError(f"'{filepath}' is empty")
-        logger.error("Input file is empty", err, data={"file": filepath})
-        raise err
+        raise ValueError(f"'{filepath}' is empty")
     else:
         return os.stat(filepath).st_size == 0
 
 
-def metadata_json_is_parseable(filepath, give_error: Optional[bool]) -> bool:
+def metadata_json_is_parseable(filepath, give_error: bool=False) -> bool:
     """
     Check that the given file can be loaded as json. If not, return False.
-    Optional variable allows an error to be raised instead.
+    give_error argument allows an error to be raised instead.
     """
     try:
         with open(filepath, "r") as is_files_dir_parseable:
