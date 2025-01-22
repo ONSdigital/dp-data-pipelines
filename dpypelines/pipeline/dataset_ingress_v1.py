@@ -187,7 +187,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             raise err
 
     # Running the data transformation module
-    process_transform(local_store, pipeline_config, files_in_directory, de_notifier)
+    csv_path, metadata_path = process_transform(local_store, pipeline_config, files_in_directory, de_notifier)
 
     # TODO - validate the metadata once we have a schema for it.
 
