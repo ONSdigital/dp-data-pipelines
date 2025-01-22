@@ -13,8 +13,13 @@ def get_transform_details(config: Dict, transform_field: str) -> Any:
             transform_field in config.keys()
         ), f"""'{transform_field}' not found in config dictionary:
         {json.dumps(config, indent=2, default=lambda x: str(x))}"""
-        transform_field_to_get = config[transform_field]
-        return transform_field_to_get
+        try:
+            transform_field_to_get = config[transform_field]
+            return transform_field_to_get
+        except Exception:
+            raise Exception(
+                f"Failed to retrieve {transform_field} from pipeline config."
+            )
     else:
         raise NotImplementedError(
             f"Config version {config['config_version']} not recognised"
