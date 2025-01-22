@@ -133,23 +133,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                     raise err
 
             # Validate that metadata.json is parseable as JSON
-            if "metadata.json" in filepath:
-                if metadata_json_is_parseable(filepath, False):
-                else:
-                    try:
-                        raise ValueError("metadata.json is not parseable")
-                    except ValueError as err:
-                        email_content = failed_validation_email(
-                            file, "metadata.json is not parseable as JSON"
-                        )
-                        email_client.send(
-                            submitter_email,
-                            email_content.subject,
-                            email_content.message,
-                        )
-                        logger.error("metadata.json is not parseable as JSON", err)
-                        de_notifier.failure()
-                        raise err
+            metadata_json_is_parseable(filepath, False)
             logger.info("File exists and is not empty", data={"file": file})
             email_content = successful_validation_email(file)
             email_client.send(
