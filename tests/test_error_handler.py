@@ -1,5 +1,7 @@
 from unittest.mock import patch
+
 import pytest
+
 from dpypelines.pipeline.shared.error_handler_module import (
     error_handler,
     send_error_email,
@@ -27,9 +29,9 @@ class TestErrorHandler:
             error="This is a Test Error",
             data={"TestKey": "Test value"},
             submitter_email="test@gmail.com",
-            surpress_email=True,
-            surpress_logs=True,
-            surpress_notification=True,
+            enable_email=True,
+            enable_logs=True,
+            enable_notification=True,
         )
 
         # Test logger usage
@@ -58,9 +60,9 @@ class TestErrorHandler:
             error="This is a Test Error",
             data=None,
             submitter_email="test@gmail.com",
-            surpress_email=True,
-            surpress_logs=True,
-            surpress_notification=True,
+            enable_email=True,
+            enable_logs=True,
+            enable_notification=True,
         )
 
         # Test logger usage
