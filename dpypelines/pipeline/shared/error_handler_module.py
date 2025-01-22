@@ -24,9 +24,9 @@ def error_handler(
     section (str): The section of the ETL pipeline where the error occurred.
     error (str): The error message to log and process.
     data (dict, optional): Additional data to include in the logs.
-    surpress_logs (bool): If True, logging is surpressed.
-    surpress_email (bool): If True, email notifications are surpressed.
-    surpress_notification (bool): If True, system notifications are surpressed.
+    enable_logs (bool): If True, logging is surpressed.
+    enable_email (bool): If True, email notifications are surpressed.
+    enable_notification (bool): If True, system notifications are surpressed.
 
     """
 
