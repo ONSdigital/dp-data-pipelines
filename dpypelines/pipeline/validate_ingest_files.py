@@ -1,8 +1,8 @@
 import json
 import os
-from typing import Optional
 
-def file_size_0(filepath, give_error: bool=False) -> bool:
+
+def file_size_0(filepath, give_error: bool = False) -> bool:
     """
     Checks the given file to ensure it is not empty. If it is, return True.
     give_error argument allows an error to be raised instead.
@@ -13,7 +13,7 @@ def file_size_0(filepath, give_error: bool=False) -> bool:
         return os.stat(filepath).st_size == 0
 
 
-def metadata_json_is_parseable(filepath, give_error: bool=False) -> bool:
+def metadata_json_is_parseable(filepath, give_error: bool = False) -> bool:
     """
     Check that the given file can be loaded as json. If not, return False.
     give_error argument allows an error to be raised instead.

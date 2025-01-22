@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import pytest
 
 from dpypelines.pipeline.validate_ingest_files import (
@@ -36,10 +37,7 @@ def test_import_file_size_not_0_give_error():
     with pytest.raises(ValueError) as e:
         file_size_0(test_file, True)
 
-    assert (
-        f"'{test_file}' is empty"
-        == str(e.value)
-    )
+    assert f"'{test_file}' is empty" == str(e.value)
 
 
 def test_metadata_json_is_parseable():
@@ -69,7 +67,4 @@ def test_metadata_json_is_parseable_error():
     with pytest.raises(Exception) as e:
         metadata_json_is_parseable(test_file, True)
 
-    assert (
-        "metadata.json is not parseable"
-        == str(e.value)
-    )
+    assert "metadata.json is not parseable" == str(e.value)

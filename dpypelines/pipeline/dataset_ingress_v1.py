@@ -100,9 +100,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             metadata_json_is_parseable(filepath, give_error=True)
 
         email_content = successful_validation_email(file)
-        email_client.send(
-            submitter_email, email_content.subject, email_content.message
-        )
+        email_client.send(submitter_email, email_content.subject, email_content.message)
 
     # Allow DE's to skip uploading to S3 while developing code locally.
     # Retrieve SKIP_DATA_UPLOAD value from environment variable
@@ -138,9 +136,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             email_client.send(
                 submitter_email, email_content.subject, email_content.message
             )
-            err = FileNotFoundError(
-                    f"No file found matching pattern {required_file}"
-                )
+            err = FileNotFoundError(f"No file found matching pattern {required_file}")
             logger.error(
                 "Required file not found",
                 err,
@@ -167,8 +163,8 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     for supp_dist_pattern in supp_dist_patterns:
         if not local_store.has_lone_file_matching(supp_dist_pattern):
             err = FileNotFoundError(
-                    f"No file found matching pattern {supp_dist_pattern}"
-                )
+                f"No file found matching pattern {supp_dist_pattern}"
+            )
             email_content = supplementary_distribution_not_found_email(
                 supp_dist_pattern
             )
