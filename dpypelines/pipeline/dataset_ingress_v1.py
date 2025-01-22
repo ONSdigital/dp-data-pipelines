@@ -16,7 +16,7 @@ from dpypelines.pipeline.shared.email_templates import (
     supplementary_distribution_not_found_email,
 )
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
-from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
+from dpypelines.pipeline.shared.transforms.process_tranform_module import process_transform
 from dpypelines.pipeline.shared.utils import (
     get_email_client,
     get_mimetype,
@@ -184,101 +184,8 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             de_notifier.failure()
             raise err
 
-    # Get the transform inputs from the pipeline_config and run the specified sanity checker for it
-    input_file_paths = []
-    transform_inputs = get_transform_details(pipeline_config, "transform_inputs")
-
-    for pattern, sanity_checker in transform_inputs.items():
-        try:
-            input_file_path: Path = local_store.get_pathlike_of_file_matching(pattern)
-            logger.info(
-                "Retrieved input file that matches pattern",
-                data={
-                    "input_file_path": input_file_path,
-                    "pattern": pattern,
-                    "files_in_directory": files_in_directory,
-                },
-            )
-        except Exception as err:
-            logger.error(
-                "Failed to retrieve input file matching pattern",
-                err,
-                data={
-                    "pattern": pattern,
-                    "files_in_directory": files_in_directory,
-                    "pipeline_config": pipeline_config,
-                },
-            )
-
-            de_notifier.failure()
-            raise err
-
-        try:
-            sanity_checker(input_file_path)
-            logger.info(
-                "Sanity check run on input file path.",
-                data={
-                    "sanity_checker": sanity_checker,
-                    "input_file_path": input_file_path,
-                },
-            )
-        except Exception as err:
-            logger.error(
-                "Error occurred when running sanity checker on input file path.",
-                err,
-                data={
-                    "input_file_path": input_file_path,
-                    "files_in_directory": files_in_directory,
-                    "pipeline_config": pipeline_config,
-                },
-            )
-
-            de_notifier.failure()
-            raise err
-
-        input_file_paths.append(input_file_path)
-
-    # Get the transform function from pipeline config
-    transform_function = get_transform_details(pipeline_config, "transform")
-    # Get transform keyword arguments (kwargs) from pipeline config
-    transform_kwargs = get_transform_details(pipeline_config, "transform_kwargs")
-    logger.info(
-        "Retrieved transform function and transform_kwargs from pipeline config",
-        data={
-            "transform_function": transform_function,
-            "transform_kwargs": transform_kwargs,
-            "input_file_paths": input_file_paths,
-        },
-    )
-
-    try:
-        csv_path, metadata_path = transform_function(
-            *input_file_paths, **transform_kwargs
-        )
-        logger.info(
-            "Transform function executed successfully",
-            data={
-                "transform_function": transform_function,
-                "input_file_paths": input_file_paths,
-                "transform_kwargs": transform_kwargs,
-                "csv_path": csv_path,
-                "metadata_path": metadata_path,
-            },
-        )
-
-    except Exception as err:
-        logger.error(
-            "Transform function execution failed",
-            err,
-            data={
-                "transform_function": transform_function,
-                "input_file_paths": input_file_paths,
-                "transform_kwargs": transform_kwargs,
-                "pipeline_config": pipeline_config,
-            },
-        )
-        de_notifier.failure()
-        raise err
+    # Running the data transformation module
+    process_transform(local_store, pipeline_config, files_in_directory, de_notifier)
 
     # TODO - validate the metadata once we have a schema for it.
 
