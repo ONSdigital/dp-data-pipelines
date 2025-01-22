@@ -77,7 +77,7 @@ class TestErrorHandler:
             "An error has occurred in section: 1.2.1 \n\nThis is a Test Error",
         )
 
-        # Test notifier usage
+        # Test failure method to valide error notification was triggered once
         mock_notifier.return_value.failure.assert_called_once()
 
     def test_send_error_email_success(
