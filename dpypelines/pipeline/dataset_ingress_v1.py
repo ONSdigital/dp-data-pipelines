@@ -15,6 +15,9 @@ from dpypelines.pipeline.shared.email_templates import (
     supplementary_distribution_not_found_email,
 )
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
+from dpypelines.pipeline.shared.transforms.process_tranform_module import (
+    process_transform,
+)
 from dpypelines.pipeline.shared.utils import (
     get_email_client,
     get_mimetype,
@@ -181,6 +184,11 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             )
             de_notifier.failure()
             raise err
+
+    # Running the data transformation module
+    csv_path, metadata_path = process_transform(
+        local_store, pipeline_config, files_in_directory, de_notifier
+    )
 
     # TODO - validate the metadata once we have a schema for it.
 
