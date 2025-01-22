@@ -1,5 +1,4 @@
 import logging
-
 from pathlib import Path
 
 from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
