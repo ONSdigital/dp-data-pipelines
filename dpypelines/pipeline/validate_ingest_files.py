@@ -28,9 +28,6 @@ def metadata_json_is_parseable(filepath, give_error: Optional[bool]) -> bool:
     try:
         with open(filepath, "r") as is_files_dir_parseable:
             json.load(is_files_dir_parseable)
-            logger.info(
-                "metadata.json is parseable as JSON", data={"file": filepath}
-                )
     except Exception:
         if give_error:
             raise Exception("metadata.json is not parseable")

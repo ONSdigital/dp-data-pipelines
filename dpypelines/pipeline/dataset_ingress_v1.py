@@ -89,11 +89,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Validate existence of each file in the directory and that it is not empty
     for file in files_in_directory:
-        if not local_store.has_lone_file_matching(file):
-            err = FileNotFoundError(f"{file} does not exist")
-            logger.error("Input file not found", err, data={"file": file})
-            de_notifier.failure()
-            raise err
 
         filepath = os.path.join(files_dir, file)
 
@@ -121,10 +116,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             assert (
                 upload_url is not None
             ), "UPLOAD_SERVICE_URL environment variable not set"
-            logger.info(
-                "Retrieved Upload Service URL",
-                data={"upload_url": upload_url},
-            )
         except Exception as err:
             logger.error("Failed to retrieve Upload Service URL", err)
             de_notifier.failure()

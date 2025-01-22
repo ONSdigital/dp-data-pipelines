@@ -135,9 +135,6 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
             # Validate that metadata.json is parseable as JSON
             if "metadata.json" in filepath:
                 if metadata_json_is_parseable(filepath, False):
-                    logger.info(
-                        "metadata.json is parseable as JSON", data={"file": file}
-                    )
                 else:
                     try:
                         raise ValueError("metadata.json is not parseable")
