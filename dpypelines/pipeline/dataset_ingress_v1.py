@@ -185,7 +185,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     csv_path = [
         filename for filename in files_in_directory if filename.endswith(".csv")
     ]
-    csv_path= csv_path[0]
+    csv_path = csv_path[0]
     # TODO - validate the metadata once we have a schema for it.
 
     # TODO - validate the csv once we know what we're validating
