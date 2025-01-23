@@ -1,6 +1,6 @@
-from distutils.command.config import config
 import os
 import re
+from distutils.command.config import config
 
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
@@ -103,9 +103,10 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Allow DE's to skip uploading to S3 while developing code locally.
     # Retrieve SKIP_DATA_UPLOAD value from environment variable
-    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
+    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "True")
     skip_data_upload = str_to_bool(skip_data_upload)
 
+    skip_data_upload = True
     # Retrieve Upload Service URL from environment variable
     if not skip_data_upload:
         try:
@@ -160,6 +161,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Check for the existence of each supplementary distribution
     for supp_dist_pattern in supp_dist_patterns:
+        print(f"SUPP_PATTERN {supp_dist_pattern}")
         if not local_store.has_lone_file_matching(supp_dist_pattern):
             err = FileNotFoundError(
                 f"No file found matching pattern {supp_dist_pattern}"
@@ -183,10 +185,8 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             de_notifier.failure()
             raise err
 
-
     csv_path = pipeline_config["required_files"][0]["matches"]
     csv_path = local_store.get_pathlike_of_file_matching(csv_path)
-    print(f"CSVPATH: {csv_path}")
     # TODO - validate the metadata once we have a schema for it.
 
     # TODO - validate the csv once we know what we're validating
