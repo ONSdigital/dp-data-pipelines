@@ -23,10 +23,7 @@ from dpypelines.pipeline.shared.utils import (
     get_submitter_email,
 )
 from dpypelines.pipeline.utils import get_notifier
-from dpypelines.pipeline.validate_ingest_files import (
-    file_size_0,
-    metadata_json_is_parseable,
-)
+from dpypelines.pipeline.validate_pipeline import validate_pipeline
 
 logger = DpLogger("data-ingress-pipelines")
 
@@ -42,6 +39,10 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     Raises:
         Exception: If any unexpected error occurs.
     """
+    # Validate the pipeline
+    files_dir = Path(files_dir)
+    validate_pipeline(files_dir, pipeline_config)
+
     # Create notifier from webhook env var
     de_notifier = get_notifier()
 
@@ -66,123 +67,123 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         de_notifier.failure()
         raise err
 
-    # Retrieve manifest.json as dict from local store
-    try:
-        manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
-    except Exception as err:
-        logger.error("Failed to retrieve manifest.json", err)
-        de_notifier.failure()
-        raise err
+    # # Retrieve manifest.json as dict from local store
+    # try:
+    #     manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
+    # except Exception as err:
+    #     logger.error("Failed to retrieve manifest.json", err)
+    #     de_notifier.failure()
+    #     raise err
 
-    # Retrieve submitter email from manifest_dict and create email client from env var
-    try:
-        submitter_email = get_submitter_email(manifest_dict)
-        email_client = get_email_client()
-        logger.info(
-            "Submitter email received, email client created",
-            data={"email_client": email_client},
-        )
-    except Exception as err:
-        logger.error("Failed to create email client", err)
-        de_notifier.failure()
-        raise err
+    # # Retrieve submitter email from manifest_dict and create email client from env var
+    # try:
+    #     submitter_email = get_submitter_email(manifest_dict)
+    #     email_client = get_email_client()
+    #     logger.info(
+    #         "Submitter email received, email client created",
+    #         data={"email_client": email_client},
+    #     )
+    # except Exception as err:
+    #     logger.error("Failed to create email client", err)
+    #     de_notifier.failure()
+    #     raise err
 
-    # Validate existence of each file in the directory and that it is not empty
-    for file in files_in_directory:
+    # # Validate existence of each file in the directory and that it is not empty
+    # for file in files_in_directory:
 
-        filepath = os.path.join(files_dir, file)
+    #     filepath = os.path.join(files_dir, file)
 
-        # Make sure file is not empty
-        file_size_0(filepath, give_error=True)
+    #     # Make sure file is not empty
+    #     file_size_0(filepath, give_error=True)
 
-        # Validate that metadata.json is parseable as JSON
-        if "metadata.json" in filepath:
-            metadata_json_is_parseable(filepath, give_error=True)
+    #     # Validate that metadata.json is parseable as JSON
+    #     if "metadata.json" in filepath:
+    #         metadata_json_is_parseable(filepath, give_error=True)
 
-        email_content = successful_validation_email(file)
-        email_client.send(submitter_email, email_content.subject, email_content.message)
+    #     email_content = successful_validation_email(file)
+    #     email_client.send(submitter_email, email_content.subject, email_content.message)
 
-    # Allow DE's to skip uploading to S3 while developing code locally.
-    # Retrieve SKIP_DATA_UPLOAD value from environment variable
-    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
-    skip_data_upload = str_to_bool(skip_data_upload)
+    # # Allow DE's to skip uploading to S3 while developing code locally.
+    # # Retrieve SKIP_DATA_UPLOAD value from environment variable
+    # skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
+    # skip_data_upload = str_to_bool(skip_data_upload)
 
-    # Retrieve Upload Service URL from environment variable
-    if not skip_data_upload:
-        try:
-            upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
-            assert (
-                upload_url is not None
-            ), "UPLOAD_SERVICE_URL environment variable not set"
-        except Exception as err:
-            logger.error("Failed to retrieve Upload Service URL", err)
-            de_notifier.failure()
-            raise err
+    # # Retrieve Upload Service URL from environment variable
+    # if not skip_data_upload:
+    #     try:
+    #         upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
+    #         assert (
+    #             upload_url is not None
+    #         ), "UPLOAD_SERVICE_URL environment variable not set"
+    #     except Exception as err:
+    #         logger.error("Failed to retrieve Upload Service URL", err)
+    #         de_notifier.failure()
+    #         raise err
 
-    # Extract the patterns for required files from the pipeline configuration
-    required_file_patterns = get_matching_pattern(pipeline_config, "required_files")
-    logger.info(
-        "Retrieved required file patterns from pipeline config",
-        data={
-            "required_file_patterns": required_file_patterns,
-            "pipeline_config": pipeline_config,
-        },
-    )
+    # # Extract the patterns for required files from the pipeline configuration
+    # required_file_patterns = get_matching_pattern(pipeline_config, "required_files")
+    # logger.info(
+    #     "Retrieved required file patterns from pipeline config",
+    #     data={
+    #         "required_file_patterns": required_file_patterns,
+    #         "pipeline_config": pipeline_config,
+    #     },
+    # )
 
-    # Check that all required files are present in the local store
-    for required_file in required_file_patterns:
-        if not local_store.has_lone_file_matching(required_file):
-            email_content = required_file_not_found_email(required_file)
-            email_client.send(
-                submitter_email, email_content.subject, email_content.message
-            )
-            err = FileNotFoundError(f"No file found matching pattern {required_file}")
-            logger.error(
-                "Required file not found",
-                err,
-                data={
-                    "required_file": required_file,
-                    "required_file_patterns": required_file_patterns,
-                    "files_in_directory": files_in_directory,
-                    "pipeline_config": pipeline_config,
-                },
-            )
-            de_notifier.failure()
-            raise err
+    # # Check that all required files are present in the local store
+    # for required_file in required_file_patterns:
+    #     if not local_store.has_lone_file_matching(required_file):
+    #         email_content = required_file_not_found_email(required_file)
+    #         email_client.send(
+    #             submitter_email, email_content.subject, email_content.message
+    #         )
+    #         err = FileNotFoundError(f"No file found matching pattern {required_file}")
+    #         logger.error(
+    #             "Required file not found",
+    #             err,
+    #             data={
+    #                 "required_file": required_file,
+    #                 "required_file_patterns": required_file_patterns,
+    #                 "files_in_directory": files_in_directory,
+    #                 "pipeline_config": pipeline_config,
+    #             },
+    #         )
+    #         de_notifier.failure()
+    #         raise err
 
-    # Extract the patterns for supplementary distributions from the pipeline configuration
-    supp_dist_patterns = get_matching_pattern(
-        pipeline_config, "supplementary_distributions"
-    )
-    logger.info(
-        "Retrieved supplementary distribution patterns from pipeline config",
-        data={"supplementary_distribution_patterns": supp_dist_patterns},
-    )
+    # # Extract the patterns for supplementary distributions from the pipeline configuration
+    # supp_dist_patterns = get_matching_pattern(
+    #     pipeline_config, "supplementary_distributions"
+    # )
+    # logger.info(
+    #     "Retrieved supplementary distribution patterns from pipeline config",
+    #     data={"supplementary_distribution_patterns": supp_dist_patterns},
+    # )
 
-    # Check for the existence of each supplementary distribution
-    for supp_dist_pattern in supp_dist_patterns:
-        if not local_store.has_lone_file_matching(supp_dist_pattern):
-            err = FileNotFoundError(
-                f"No file found matching pattern {supp_dist_pattern}"
-            )
-            email_content = supplementary_distribution_not_found_email(
-                supp_dist_pattern
-            )
-            email_client.send(
-                submitter_email, email_content.subject, email_content.message
-            )
-            logger.error(
-                "Supplementary distribution not found.",
-                err,
-                data={
-                    "supplementary_distribution": supp_dist_pattern,
-                    "supplementary_distribution_patterns": supp_dist_patterns,
-                    "files_in_directory": files_in_directory,
-                    "pipeline_config": pipeline_config,
-                },
-            )
-            de_notifier.failure()
-            raise err
+    # # Check for the existence of each supplementary distribution
+    # for supp_dist_pattern in supp_dist_patterns:
+    #     if not local_store.has_lone_file_matching(supp_dist_pattern):
+    #         err = FileNotFoundError(
+    #             f"No file found matching pattern {supp_dist_pattern}"
+    #         )
+    #         email_content = supplementary_distribution_not_found_email(
+    #             supp_dist_pattern
+    #         )
+    #         email_client.send(
+    #             submitter_email, email_content.subject, email_content.message
+    #         )
+    #         logger.error(
+    #             "Supplementary distribution not found.",
+    #             err,
+    #             data={
+    #                 "supplementary_distribution": supp_dist_pattern,
+    #                 "supplementary_distribution_patterns": supp_dist_patterns,
+    #                 "files_in_directory": files_in_directory,
+    #                 "pipeline_config": pipeline_config,
+    #             },
+    #         )
+    #         de_notifier.failure()
+    #         raise err
 
     # Get the transform inputs from the pipeline_config and run the specified sanity checker for it
     input_file_paths = []
@@ -284,8 +285,23 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # TODO - validate the csv once we know what we're validating
 
+    # Allow DE's to skip uploading to S3 while developing code locally.
+    # Retrieve SKIP_DATA_UPLOAD value from environment variable
+    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
+    skip_data_upload = str_to_bool(skip_data_upload)
+
+    # Retrieve Upload Service URL from environment variable
     if not skip_data_upload:
-        # Upload output files to Upload Service
+        try:
+            upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
+            assert (
+                upload_url is not None
+            ), "UPLOAD_SERVICE_URL environment variable not set"
+        except Exception as err:
+            logger.error("Failed to retrieve Upload Service URL", err)
+            de_notifier.failure()
+            raise err
+
         try:
             # Create UploadClient from upload_url
             upload_client = UploadServiceClient(upload_url)
@@ -329,6 +345,14 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             raise err
 
         # Check for supplementary distributions to upload
+        supp_dist_patterns = get_matching_pattern(
+            pipeline_config, "supplementary_distributions"
+        )
+        logger.info(
+            "Retrieved supplementary distribution patterns from pipeline config",
+            data={"supplementary_distribution_patterns": supp_dist_patterns},
+        )
+
         if supp_dist_patterns:
             # Get all files in local store
             all_files = local_store.get_file_names()
