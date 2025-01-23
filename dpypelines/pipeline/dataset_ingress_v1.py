@@ -1,3 +1,4 @@
+from distutils.command.config import config
 import os
 import re
 
@@ -182,13 +183,10 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             de_notifier.failure()
             raise err
 
-    #csv_path = [
-     #   filename for filename in files_in_directory if filename.endswith(".csv")
-    #]
-    
-    #with open('csv_files_list.txt', 'w') as output_file:
-     #   output_file.write('\n'.join(files_in_directory))
-    csv_path = "data.csv"
+
+    csv_path = pipeline_config["required_files"][0]["matches"]
+    csv_path = local_store.get_pathlike_of_file_matching(csv_path)
+    print(f"CSVPATH: {csv_path}")
     # TODO - validate the metadata once we have a schema for it.
 
     # TODO - validate the csv once we know what we're validating
