@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 from dpytools.http.upload.upload_service_client import UploadServiceClient
+from dpytools.http.api.dataset_api_client import DatasetAPIClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
@@ -107,7 +108,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
     skip_data_upload = str_to_bool(skip_data_upload)
 
-    # Retrieve Upload Service URL from environment variable
+    # Retrieve Upload Service and Dataset API URLs from environment variables
     if not skip_data_upload:
         try:
             upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
@@ -116,6 +117,15 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             ), "UPLOAD_SERVICE_URL environment variable not set"
         except Exception as err:
             logger.error("Failed to retrieve Upload Service URL", err)
+            de_notifier.failure()
+            raise err
+        try:
+            dataset_api_url = os.environ.get("DATASET_API_URL", None)
+            assert (
+                dataset_api_url is not None
+            ), "DATASET_API_URL environment variable is not set"
+        except Exception as err:
+            logger.error("Failed to retrieve Dataset API URL", err)
             de_notifier.failure()
             raise err
 
@@ -285,15 +295,27 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # TODO - validate the csv once we know what we're validating
 
     if not skip_data_upload:
-        # Upload output files to Upload Service
+        # Submit outputs to Upload Service and Dataset API
         try:
-            # Create UploadClient from upload_url
+            # Create UploadServiceClient from upload_url
             upload_client = UploadServiceClient(upload_url)
         except Exception as err:
             logger.error(
-                "Failed to create UploadClient",
+                "Failed to create Upload Service Client",
                 err,
                 data={"upload_url": upload_url},
+            )
+            de_notifier.failure()
+            raise err
+
+        try:
+            # Create DatasetAPIClient from dataset_api_url and dataset_id
+            dataset_api_client = DatasetAPIClient(dataset_api_url, "dataset_id")
+        except Exception as err:
+            logger.error(
+                "Failed to create Dataset API Client",
+                err,
+                data={"dataset_api_url": dataset_api_url, "dataset_id": "dataset_id"},
             )
             de_notifier.failure()
             raise err
@@ -326,6 +348,15 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             email_client.send(
                 submitter_email, email_content.subject, email_content.message
             )
+            raise err
+
+        try:
+            dataset_api_response = dataset_api_client.get_path()
+            if dataset_api_response.status_code == 404:
+                print("I need to POST a new dataset")
+            else:
+                print("I need to PUT an updated dataset")
+        except Exception as err:
             raise err
 
         # Check for supplementary distributions to upload
