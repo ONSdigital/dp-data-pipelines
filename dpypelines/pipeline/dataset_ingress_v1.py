@@ -15,6 +15,7 @@ from dpypelines.pipeline.shared.email_templates import (
     successful_validation_email,
     supplementary_distribution_not_found_email,
 )
+from dpypelines.pipeline.shared.error_handler_module import error_handler
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
 from dpypelines.pipeline.shared.utils import (
@@ -27,7 +28,6 @@ from dpypelines.pipeline.validate_ingest_files import (
     file_size_0,
     metadata_json_is_parseable,
 )
-from dpypelines.pipeline.shared.error_handler_module import error_handler
 
 logger = DpLogger("data-ingress-pipelines")
 
@@ -293,19 +293,19 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     except Exception as err:
         error_handler(
-                section="1.1",
-                error="Transform function execution failed",
-                data={
+            section="1.1",
+            error="Transform function execution failed",
+            data={
                 "transform_function": transform_function,
                 "input_file_paths": input_file_paths,
                 "transform_kwargs": transform_kwargs,
                 "pipeline_config": pipeline_config,
             },
-                submitter_email=submitter_email,
-                enable_email=True,
-                enable_logs=True,
-                enable_notification=True,
-            )
+            submitter_email=submitter_email,
+            enable_email=True,
+            enable_logs=True,
+            enable_notification=True,
+        )
         raise err
 
     # TODO - validate the metadata once we have a schema for it.
@@ -350,7 +350,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 data={
                     "csv_path": csv_path,
                     "upload_url": upload_url,
-            },
+                },
                 submitter_email=submitter_email,
                 enable_email=True,
                 enable_logs=True,
@@ -411,7 +411,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                         data={
                             "supplementary_distribution": supp_dist_path,
                             "upload_url": upload_url,
-                    },
+                        },
                         submitter_email=submitter_email,
                         enable_email=True,
                         enable_logs=True,
