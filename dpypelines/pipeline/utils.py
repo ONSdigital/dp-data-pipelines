@@ -1,4 +1,5 @@
 from dpytools.http.upload.upload_service_client import UploadServiceClient
+from dpytools.http.api.dataset_api_client import DatasetAPIClient
 from dpytools.logging.logger import DpLogger
 
 from dpypelines.pipeline.shared.notification import (
@@ -48,5 +49,27 @@ def get_upload_client(upload_url):
         raise err
 
 
+def get_dataset_api_client(dataset_api_url, dataset_id):
+    try:
+        # Create DatasetAPIClient from dataset_api_url and dataset_id
+        client = DatasetAPIClient(dataset_api_url, dataset_id)
+        logger.info(
+            "DatasetAPIClient created for dataset_id provided",
+            data={"dataset_api_url": dataset_api_url, "dataset_id": dataset_id},
+        )
+        return client
+    except Exception as err:
+        logger.error(
+            "Error creating DatasetAPIClient",
+            err,
+            data={"dataset_api_url": dataset_api_url, "dataset_id": dataset_id},
+        )
+        raise err
+
+
 def get_secondary_function(config_dict: dict):
     return config_dict["secondary_function"]
+
+
+def get_dataset_id_from_metadata(metadata: dict) -> str:
+    return metadata["dcterms:identifier"]
