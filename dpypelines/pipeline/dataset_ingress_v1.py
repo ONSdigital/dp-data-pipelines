@@ -8,12 +8,9 @@ from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.shared.email_templates import (
-    failed_file_upload_email,
-    required_file_not_found_email,
     submission_processed_email,
     successful_file_upload_email,
     successful_validation_email,
-    supplementary_distribution_not_found_email,
 )
 from dpypelines.pipeline.shared.error_handler_module import error_handler
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
