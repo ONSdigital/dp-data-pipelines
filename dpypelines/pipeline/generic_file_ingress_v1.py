@@ -19,10 +19,10 @@ from dpypelines.pipeline.shared.utils import (
     get_submitter_email,
 )
 from dpypelines.pipeline.utils import (
-    get_notifier,
-    get_upload_client,
     get_dataset_api_client,
-    get_dataset_id_from_metadata,
+    get_notifier,
+    get_upload_service_client,
+    get_value_from_metadata,
 )
 from dpypelines.pipeline.validate_ingest_files import (
     file_size_0,
@@ -248,7 +248,7 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
 
     if not skip_data_upload:
         # Upload output files to Upload Service
-        upload_client = get_upload_client(upload_url)
+        upload_client = get_upload_service_client(upload_url)
 
         for required_file in required_file_patterns:
             try:
@@ -298,22 +298,44 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                 raise err
 
         # Submit metadata to Dataset API
-        metadata = local_store.get_lone_matching_json_as_dict("^metadata.json$")
-        dataset_id = get_dataset_id_from_metadata(metadata)
+        try:
+            metadata = local_store.get_lone_matching_json_as_dict("^metadata.json$")
+            logger.info(
+                "Retrieved metadata.json",
+                data={"metadata": metadata},
+            )
+        except Exception as err:
+            logger.error("Failed to retrieve metadata.json", err)
+            de_notifier.failure()
+            raise err
+
+        # Get dataset_id from metadata and create DatasetAPIClient
+        dataset_id = get_value_from_metadata(metadata, "dcterms:identifier")
         dataset_api_client = get_dataset_api_client(dataset_api_url, dataset_id)
-        dataset_api_response = dataset_api_client.get_path()
-        if dataset_api_response.status_code == 404:
-            # 2423 TODO This doesn't actually print, because the error is handled in BaseHTTPClient._handle_request()
-            # 2423 Q: how do we handle the difference between a nonsense dataset_id and a valid dataset_id that deosn't yet exist in the Dataset API?
-            print(
-                "Dataset ID does not exist in Dataset API - submit POST request to add new dataset"
+
+        # Check that the Dataset API endpoint exists
+        try:
+            dataset_api_response = dataset_api_client.get_path()
+            # 2423 Q: do we need to handle the difference between a nonsense dataset_id (i.e. one that shouldn't exist) and a valid dataset_id that doesn't yet exist in the Dataset API? Or will this be done within the API?
+            if dataset_api_response.status_code == 404:
+                # 2423 TODO This doesn't actually print, because the error is handled in BaseHTTPClient._handle_request()
+                print(
+                    "Dataset ID does not exist in Dataset API - submit POST request to add new dataset"
+                )
+            elif dataset_api_response.status_code == 200:
+                print(
+                    "Dataset ID exists in Dataset API - submit PUT request to update existing dataset"
+                )
+            else:
+                print("Unhandled status code")
+        except Exception as err:
+            logger.error(
+                "Error getting Dataset API path for given dataset_id",
+                err,
+                data={"dataset_api_url": dataset_api_url, "dataset_id": dataset_id},
             )
-        elif dataset_api_response.status_code == 200:
-            print(
-                "Dataset ID exists in Dataset API - submit PUT request to update existing dataset"
-            )
-        else:
-            print("Unhandled status code")
+            de_notifier.failure()
+            raise err
 
     email_content = submission_processed_email()
     email_client.send(submitter_email, email_content.subject, email_content.message)

@@ -32,6 +32,9 @@ def before_all(context):
     context.upload_service_url = os.environ.get("UPLOAD_SERVICE_URL", None)
     os.environ["UPLOAD_SERVICE_URL"] = "http://127.0.0.1:5001/upload-new"
 
+    context.dataset_api_url = os.environ.get("DATASET_API_URL", None)
+    os.environ["DATASET_API_URL"] = "http://127.0.0.1:5001/datasets"
+
     context.service_token_for_upload = os.environ.get("SERVICE_TOKEN_FOR_UPLOAD", None)
     os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = "not-a-real-token"
 
@@ -129,6 +132,9 @@ def after_all(context):
 
     if context.upload_service_url is not None:
         os.environ["UPLOAD_SERVICE_URL"] = context.upload_service_url
+
+    if context.dataset_api_url is not None:
+        os.environ["DATASET_API_URL"] = context.dataset_api_url
 
     if context.service_token_for_upload is not None:
         os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = context.service_token_for_upload

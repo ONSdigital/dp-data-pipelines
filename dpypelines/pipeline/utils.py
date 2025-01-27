@@ -1,5 +1,7 @@
-from dpytools.http.upload.upload_service_client import UploadServiceClient
+from typing import Optional
+
 from dpytools.http.api.dataset_api_client import DatasetAPIClient
+from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 
 from dpypelines.pipeline.shared.notification import (
@@ -33,7 +35,7 @@ def get_notifier():
         raise err
 
 
-def get_upload_client(upload_url):
+def get_upload_service_client(upload_url):
     # Upload output files to Upload Service
     try:
         # Create UploadClient from upload_url
@@ -49,9 +51,9 @@ def get_upload_client(upload_url):
         raise err
 
 
-def get_dataset_api_client(dataset_api_url, dataset_id):
+def get_dataset_api_client(dataset_api_url: str, dataset_id: str) -> DatasetAPIClient:
+    # Create DatasetAPIClient from dataset_api_url and dataset_id
     try:
-        # Create DatasetAPIClient from dataset_api_url and dataset_id
         client = DatasetAPIClient(dataset_api_url, dataset_id)
         logger.info(
             "DatasetAPIClient created for dataset_id provided",
@@ -71,5 +73,12 @@ def get_secondary_function(config_dict: dict):
     return config_dict["secondary_function"]
 
 
-def get_dataset_id_from_metadata(metadata: dict) -> str:
-    return metadata["dcterms:identifier"]
+def get_value_from_metadata(metadata: dict, key: str) -> Optional[str]:
+    # Get the value for the specified key from metadata
+    try:
+        return metadata[key]
+    except KeyError as err:
+        logger.error(
+            "Value not found in metadata for given key", err, data={"key": key}
+        )
+        raise err
