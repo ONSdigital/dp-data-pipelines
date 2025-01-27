@@ -48,7 +48,7 @@ def error_handler(
             notifier.failure()
         except Exception as notification_err:
             logger.error("Failed to trigger system notifications", notification_err)
-    
+
     raise Exception(error)
 
 
