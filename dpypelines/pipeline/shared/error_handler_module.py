@@ -49,7 +49,7 @@ def error_handler(
         except Exception as notification_err:
             logger.error("Failed to trigger system notifications", notification_err)
     
-    raise exception
+    raise Exception(error)
 
 
 def send_error_email(

@@ -43,7 +43,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Create notifier from webhook env var
     de_notifier = get_notifier()
 
-    #Create boolean variables for error handler, to allow easy setting
+    # Create boolean variables for error handler, to allow easy setting
     enable_notification = True
     enable_logs = True
     enable_email = True

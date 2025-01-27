@@ -34,7 +34,7 @@ class TestErrorHandler:
                 enable_logs=True,
                 enable_notification=True,
             )
-        
+
         assert str(err.value) == "This is a Test Error"
 
         # Test logger usage
