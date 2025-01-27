@@ -105,10 +105,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Allow DE's to skip uploading to S3 while developing code locally.
     # Retrieve SKIP_DATA_UPLOAD value from environment variable
-    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "True")
+    skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
     skip_data_upload = str_to_bool(skip_data_upload)
 
-    skip_data_upload = True
     # Retrieve Upload Service URL from environment variable
     if not skip_data_upload:
         try:
@@ -163,7 +162,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
     # Check for the existence of each supplementary distribution
     for supp_dist_pattern in supp_dist_patterns:
-        print(f"SUPP_PATTERN {supp_dist_pattern}")
         if not local_store.has_lone_file_matching(supp_dist_pattern):
             err = FileNotFoundError(
                 f"No file found matching pattern {supp_dist_pattern}"
