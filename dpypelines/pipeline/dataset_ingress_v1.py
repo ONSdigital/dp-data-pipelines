@@ -1,6 +1,5 @@
 import os
 import re
-from distutils.command.config import config
 
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
