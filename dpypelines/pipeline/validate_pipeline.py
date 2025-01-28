@@ -52,7 +52,9 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
     }
 
 
-def validate_pattern_files(files_dir: Path, pattern: str, collected_files: List[Path]) -> None:
+def validate_pattern_files(
+    files_dir: Path, pattern: str, collected_files: List[Path]
+) -> None:
     """Validate files matching a regex pattern exist and are not empty."""
     regex = re.compile(pattern)
     matched_files = [f for f in files_dir.iterdir() if regex.match(f.name)]
@@ -85,7 +87,9 @@ def validate_transform_inputs(files_dir: Path, pipeline_config: dict) -> List[Pa
                 error=FileNotFoundError(),
                 data={"pattern": pattern, "files_dir": str(files_dir)},
             )
-            raise FileNotFoundError(f"No files found matching transform pattern: {pattern}")
+            raise FileNotFoundError(
+                f"No files found matching transform pattern: {pattern}"
+            )
 
         for file_path in matched_files:
             validate_file_exists_and_not_empty(file_path)
@@ -181,7 +185,9 @@ def validate_supplementary_files(files_dir: Path, pipeline_config: dict) -> List
                     error=FileNotFoundError(),
                     data={"pattern": pattern, "files_dir": str(files_dir)},
                 )
-                raise FileNotFoundError(f"Supplementary distribution not found for pattern: {pattern}")
+                raise FileNotFoundError(
+                    f"Supplementary distribution not found for pattern: {pattern}"
+                )
 
             for file in matched_files:
                 validate_file_exists_and_not_empty(file)
