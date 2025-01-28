@@ -1,6 +1,8 @@
 import os
 import re
 
+from pathlib import Path
+
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
@@ -184,9 +186,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             )
             de_notifier.failure()
             raise err
-
-    csv_path, metadat_path = process_transform(
-        local_store, pipeline_config, files_in_directory, de_notifier
+    if pipeline_config["transfrom"] is not None:
+        csv_path, metadat_path = process_transform(
+            local_store, pipeline_config, files_in_directory, de_notifier
     )
     # TODO - validate the metadata once we have a schema for it.
 
@@ -205,7 +207,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             )
             de_notifier.failure()
             raise err
-
+        """ 
         try:
             # Upload CSV to Upload Service
             upload_client.upload_new(csv_path, "text/csv")
@@ -231,6 +233,37 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             )
             de_notifier.failure()
             email_content = failed_file_upload_email(csv_path.name, str(err))
+            email_client.send(
+                submitter_email, email_content.subject, email_content.message
+            )
+            raise err 
+            """
+
+        try:
+            for required_file_path in required_file_patterns:
+                mimetype = get_mimetype(Path(required_file_path).suffix)
+                if mimetype:
+                    upload_client.upload_new(required_file_path, mimetype)
+                else:
+                    raise NotImplementedError(
+                        f"Uploading file type {Path(required_file_path).suffix} not currently supported."
+                    )
+                logger.info(
+                    "File uploaded",
+                    data={"file_path": required_file_path},
+                )
+                email_content = successful_file_upload_email(Path(required_file_path).name)
+                email_client.send(
+                    submitter_email, email_content.subject, email_content.message
+                )
+        except Exception as err:
+            logger.error(
+                "Failed to upload file",
+                err,
+                data={"file_path": required_file_path},
+            )
+            de_notifier.failure()
+            email_content = failed_file_upload_email(required_file, str(err))
             email_client.send(
                 submitter_email, email_content.subject, email_content.message
             )
