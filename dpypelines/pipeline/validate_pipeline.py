@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 from typing import Dict, List
 
@@ -35,12 +36,11 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
     # 4. Validate config-required files
     config_files = []
     for pattern in get_matching_pattern(pipeline_config, "required_files"):
-        file_path = files_dir / pattern
-        validate_file_exists_and_not_empty(file_path)
-        config_files.append(file_path)
+        validate_pattern_files(files_dir, pattern, config_files)
 
     # 5. Validate supplementary files
-    supp_files = validate_supplementary_files(files_dir, pipeline_config)
+    supplementary_files = validate_supplementary_files(files_dir, pipeline_config)
+    config_files.extend(supplementary_files)
 
     logger.info("Pipeline validation completed successfully")
 
@@ -52,14 +52,74 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
     }
 
 
+def validate_pattern_files(files_dir: Path, pattern: str, collected_files: List[Path]) -> None:
+    """Validate files matching a regex pattern exist and are not empty."""
+    regex = re.compile(pattern)
+    matched_files = [f for f in files_dir.iterdir() if regex.match(f.name)]
+
+    if not matched_files:
+        logger.error(
+            "No files matched the pattern",
+            error=FileNotFoundError(),
+            data={"pattern": pattern, "files_dir": str(files_dir)},
+        )
+        raise FileNotFoundError(f"No files found matching pattern: {pattern}")
+
+    for file in matched_files:
+        validate_file_exists_and_not_empty(file)
+        collected_files.append(file)
+
+
+def validate_transform_inputs(files_dir: Path, pipeline_config: dict) -> List[Path]:
+    """Validate transform inputs and run sanity checks."""
+    input_file_paths = []
+    transform_inputs = get_transform_details(pipeline_config, "transform_inputs")
+
+    for pattern, sanity_checker in transform_inputs.items():
+        regex = re.compile(pattern)
+        matched_files = [f for f in files_dir.iterdir() if regex.match(f.name)]
+
+        if not matched_files:
+            logger.error(
+                "No files matched the transform input pattern",
+                error=FileNotFoundError(),
+                data={"pattern": pattern, "files_dir": str(files_dir)},
+            )
+            raise FileNotFoundError(f"No files found matching transform pattern: {pattern}")
+
+        for file_path in matched_files:
+            validate_file_exists_and_not_empty(file_path)
+            try:
+                sanity_checker(file_path)
+                logger.info("Sanity check passed", data={"file": str(file_path)})
+                input_file_paths.append(file_path)
+            except Exception as e:
+                logger.error(
+                    "Sanity check failed",
+                    error=e,
+                    data={"file_path": str(file_path)},
+                )
+                raise ValueError(f"Sanity check failed for {file_path}: {str(e)}")
+
+    return input_file_paths
+
+
 def validate_file_exists_and_not_empty(file_path: Path) -> None:
     """Validate file exists and has content."""
     if not file_path.exists():
-        logger.error("Required file not found", error=FileNotFoundError(), data={"file_path": str(file_path)})
+        logger.error(
+            "Required file not found",
+            error=FileNotFoundError(),
+            data={"file_path": str(file_path)},
+        )
         raise FileNotFoundError(f"Required file not found: {file_path}")
 
     if file_size_0(file_path, give_error=True):
-        logger.error("File is empty", error=ValueError(), data={"file_path": str(file_path)})
+        logger.error(
+            "File is empty",
+            error=ValueError(),
+            data={"file_path": str(file_path)},
+        )
         raise ValueError(f"Required file is empty: {file_path}")
 
 
@@ -70,7 +130,11 @@ def validate_json_file(file_path: Path) -> dict:
             data = json.load(f)
         return data
     except json.JSONDecodeError as e:
-        logger.error("Invalid JSON format", error=e, data={"file_path": str(file_path)})
+        logger.error(
+            "Invalid JSON format",
+            error=e,
+            data={"file_path": str(file_path)},
+        )
         raise ValueError(f"File is not valid JSON: {str(e)}")
 
 
@@ -94,27 +158,12 @@ def validate_manifest_vars(manifest_dict: dict) -> None:
     try:
         get_submitter_email(manifest_dict)
     except Exception as e:
-        logger.error("Invalid submitter email", error=e, data={"manifest": manifest_dict})
+        logger.error(
+            "Invalid submitter email",
+            error=e,
+            data={"manifest": manifest_dict},
+        )
         raise ValueError(f"Invalid submitter email: {str(e)}")
-
-
-def validate_transform_inputs(files_dir: Path, pipeline_config: dict) -> List[Path]:
-    """Validate transform inputs and run sanity checks."""
-    input_file_paths = []
-    transform_inputs = get_transform_details(pipeline_config, "transform_inputs")
-
-    for pattern, sanity_checker in transform_inputs.items():
-        file_path = files_dir / pattern
-        validate_file_exists_and_not_empty(file_path)
-        try:
-            sanity_checker(file_path)
-            logger.info("Sanity check passed", data={"file": str(file_path)})
-            input_file_paths.append(file_path)
-        except Exception as e:
-            logger.error("Sanity check failed", error=e, data={"file": str(file_path)})
-            raise ValueError(f"Sanity check failed for {file_path}: {str(e)}")
-
-    return input_file_paths
 
 
 def validate_supplementary_files(files_dir: Path, pipeline_config: dict) -> List[Path]:
@@ -124,8 +173,18 @@ def validate_supplementary_files(files_dir: Path, pipeline_config: dict) -> List
 
     if patterns:
         for pattern in patterns:
-            file_path = files_dir / pattern
-            validate_file_exists_and_not_empty(file_path)
-            supp_files.append(file_path)
+            regex = re.compile(pattern)
+            matched_files = [f for f in files_dir.iterdir() if regex.match(f.name)]
+            if not matched_files:
+                logger.error(
+                    "Supplementary distribution not found.",
+                    error=FileNotFoundError(),
+                    data={"pattern": pattern, "files_dir": str(files_dir)},
+                )
+                raise FileNotFoundError(f"Supplementary distribution not found for pattern: {pattern}")
+
+            for file in matched_files:
+                validate_file_exists_and_not_empty(file)
+                supp_files.append(file)
 
     return supp_files
