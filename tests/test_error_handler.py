@@ -38,7 +38,7 @@ class TestErrorHandler:
         assert str(err.value) == "This is a Test Error"
 
         # Test logger usage
-        mock_logger.error.assert_called_once_with(
+        mock_logger.info.assert_called_once_with(
             "Error in section: 1.2.1 This is a Test Error",
             data={"TestKey": "Test value"},
         )
@@ -72,7 +72,7 @@ class TestErrorHandler:
         assert str(err.value) == "This is a Test Error"
 
         # Test logger usage
-        mock_logger.error.assert_called_once_with(
+        mock_logger.info.assert_called_once_with(
             "Error in section: 1.2.1 This is a Test Error"
         )
 
