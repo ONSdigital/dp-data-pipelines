@@ -8,9 +8,7 @@ from dpytools.logging.logger import DpLogger
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
 from dpypelines.pipeline.shared.utils import get_submitter_email
-from dpypelines.pipeline.validate_ingest_files import (
-    file_size_0,
-)
+from dpypelines.pipeline.validate_ingest_files import file_size_0
 
 logger = DpLogger("data-ingress-pipelines")
 
