@@ -48,7 +48,7 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
         "manifest": manifest_dict,
         "input_files": input_paths,
         "config_files": config_files,
-        "supplementary_files": supp_files,
+        "supplementary_files": supplementary_files,
     }
 
 
