@@ -185,10 +185,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             )
             de_notifier.failure()
             raise err
-    if pipeline_config["transform"] is not None:
-        csv_path, metadat_path = process_transform(
-            local_store, pipeline_config, files_in_directory, de_notifier
-        )
+
     # TODO - validate the metadata once we have a schema for it.
 
     # TODO - validate the csv once we know what we're validating
