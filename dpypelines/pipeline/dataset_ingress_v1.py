@@ -11,6 +11,7 @@ from dpypelines.pipeline.shared.email_templates import (
     submission_processed_email,
     successful_file_upload_email,
     successful_validation_email,
+    failed_file_upload_email,
 )
 from dpypelines.pipeline.shared.error_handler_module import error_handler
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
