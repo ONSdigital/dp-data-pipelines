@@ -264,7 +264,10 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     )
                 logger.info(
                     "File uploaded",
-                    data={"file_path": required_file_path},
+                    data={
+                        "file_path": required_file_path,
+                        "upload_url": upload_url,
+                    },
                 )
                 email_content = successful_file_upload_email(
                     Path(required_file_path).name
