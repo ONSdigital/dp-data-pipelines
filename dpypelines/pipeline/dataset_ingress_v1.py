@@ -185,7 +185,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             )
             de_notifier.failure()
             raise err
-    if pipeline_config["transfrom"] is not None:
+    if pipeline_config["transform"] is not None:
         csv_path, metadat_path = process_transform(
             local_store, pipeline_config, files_in_directory, de_notifier
         )
