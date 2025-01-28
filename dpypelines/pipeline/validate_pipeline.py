@@ -21,7 +21,7 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
     logger.info("Starting pipeline validation", data={"files_dir": str(files_dir)})
 
     # 1. Check core required files
-    required_files = ["metadata.json", "manifest.json"]
+    required_files = ["manifest.json"]
     for file_name in required_files:
         validate_file_exists_and_not_empty(files_dir / file_name)
 
@@ -47,7 +47,6 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
 
     return {
         "manifest": manifest_dict,
-        "metadata": metadata_dict,
         "input_files": input_paths,
         "config_files": config_files,
         "supplementary_files": supp_files,
