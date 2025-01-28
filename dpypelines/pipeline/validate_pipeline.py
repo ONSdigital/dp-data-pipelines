@@ -54,6 +54,7 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
         "supplementary_files": supp_files,
     }
 
+
 def validate_file_exists_and_not_empty(file_path: Path) -> None:
     """Validate file exists and has content."""
     if not file_path.exists():
@@ -63,7 +64,8 @@ def validate_file_exists_and_not_empty(file_path: Path) -> None:
     if file_size_0(file_path, give_error=True):
         logger.error("File is empty", data={"file_path": str(file_path)})
         raise ValueError(f"Required file is empty: {file_path}")
-     
+
+
 def validate_json_file(file_path: Path) -> dict:
     """Validate and parse JSON file."""
     try:
@@ -73,6 +75,7 @@ def validate_json_file(file_path: Path) -> dict:
     except json.JSONDecodeError as e:
         logger.error("Invalid JSON format", data={"file_path": str(file_path)})
         raise ValueError(f"File is not valid JSON: {str(e)}")
+
 
 def validate_manifest_vars(manifest_dict: dict) -> None:
     """Validate manifest dictionary has required fields."""
