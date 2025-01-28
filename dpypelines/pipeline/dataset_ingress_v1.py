@@ -196,106 +196,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 enable_notification=enable_notification,
             )
 
-    # Get the transform inputs from the pipeline_config and run the specified sanity checker for it
-    input_file_paths = []
-    transform_inputs = get_transform_details(pipeline_config, "transform_inputs")
-
-    for pattern, sanity_checker in transform_inputs.items():
-        try:
-            input_file_path: Path = local_store.get_pathlike_of_file_matching(pattern)
-            logger.info(
-                "Retrieved input file that matches pattern",
-                data={
-                    "input_file_path": input_file_path,
-                    "pattern": pattern,
-                    "files_in_directory": files_in_directory,
-                },
-            )
-        except Exception:
-            error_handler(
-                section="1.1",
-                error="Failed to retrieve input file matching pattern",
-                data={
-                    "pattern": pattern,
-                    "files_in_directory": files_in_directory,
-                    "pipeline_config": pipeline_config,
-                },
-                submitter_email=submitter_email,
-                enable_email=enable_email,
-                enable_logs=enable_logs,
-                enable_notification=enable_notification,
-            )
-
-        try:
-            sanity_checker(input_file_path)
-            logger.info(
-                "Sanity check run on input file path.",
-                data={
-                    "sanity_checker": sanity_checker,
-                    "input_file_path": input_file_path,
-                },
-            )
-        except Exception:
-            error_handler(
-                section="1.1",
-                error="Error occurred when running sanity checker on input file path.",
-                data={
-                    "input_file_path": input_file_path,
-                    "files_in_directory": files_in_directory,
-                    "pipeline_config": pipeline_config,
-                },
-                submitter_email=submitter_email,
-                enable_email=enable_email,
-                enable_logs=enable_logs,
-                enable_notification=enable_notification,
-            )
-
-        input_file_paths.append(input_file_path)
-
-    # Get the transform function from pipeline config
-    transform_function = get_transform_details(pipeline_config, "transform")
-    # Get transform keyword arguments (kwargs) from pipeline config
-    transform_kwargs = get_transform_details(pipeline_config, "transform_kwargs")
-    logger.info(
-        "Retrieved transform function and transform_kwargs from pipeline config",
-        data={
-            "transform_function": transform_function,
-            "transform_kwargs": transform_kwargs,
-            "input_file_paths": input_file_paths,
-        },
-    )
-
-    try:
-        csv_path, metadata_path = transform_function(
-            *input_file_paths, **transform_kwargs
-        )
-        logger.info(
-            "Transform function executed successfully",
-            data={
-                "transform_function": transform_function,
-                "input_file_paths": input_file_paths,
-                "transform_kwargs": transform_kwargs,
-                "csv_path": csv_path,
-                "metadata_path": metadata_path,
-            },
-        )
-
-    except Exception:
-        error_handler(
-            section="1.1",
-            error="Transform function execution failed",
-            data={
-                "transform_function": transform_function,
-                "input_file_paths": input_file_paths,
-                "transform_kwargs": transform_kwargs,
-                "pipeline_config": pipeline_config,
-            },
-            submitter_email=submitter_email,
-            enable_email=enable_email,
-            enable_logs=enable_logs,
-            enable_notification=enable_notification,
-        )
-
     # TODO - validate the metadata once we have a schema for it.
 
     # TODO - validate the csv once we know what we're validating
@@ -315,8 +215,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 enable_logs=enable_logs,
                 enable_notification=enable_notification,
             )
-            de_notifier.failure()
-            raise err
         """ 
 
         try:
