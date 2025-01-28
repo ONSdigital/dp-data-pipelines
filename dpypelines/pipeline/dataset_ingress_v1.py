@@ -1,6 +1,5 @@
 import os
 import re
-
 from pathlib import Path
 
 from dpytools.http.upload.upload_service_client import UploadServiceClient
@@ -189,7 +188,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     if pipeline_config["transfrom"] is not None:
         csv_path, metadat_path = process_transform(
             local_store, pipeline_config, files_in_directory, de_notifier
-    )
+        )
     # TODO - validate the metadata once we have a schema for it.
 
     # TODO - validate the csv once we know what we're validating
@@ -252,7 +251,9 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     "File uploaded",
                     data={"file_path": required_file_path},
                 )
-                email_content = successful_file_upload_email(Path(required_file_path).name)
+                email_content = successful_file_upload_email(
+                    Path(required_file_path).name
+                )
                 email_client.send(
                     submitter_email, email_content.subject, email_content.message
                 )
