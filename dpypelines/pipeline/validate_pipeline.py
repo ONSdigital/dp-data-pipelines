@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 from dpytools.logging.logger import DpLogger
 
@@ -15,16 +15,44 @@ from dpypelines.pipeline.validate_ingest_files import (
 logger = DpLogger("data-ingress-pipelines")
 
 
-def validate_json_file(file_path: Path) -> dict:
-    """Validate and parse JSON file."""
-    try:
-        with open(file_path) as f:
-            data = json.load(f)
-        return data
-    except json.JSONDecodeError as e:
-        logger.error("Invalid JSON format", data={"file_path": str(file_path)})
-        raise ValueError(f"File is not valid JSON: {str(e)}")
+def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
+    """
+    Main validation function that returns validated objects.
+    """
+    logger.info("Starting pipeline validation", data={"files_dir": str(files_dir)})
 
+    # 1. Check core required files
+    required_files = ["metadata.json", "manifest.json"]
+    for file_name in required_files:
+        validate_file_exists_and_not_empty(files_dir / file_name)
+
+    # 2. Validate manifest.json and metadata.json
+    manifest_dict = validate_json_file(files_dir / "manifest.json")
+    validate_manifest_vars(manifest_dict)
+    metadata_dict = validate_json_file(files_dir / "metadata.json")
+
+    # 3. Validate transform inputs
+    input_paths = validate_transform_inputs(files_dir, pipeline_config)
+
+    # 4. Validate config-required files
+    config_files = []
+    for pattern in get_matching_pattern(pipeline_config, "required_files"):
+        file_path = files_dir / pattern
+        validate_file_exists_and_not_empty(file_path)
+        config_files.append(file_path)
+
+    # 5. Validate supplementary files
+    supp_files = validate_supplementary_files(files_dir, pipeline_config)
+
+    logger.info("Pipeline validation completed successfully")
+
+    return {
+        "manifest": manifest_dict,
+        "metadata": metadata_dict,
+        "input_files": input_paths,
+        "config_files": config_files,
+        "supplementary_files": supp_files,
+    }
 
 def validate_file_exists_and_not_empty(file_path: Path) -> None:
     """Validate file exists and has content."""
@@ -35,7 +63,16 @@ def validate_file_exists_and_not_empty(file_path: Path) -> None:
     if file_size_0(file_path, give_error=True):
         logger.error("File is empty", data={"file_path": str(file_path)})
         raise ValueError(f"Required file is empty: {file_path}")
-
+     
+def validate_json_file(file_path: Path) -> dict:
+    """Validate and parse JSON file."""
+    try:
+        with open(file_path) as f:
+            data = json.load(f)
+        return data
+    except json.JSONDecodeError as e:
+        logger.error("Invalid JSON format", data={"file_path": str(file_path)})
+        raise ValueError(f"File is not valid JSON: {str(e)}")
 
 def validate_manifest_vars(manifest_dict: dict) -> None:
     """Validate manifest dictionary has required fields."""
@@ -91,41 +128,3 @@ def validate_supplementary_files(files_dir: Path, pipeline_config: dict) -> List
             supp_files.append(file_path)
 
     return supp_files
-
-
-def validate_pipeline(files_dir: Path, pipeline_config: dict) -> Dict:
-    """Main validation function that returns validated objects."""
-    logger.info("Starting pipeline validation", data={"files_dir": str(files_dir)})
-
-    # 1. Check core required files
-    required_files = ["metadata.json", "manifest.json"]
-    for file_name in required_files:
-        validate_file_exists_and_not_empty(files_dir / file_name)
-
-    # 2. Validate manifest.json and metadata.json
-    manifest_dict = validate_json_file(files_dir / "manifest.json")
-    validate_manifest_vars(manifest_dict)
-    metadata_dict = validate_json_file(files_dir / "metadata.json")
-
-    # 3. Validate transform inputs
-    input_paths = validate_transform_inputs(files_dir, pipeline_config)
-
-    # 4. Validate config-required files
-    config_files = []
-    for pattern in get_matching_pattern(pipeline_config, "required_files"):
-        file_path = files_dir / pattern
-        validate_file_exists_and_not_empty(file_path)
-        config_files.append(file_path)
-
-    # 5. Validate supplementary files
-    supp_files = validate_supplementary_files(files_dir, pipeline_config)
-
-    logger.info("Pipeline validation completed successfully")
-
-    return {
-        "manifest": manifest_dict,
-        "metadata": metadata_dict,
-        "input_files": input_paths,
-        "config_files": config_files,
-        "supplementary_files": supp_files,
-    }
