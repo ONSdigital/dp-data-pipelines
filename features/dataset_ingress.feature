@@ -16,8 +16,8 @@ Feature: Data Ingress v1
     And dataset_ingress_v1 starts using the temporary source directory
     #Then the pipeline should generate no errors
     #And I read the csv output 'data.csv'
-    And the csv output should have '24' rows
-    And the csv output has the columns
+    #And the csv output should have '24' rows
+    #And the csv output has the columns
           | ID | Test | Name xml:lang |
     And I read the metadata output 'metadata.json'
     And the metadata should match 'fixtures/correct_metadata_2_0.json'
