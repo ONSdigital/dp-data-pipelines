@@ -25,10 +25,9 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
     for file_name in required_files:
         validate_file_exists_and_not_empty(files_dir / file_name)
 
-    # 2. Validate manifest.json and metadata.json
+    # 2. Validate manifest.json
     manifest_dict = validate_json_file(files_dir / "manifest.json")
     validate_manifest_vars(manifest_dict)
-    metadata_dict = validate_json_file(files_dir / "metadata.json")
 
     # 3. Validate transform inputs
     input_paths = validate_transform_inputs(files_dir, pipeline_config)
