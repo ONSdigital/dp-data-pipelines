@@ -57,11 +57,11 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
 def validate_file_exists_and_not_empty(file_path: Path) -> None:
     """Validate file exists and has content."""
     if not file_path.exists():
-        logger.error("Required file not found", error="FileNotFoundError", data={"file_path": str(file_path)})
+        logger.error("Required file not found", error=FileNotFoundError(), data={"file_path": str(file_path)})
         raise FileNotFoundError(f"Required file not found: {file_path}")
 
     if file_size_0(file_path, give_error=True):
-        logger.error("File is empty", error="ValueError", data={"file_path": str(file_path)})
+        logger.error("File is empty", error=ValueError(), data={"file_path": str(file_path)})
         raise ValueError(f"Required file is empty: {file_path}")
 
 
@@ -72,7 +72,7 @@ def validate_json_file(file_path: Path) -> dict:
             data = json.load(f)
         return data
     except json.JSONDecodeError as e:
-        logger.error("Invalid JSON format", error="JSONDecodeError", data={"file_path": str(file_path)})
+        logger.error("Invalid JSON format", error=e, data={"file_path": str(file_path)})
         raise ValueError(f"File is not valid JSON: {str(e)}")
 
 
@@ -84,7 +84,7 @@ def validate_manifest_vars(manifest_dict: dict) -> None:
     if missing_keys:
         logger.error(
             "Missing required manifest keys",
-            error="KeyError",
+            error=KeyError(),
             data={
                 "missing_keys": missing_keys,
                 "manifest_keys": list(manifest_dict.keys()),
@@ -96,7 +96,7 @@ def validate_manifest_vars(manifest_dict: dict) -> None:
     try:
         get_submitter_email(manifest_dict)
     except Exception as e:
-        logger.error("Invalid submitter email", error="ValueError", data={"manifest": manifest_dict})
+        logger.error("Invalid submitter email", error=e, data={"manifest": manifest_dict})
         raise ValueError(f"Invalid submitter email: {str(e)}")
 
 
@@ -113,7 +113,7 @@ def validate_transform_inputs(files_dir: Path, pipeline_config: dict) -> List[Pa
             logger.info("Sanity check passed", data={"file": str(file_path)})
             input_file_paths.append(file_path)
         except Exception as e:
-            logger.error("Sanity check failed", error="ValueError", data={"file": str(file_path)})
+            logger.error("Sanity check failed", error=e, data={"file": str(file_path)})
             raise ValueError(f"Sanity check failed for {file_path}: {str(e)}")
 
     return input_file_paths
