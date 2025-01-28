@@ -16,9 +16,6 @@ from dpypelines.pipeline.shared.email_templates import (
     supplementary_distribution_not_found_email,
 )
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
-from dpypelines.pipeline.shared.transforms.process_tranform_module import (
-    process_transform,
-)
 from dpypelines.pipeline.shared.utils import (
     get_email_client,
     get_mimetype,
