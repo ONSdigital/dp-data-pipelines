@@ -1,0 +1,60 @@
+{
+    "@context": {
+        "adms": "http://www.w3.org/ns/adms#",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "dcterms": "http://purl.org/dc/terms/",
+        "dqv": "http://www.w3.org/ns/dqv#",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "vcard": "http://www.w3.org/2006/vcard/ns#"
+    },
+    "@id": "dataset_id",
+    "@type": "dcat:DatasetSeries",
+    "dcterms:identifier": "cpih",
+    "dcterms:title": "dataset_title_string_required",
+    "dcterms:description": "dataset_description_string_required",
+    "dqv:hasQualityAnnotation": [
+        {
+            "dqv:QualityCertificate": "qmi.href_string_required"
+        }
+    ],
+    "dcat:contactPoint": [
+        {
+            "vcard:fn": "contact.name_string_required",
+            "vcard:hasEmail": "contact.email_string_required",
+            "vcard:hasTelephone": "contact.telephone_string"
+        }
+    ],
+    "dcterms:publisher": [
+        {
+            "TBC:type": "publisher.type_string_required",
+            "foaf:name": "publisher.name_string_required",
+            "foaf:homepage": "publisher.href_string_required"
+        }
+    ],
+    "TBC:edition": [
+        {
+            "@id": "edition.id_string",
+            "@type": "dcat:Dataset",
+            "dcterms:identifier": "edition.title_string_required",
+            "TBC:usage_notes": [
+                {
+                    "TBC:title": "usage_notes.title_string",
+                    "TBC:note": "usage_notes.note_string"
+                }
+            ],
+            "TBC:alerts": [
+                {
+                    "TBC:type": "AlertTypeEnum['correction','alert']",
+                    "adms:versionNotes": "alerts.description_string_required"
+                }
+            ],
+            "dcat:distribution": [
+                {
+                    "@id": "distribution.id_string",
+                    "dcterms:title": "distribution.title_string_required",
+                    "dcat:mediaType": "distribution.media_type_string_required"
+                }
+            ]
+        }
+    ]
+}

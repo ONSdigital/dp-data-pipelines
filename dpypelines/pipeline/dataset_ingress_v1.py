@@ -312,3 +312,4 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     email_content = submission_processed_email()
     email_client.send(submitter_email, email_content.subject, email_content.message)
     de_notifier.success()
+    return True
