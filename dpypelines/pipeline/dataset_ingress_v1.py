@@ -8,21 +8,22 @@ from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.shared.email_templates import (
-    failed_file_upload_email,
-    required_file_not_found_email,
     submission_processed_email,
     successful_file_upload_email,
     successful_validation_email,
-    supplementary_distribution_not_found_email,
 )
+from dpypelines.pipeline.shared.error_handler_module import error_handler
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
-from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
 from dpypelines.pipeline.shared.utils import (
     get_email_client,
     get_mimetype,
     get_submitter_email,
 )
-from dpypelines.pipeline.utils import get_notifier
+from dpypelines.pipeline.utils import (
+    get_dataset_api_client,
+    get_notifier,
+    get_value_from_metadata,
+)
 from dpypelines.pipeline.validate_ingest_files import (
     file_size_0,
     metadata_json_is_parseable,
@@ -43,6 +44,11 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Create notifier from webhook env var
     de_notifier = get_notifier()
 
+    # Create boolean variables for error handler, to allow easy setting
+    enable_notification = True
+    enable_logs = True
+    enable_email = True
+
     # Create local data store from files directory
     try:
         local_store = LocalDirectoryStore(files_dir)
@@ -55,22 +61,30 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 "files_in_directory": files_in_directory,
             },
         )
-    except Exception as err:
-        logger.error(
-            "Failed to create local data store from files directory",
-            err,
+    except Exception:
+        error_handler(
+            section="1.1",
+            error="Failed to create local data store from files directory",
             data={"files_directory": files_dir},
+            submitter_email="",
+            enable_email=enable_email,
+            enable_logs=enable_logs,
+            enable_notification=enable_notification,
         )
-        de_notifier.failure()
-        raise err
 
     # Retrieve manifest.json as dict from local store
     try:
         manifest_dict = local_store.get_lone_matching_json_as_dict("manifest.json")
-    except Exception as err:
-        logger.error("Failed to retrieve manifest.json", err)
-        de_notifier.failure()
-        raise err
+    except Exception:
+        error_handler(
+            section="1.1",
+            error="Failed to retrieve manifest.json",
+            data=None,
+            submitter_email="",
+            enable_email=enable_email,
+            enable_logs=enable_logs,
+            enable_notification=enable_notification,
+        )
 
     # Retrieve submitter email from manifest_dict and create email client from env var
     try:
@@ -80,10 +94,16 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             "Submitter email received, email client created",
             data={"email_client": email_client},
         )
-    except Exception as err:
-        logger.error("Failed to create email client", err)
-        de_notifier.failure()
-        raise err
+    except Exception:
+        error_handler(
+            section="1.1",
+            error="Failed to create email client",
+            data=None,
+            submitter_email="No submitter email acquired",
+            enable_email=enable_email,
+            enable_logs=enable_logs,
+            enable_notification=enable_notification,
+        )
 
     # Validate existence of each file in the directory and that it is not empty
     for file in files_in_directory:
@@ -105,17 +125,39 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
     skip_data_upload = str_to_bool(skip_data_upload)
 
-    # Retrieve Upload Service URL from environment variable
+    # Retrieve Upload Service and Dataset API URLs from environment variables
     if not skip_data_upload:
         try:
             upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
             assert (
                 upload_url is not None
             ), "UPLOAD_SERVICE_URL environment variable not set"
-        except Exception as err:
-            logger.error("Failed to retrieve Upload Service URL", err)
-            de_notifier.failure()
-            raise err
+        except Exception:
+            error_handler(
+                section="1.1",
+                error="Failed to retrieve Upload Service URL",
+                data=None,
+                submitter_email=submitter_email,
+                enable_email=enable_email,
+                enable_logs=enable_logs,
+                enable_notification=enable_notification,
+            )
+
+        try:
+            dataset_api_url = os.environ.get("DATASET_API_URL", None)
+            assert (
+                dataset_api_url is not None
+            ), "DATASET_API_URL environment variable is not set"
+        except Exception:
+            error_handler(
+                section="1.1",
+                error="Failed to retrieve Dataset API URL",
+                data=None,
+                submitter_email=submitter_email,
+                enable_email=enable_email,
+                enable_logs=enable_logs,
+                enable_notification=enable_notification,
+            )
 
     # Extract the patterns for required files from the pipeline configuration
     required_file_patterns = get_matching_pattern(pipeline_config, "required_files")
@@ -130,23 +172,20 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Check that all required files are present in the local store
     for required_file in required_file_patterns:
         if not local_store.has_lone_file_matching(required_file):
-            email_content = required_file_not_found_email(required_file)
-            email_client.send(
-                submitter_email, email_content.subject, email_content.message
-            )
-            err = FileNotFoundError(f"No file found matching pattern {required_file}")
-            logger.error(
-                "Required file not found",
-                err,
+            error_handler(
+                section="1.1",
+                error="Required file not found",
                 data={
                     "required_file": required_file,
                     "required_file_patterns": required_file_patterns,
                     "files_in_directory": files_in_directory,
                     "pipeline_config": pipeline_config,
                 },
+                submitter_email=submitter_email,
+                enable_email=enable_email,
+                enable_logs=enable_logs,
+                enable_notification=enable_notification,
             )
-            de_notifier.failure()
-            raise err
 
     # Extract the patterns for supplementary distributions from the pipeline configuration
     supp_dist_patterns = get_matching_pattern(
@@ -160,123 +199,20 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Check for the existence of each supplementary distribution
     for supp_dist_pattern in supp_dist_patterns:
         if not local_store.has_lone_file_matching(supp_dist_pattern):
-            err = FileNotFoundError(
-                f"No file found matching pattern {supp_dist_pattern}"
-            )
-            email_content = supplementary_distribution_not_found_email(
-                supp_dist_pattern
-            )
-            email_client.send(
-                submitter_email, email_content.subject, email_content.message
-            )
-            logger.error(
-                "Supplementary distribution not found.",
-                err,
+            error_handler(
+                section="1.1",
+                error="Supplementary distribution not found.",
                 data={
                     "supplementary_distribution": supp_dist_pattern,
                     "supplementary_distribution_patterns": supp_dist_patterns,
                     "files_in_directory": files_in_directory,
                     "pipeline_config": pipeline_config,
                 },
+                submitter_email=submitter_email,
+                enable_email=enable_email,
+                enable_logs=enable_logs,
+                enable_notification=enable_notification,
             )
-            de_notifier.failure()
-            raise err
-
-    # Get the transform inputs from the pipeline_config and run the specified sanity checker for it
-    input_file_paths = []
-    transform_inputs = get_transform_details(pipeline_config, "transform_inputs")
-
-    for pattern, sanity_checker in transform_inputs.items():
-        try:
-            input_file_path: Path = local_store.get_pathlike_of_file_matching(pattern)
-            logger.info(
-                "Retrieved input file that matches pattern",
-                data={
-                    "input_file_path": input_file_path,
-                    "pattern": pattern,
-                    "files_in_directory": files_in_directory,
-                },
-            )
-        except Exception as err:
-            logger.error(
-                "Failed to retrieve input file matching pattern",
-                err,
-                data={
-                    "pattern": pattern,
-                    "files_in_directory": files_in_directory,
-                    "pipeline_config": pipeline_config,
-                },
-            )
-
-            de_notifier.failure()
-            raise err
-
-        try:
-            sanity_checker(input_file_path)
-            logger.info(
-                "Sanity check run on input file path.",
-                data={
-                    "sanity_checker": sanity_checker,
-                    "input_file_path": input_file_path,
-                },
-            )
-        except Exception as err:
-            logger.error(
-                "Error occurred when running sanity checker on input file path.",
-                err,
-                data={
-                    "input_file_path": input_file_path,
-                    "files_in_directory": files_in_directory,
-                    "pipeline_config": pipeline_config,
-                },
-            )
-
-            de_notifier.failure()
-            raise err
-
-        input_file_paths.append(input_file_path)
-
-    # Get the transform function from pipeline config
-    transform_function = get_transform_details(pipeline_config, "transform")
-    # Get transform keyword arguments (kwargs) from pipeline config
-    transform_kwargs = get_transform_details(pipeline_config, "transform_kwargs")
-    logger.info(
-        "Retrieved transform function and transform_kwargs from pipeline config",
-        data={
-            "transform_function": transform_function,
-            "transform_kwargs": transform_kwargs,
-            "input_file_paths": input_file_paths,
-        },
-    )
-
-    try:
-        csv_path, metadata_path = transform_function(
-            *input_file_paths, **transform_kwargs
-        )
-        logger.info(
-            "Transform function executed successfully",
-            data={
-                "transform_function": transform_function,
-                "input_file_paths": input_file_paths,
-                "transform_kwargs": transform_kwargs,
-                "csv_path": csv_path,
-                "metadata_path": metadata_path,
-            },
-        )
-
-    except Exception as err:
-        logger.error(
-            "Transform function execution failed",
-            err,
-            data={
-                "transform_function": transform_function,
-                "input_file_paths": input_file_paths,
-                "transform_kwargs": transform_kwargs,
-                "pipeline_config": pipeline_config,
-            },
-        )
-        de_notifier.failure()
-        raise err
 
     # TODO - validate the metadata once we have a schema for it.
 
@@ -287,44 +223,49 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         try:
             # Create UploadClient from upload_url
             upload_client = UploadServiceClient(upload_url)
-        except Exception as err:
-            logger.error(
-                "Failed to create UploadClient",
-                err,
+        except Exception:
+            error_handler(
+                section="1.1",
+                error="Failed to create UploadClient",
                 data={"upload_url": upload_url},
+                submitter_email=submitter_email,
+                enable_email=enable_email,
+                enable_logs=enable_logs,
+                enable_notification=enable_notification,
             )
-            de_notifier.failure()
-            raise err
 
         try:
-            # Upload CSV to Upload Service
-            upload_client.upload_new(csv_path, "text/csv")
-            logger.info(
-                "CSV uploaded to Upload Service",
-                data={
-                    "csv_path": csv_path,
-                    "upload_url": upload_url,
-                },
+            for required_file_path in required_file_patterns:
+                mimetype = get_mimetype(Path(required_file_path).suffix)
+                if mimetype:
+                    upload_client.upload_new(required_file_path, mimetype)
+                else:
+                    raise NotImplementedError(
+                        f"Uploading file type {Path(required_file_path).suffix} not currently supported."
+                    )
+                logger.info(
+                    "File uploaded",
+                    data={
+                        "file_path": required_file_path,
+                        "upload_url": upload_url,
+                    },
+                )
+                email_content = successful_file_upload_email(
+                    Path(required_file_path).name
+                )
+                email_client.send(
+                    submitter_email, email_content.subject, email_content.message
+                )
+        except Exception:
+            error_handler(
+                section="1.1",
+                error="Failed to upload file",
+                data={"file_path": required_file_path},
+                submitter_email=submitter_email,
+                enable_email=enable_email,
+                enable_logs=enable_logs,
+                enable_notification=enable_notification,
             )
-            email_content = successful_file_upload_email(csv_path.name)
-            email_client.send(
-                submitter_email, email_content.subject, email_content.message
-            )
-        except Exception as err:
-            logger.error(
-                "Failed to upload CSV file to Upload Service",
-                err,
-                data={
-                    "csv_path": csv_path,
-                    "upload_url": upload_url,
-                },
-            )
-            de_notifier.failure()
-            email_content = failed_file_upload_email(csv_path.name, str(err))
-            email_client.send(
-                submitter_email, email_content.subject, email_content.message
-            )
-            raise err
 
         # Check for supplementary distributions to upload
         if supp_dist_patterns:
@@ -372,24 +313,66 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     email_client.send(
                         submitter_email, email_content.subject, email_content.message
                     )
-                except Exception as err:
-                    logger.error(
-                        "Failed to upload supplementary distribution",
-                        err,
+                except Exception:
+                    error_handler(
+                        section="1.1",
+                        error="Failed to upload supplementary distribution",
                         data={
                             "supplementary_distribution": supp_dist_path,
                             "upload_url": upload_url,
                         },
+                        submitter_email=submitter_email,
+                        enable_email=enable_email,
+                        enable_logs=enable_logs,
+                        enable_notification=enable_notification,
                     )
-                    de_notifier.failure()
-                    email_content = failed_file_upload_email(
-                        supp_dist_path.name, str(err)
-                    )
-                    email_client.send(
-                        submitter_email, email_content.subject, email_content.message
-                    )
-                    raise err
+
+        # Submit metadata to Dataset API
+        try:
+            metadata = local_store.get_lone_matching_json_as_dict("^metadata.json$")
+            logger.info(
+                "Retrieved metadata.json",
+                data={"metadata": metadata},
+            )
+        except Exception as err:
+            logger.error("Failed to retrieve metadata.json", err)
+            de_notifier.failure()
+            raise err
+
+        # Get dataset_id from metadata and create DatasetAPIClient
+        dataset_id = get_value_from_metadata(metadata, "dcterms:identifier")
+        dataset_api_client = get_dataset_api_client(dataset_api_url, dataset_id)
+
+        # Check that the Dataset API endpoint exists
+        try:
+            dataset_api_response = dataset_api_client.get_path()
+            # 2423 Q: do we need to handle the difference between a nonsense dataset_id (i.e. one that shouldn't exist) and a valid dataset_id that doesn't yet exist in the Dataset API? Or will this be done within the API?
+            if dataset_api_response.status_code == 404:
+                # 2423 TODO This doesn't actually print, because the error is handled in BaseHTTPClient._handle_request()
+                print(
+                    "Dataset ID does not exist in Dataset API - submit POST request to add new dataset"
+                )
+            elif dataset_api_response.status_code == 200:
+                print(
+                    "Dataset ID exists in Dataset API - submit PUT request to update existing dataset"
+                )
+            else:
+                print("Unhandled status code")
+        except Exception:
+            error_handler(
+                section="1.1",
+                error="Error getting Dataset API path for given dataset_id",
+                data={
+                    "dataset_api_url": dataset_api_url,
+                    "dataset_id": dataset_id,
+                },
+                submitter_email=submitter_email,
+                enable_email=enable_email,
+                enable_logs=enable_logs,
+                enable_notification=enable_notification,
+            )
 
     email_content = submission_processed_email()
     email_client.send(submitter_email, email_content.subject, email_content.message)
     de_notifier.success()
+    return True

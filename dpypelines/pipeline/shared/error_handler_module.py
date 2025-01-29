@@ -18,7 +18,7 @@ def error_handler(
     enable_notification: bool = True,
 ):
     """
-    This funciton handles the errors.
+    This function handles the errors.
 
     Arguments:
     section (str): The section of the ETL pipeline where the error occurred.
@@ -33,12 +33,12 @@ def error_handler(
     # Log errors if the `surpress_logs is set to false
     if enable_logs:
         if data:
-            logger.error(f"Error in section: {section} {error}", data=data)
+            logger.info(f"Error in section: {section} {error}", data=data)
         else:
-            logger.error(f"Error in section: {section} {error}")
+            logger.info(f"Error in section: {section} {error}")
 
     # Send email notification if `surpress_email` is set to false
-    if enable_email:
+    if submitter_email and enable_email:
         send_error_email(section, error, submitter_email, data)
 
     # Send system notifiations if `surpress_notification` is set to false
@@ -48,6 +48,8 @@ def error_handler(
             notifier.failure()
         except Exception as notification_err:
             logger.error("Failed to trigger system notifications", notification_err)
+
+    raise Exception(error)
 
 
 def send_error_email(

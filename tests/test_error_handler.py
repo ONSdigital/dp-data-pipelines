@@ -24,18 +24,21 @@ class TestErrorHandler:
     ):
         """Testing if all arguments provided the then the function works as intended."""
 
-        error_handler(
-            section="1.2.1",
-            error="This is a Test Error",
-            data={"TestKey": "Test value"},
-            submitter_email="test@gmail.com",
-            enable_email=True,
-            enable_logs=True,
-            enable_notification=True,
-        )
+        with pytest.raises(Exception) as err:
+            error_handler(
+                section="1.2.1",
+                error="This is a Test Error",
+                data={"TestKey": "Test value"},
+                submitter_email="test@gmail.com",
+                enable_email=True,
+                enable_logs=True,
+                enable_notification=True,
+            )
+
+        assert str(err.value) == "This is a Test Error"
 
         # Test logger usage
-        mock_logger.error.assert_called_once_with(
+        mock_logger.info.assert_called_once_with(
             "Error in section: 1.2.1 This is a Test Error",
             data={"TestKey": "Test value"},
         )
@@ -55,18 +58,21 @@ class TestErrorHandler:
     ):
         """Testing if not providing `data` which is optional, the function still works as intended."""
 
-        error_handler(
-            section="1.2.1",
-            error="This is a Test Error",
-            data=None,
-            submitter_email="test@gmail.com",
-            enable_email=True,
-            enable_logs=True,
-            enable_notification=True,
-        )
+        with pytest.raises(Exception) as err:
+            error_handler(
+                section="1.2.1",
+                error="This is a Test Error",
+                data=None,
+                submitter_email="test@gmail.com",
+                enable_email=True,
+                enable_logs=True,
+                enable_notification=True,
+            )
+
+        assert str(err.value) == "This is a Test Error"
 
         # Test logger usage
-        mock_logger.error.assert_called_once_with(
+        mock_logger.info.assert_called_once_with(
             "Error in section: 1.2.1 This is a Test Error"
         )
 

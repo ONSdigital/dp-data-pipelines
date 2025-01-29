@@ -19,10 +19,8 @@ from dpypelines.pipeline.shared.utils import (
     get_submitter_email,
 )
 from dpypelines.pipeline.utils import (
-    get_dataset_api_client,
     get_notifier,
     get_upload_service_client,
-    get_value_from_metadata,
 )
 from dpypelines.pipeline.validate_ingest_files import (
     file_size_0,
@@ -181,15 +179,6 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
             logger.error("Failed to retrieve Upload Service URL", err)
             de_notifier.failure()
             raise err
-        try:
-            dataset_api_url = os.environ.get("DATASET_API_URL", None)
-            assert (
-                dataset_api_url is not None
-            ), "DATASET_API_URL environment variable is not set"
-        except Exception as err:
-            logger.error("Failed to retrieve Dataset API URL", err)
-            de_notifier.failure()
-            raise err
 
     # Extract the patterns for required files from the pipeline configuration
     try:
@@ -296,46 +285,6 @@ def generic_file_ingress_v1(files_dir: str, pipeline_config: dict):
                     submitter_email, email_content.subject, email_content.message
                 )
                 raise err
-
-        # Submit metadata to Dataset API
-        try:
-            metadata = local_store.get_lone_matching_json_as_dict("^metadata.json$")
-            logger.info(
-                "Retrieved metadata.json",
-                data={"metadata": metadata},
-            )
-        except Exception as err:
-            logger.error("Failed to retrieve metadata.json", err)
-            de_notifier.failure()
-            raise err
-
-        # Get dataset_id from metadata and create DatasetAPIClient
-        dataset_id = get_value_from_metadata(metadata, "dcterms:identifier")
-        dataset_api_client = get_dataset_api_client(dataset_api_url, dataset_id)
-
-        # Check that the Dataset API endpoint exists
-        try:
-            dataset_api_response = dataset_api_client.get_path()
-            # 2423 Q: do we need to handle the difference between a nonsense dataset_id (i.e. one that shouldn't exist) and a valid dataset_id that doesn't yet exist in the Dataset API? Or will this be done within the API?
-            if dataset_api_response.status_code == 404:
-                # 2423 TODO This doesn't actually print, because the error is handled in BaseHTTPClient._handle_request()
-                print(
-                    "Dataset ID does not exist in Dataset API - submit POST request to add new dataset"
-                )
-            elif dataset_api_response.status_code == 200:
-                print(
-                    "Dataset ID exists in Dataset API - submit PUT request to update existing dataset"
-                )
-            else:
-                print("Unhandled status code")
-        except Exception as err:
-            logger.error(
-                "Error getting Dataset API path for given dataset_id",
-                err,
-                data={"dataset_api_url": dataset_api_url, "dataset_id": dataset_id},
-            )
-            de_notifier.failure()
-            raise err
 
     email_content = submission_processed_email()
     email_client.send(submitter_email, email_content.subject, email_content.message)
