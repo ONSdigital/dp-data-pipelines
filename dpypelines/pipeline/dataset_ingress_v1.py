@@ -14,7 +14,6 @@ from dpypelines.pipeline.shared.email_templates import (
 )
 from dpypelines.pipeline.shared.error_handler_module import error_handler
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
-from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
 from dpypelines.pipeline.shared.utils import (
     get_email_client,
     get_mimetype,
@@ -197,106 +196,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 enable_notification=enable_notification,
             )
 
-    # Get the transform inputs from the pipeline_config and run the specified sanity checker for it
-    input_file_paths = []
-    transform_inputs = get_transform_details(pipeline_config, "transform_inputs")
-
-    for pattern, sanity_checker in transform_inputs.items():
-        try:
-            input_file_path: Path = local_store.get_pathlike_of_file_matching(pattern)
-            logger.info(
-                "Retrieved input file that matches pattern",
-                data={
-                    "input_file_path": input_file_path,
-                    "pattern": pattern,
-                    "files_in_directory": files_in_directory,
-                },
-            )
-        except Exception:
-            error_handler(
-                section="1.1",
-                error="Failed to retrieve input file matching pattern",
-                data={
-                    "pattern": pattern,
-                    "files_in_directory": files_in_directory,
-                    "pipeline_config": pipeline_config,
-                },
-                submitter_email=submitter_email,
-                enable_email=enable_email,
-                enable_logs=enable_logs,
-                enable_notification=enable_notification,
-            )
-
-        try:
-            sanity_checker(input_file_path)
-            logger.info(
-                "Sanity check run on input file path.",
-                data={
-                    "sanity_checker": sanity_checker,
-                    "input_file_path": input_file_path,
-                },
-            )
-        except Exception:
-            error_handler(
-                section="1.1",
-                error="Error occurred when running sanity checker on input file path.",
-                data={
-                    "input_file_path": input_file_path,
-                    "files_in_directory": files_in_directory,
-                    "pipeline_config": pipeline_config,
-                },
-                submitter_email=submitter_email,
-                enable_email=enable_email,
-                enable_logs=enable_logs,
-                enable_notification=enable_notification,
-            )
-
-        input_file_paths.append(input_file_path)
-
-    # Get the transform function from pipeline config
-    transform_function = get_transform_details(pipeline_config, "transform")
-    # Get transform keyword arguments (kwargs) from pipeline config
-    transform_kwargs = get_transform_details(pipeline_config, "transform_kwargs")
-    logger.info(
-        "Retrieved transform function and transform_kwargs from pipeline config",
-        data={
-            "transform_function": transform_function,
-            "transform_kwargs": transform_kwargs,
-            "input_file_paths": input_file_paths,
-        },
-    )
-
-    try:
-        csv_path, metadata_path = transform_function(
-            *input_file_paths, **transform_kwargs
-        )
-        logger.info(
-            "Transform function executed successfully",
-            data={
-                "transform_function": transform_function,
-                "input_file_paths": input_file_paths,
-                "transform_kwargs": transform_kwargs,
-                "csv_path": csv_path,
-                "metadata_path": metadata_path,
-            },
-        )
-
-    except Exception:
-        error_handler(
-            section="1.1",
-            error="Transform function execution failed",
-            data={
-                "transform_function": transform_function,
-                "input_file_paths": input_file_paths,
-                "transform_kwargs": transform_kwargs,
-                "pipeline_config": pipeline_config,
-            },
-            submitter_email=submitter_email,
-            enable_email=enable_email,
-            enable_logs=enable_logs,
-            enable_notification=enable_notification,
-        )
-
     # TODO - validate the metadata once we have a schema for it.
 
     # TODO - validate the csv once we know what we're validating
@@ -318,27 +217,32 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             )
 
         try:
-            # Upload CSV to Upload Service
-            upload_client.upload_new(csv_path, "text/csv")
-            logger.info(
-                "CSV uploaded to Upload Service",
-                data={
-                    "csv_path": csv_path,
-                    "upload_url": upload_url,
-                },
-            )
-            email_content = successful_file_upload_email(csv_path.name)
-            email_client.send(
-                submitter_email, email_content.subject, email_content.message
-            )
+            for required_file_path in required_file_patterns:
+                mimetype = get_mimetype(Path(required_file_path).suffix)
+                if mimetype:
+                    upload_client.upload_new(required_file_path, mimetype)
+                else:
+                    raise NotImplementedError(
+                        f"Uploading file type {Path(required_file_path).suffix} not currently supported."
+                    )
+                logger.info(
+                    "File uploaded",
+                    data={
+                        "file_path": required_file_path,
+                        "upload_url": upload_url,
+                    },
+                )
+                email_content = successful_file_upload_email(
+                    Path(required_file_path).name
+                )
+                email_client.send(
+                    submitter_email, email_content.subject, email_content.message
+                )
         except Exception:
             error_handler(
                 section="1.1",
-                error="Failed to upload CSV file to Upload Service",
-                data={
-                    "csv_path": csv_path,
-                    "upload_url": upload_url,
-                },
+                error="Failed to upload file",
+                data={"file_path": required_file_path},
                 submitter_email=submitter_email,
                 enable_email=enable_email,
                 enable_logs=enable_logs,

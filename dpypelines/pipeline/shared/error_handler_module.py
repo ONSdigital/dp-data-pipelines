@@ -33,9 +33,9 @@ def error_handler(
     # Log errors if the `surpress_logs is set to false
     if enable_logs:
         if data:
-            logger.error(f"Error in section: {section} {error}", data=data)
+            logger.info(f"Error in section: {section} {error}", data=data)
         else:
-            logger.error(f"Error in section: {section} {error}")
+            logger.info(f"Error in section: {section} {error}")
 
     # Send email notification if `surpress_email` is set to false
     if submitter_email and enable_email:
