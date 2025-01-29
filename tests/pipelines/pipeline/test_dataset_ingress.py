@@ -1,8 +1,8 @@
 from pathlib import Path
-from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
-from dpypelines.pipeline.generic_file_ingress_v1 import generic_file_ingress_v1
 
 import pytest
+
+from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 
 test_cases_base_dir = Path("tests/fixtures/test-cases/dataset_ingress_v1")
 
