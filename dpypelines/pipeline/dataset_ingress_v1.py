@@ -8,7 +8,6 @@ from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.shared.email_templates import (
-    failed_file_upload_email,
     submission_processed_email,
     successful_file_upload_email,
     successful_validation_email,
