@@ -216,42 +216,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 enable_logs=enable_logs,
                 enable_notification=enable_notification,
             )
-        """ 
-
-        try:
-            # Upload CSV to Upload Service
-            upload_client.upload_new(csv_path, "text/csv")
-            logger.info(
-                "CSV uploaded to Upload Service",
-                data={
-                    "csv_path": csv_path,
-                    "upload_url": upload_url,
-                },
-            )
-            email_content = successful_file_upload_email(csv_path.name)
-            email_client.send(
-                submitter_email, email_content.subject, email_content.message
-            )
-        except Exception:
-            error_handler(
-                section="1.1",
-                error="Failed to upload CSV file to Upload Service",
-                data={
-                    "csv_path": csv_path,
-                    "upload_url": upload_url,
-                },
-                submitter_email=submitter_email,
-                enable_email=enable_email,
-                enable_logs=enable_logs,
-                enable_notification=enable_notification,
-            )
-            de_notifier.failure()
-            email_content = failed_file_upload_email(csv_path.name, str(err))
-            email_client.send(
-                submitter_email, email_content.subject, email_content.message
-            )
-            raise err 
-            """
 
         try:
             for required_file_path in required_file_patterns:
@@ -275,18 +239,16 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 email_client.send(
                     submitter_email, email_content.subject, email_content.message
                 )
-        except Exception as err:
-            logger.error(
-                "Failed to upload file",
-                err,
+        except Exception:
+            error_handler(
+                section="1.1",
+                error="Failed to upload file",
                 data={"file_path": required_file_path},
+                submitter_email=submitter_email,
+                enable_email=enable_email,
+                enable_logs=enable_logs,
+                enable_notification=enable_notification,
             )
-            de_notifier.failure()
-            email_content = failed_file_upload_email(required_file, str(err))
-            email_client.send(
-                submitter_email, email_content.subject, email_content.message
-            )
-            raise err
 
         # Check for supplementary distributions to upload
         if supp_dist_patterns:
