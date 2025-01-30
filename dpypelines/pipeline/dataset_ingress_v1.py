@@ -2,8 +2,8 @@ import os
 import re
 from pathlib import Path
 
-from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.http.api.dataset_api_client import DatasetAPIClient
+from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
@@ -21,7 +21,6 @@ from dpypelines.pipeline.shared.utils import (
     get_submitter_email,
 )
 from dpypelines.pipeline.utils import (
-    get_dataset_api_client,
     get_notifier,
     get_value_from_metadata,
 )
