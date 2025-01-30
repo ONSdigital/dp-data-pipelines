@@ -235,7 +235,10 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             )
 
         try:
-            for required_file_path in required_file_patterns:
+            for required_file_pattern in required_file_patterns:
+                required_file_path = local_store.get_pathlike_of_file_matching(
+                    required_file_pattern
+                )
                 mimetype = get_mimetype(Path(required_file_path).suffix)
                 if mimetype:
                     upload_client.upload_new(required_file_path, mimetype)
@@ -251,7 +254,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     },
                 )
                 email_content = successful_file_upload_email(
-                    Path(required_file_path).name
+                    Path(required_file_pattern).name
                 )
                 email_client.send(
                     submitter_email, email_content.subject, email_content.message
@@ -281,7 +284,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     len(supp_dist_matching_files) == 1
                 ), f"Error finding file matching pattern {supp_dist_pattern}: matching files are {supp_dist_matching_files}"
 
-                # Create a directory to save supplementary distribution
+                # Get filepath of supplementary distribution in local store
                 supp_dist_path = local_store.get_pathlike_of_file_matching(
                     supp_dist_pattern
                 )
@@ -340,15 +343,16 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             raise err
 
         # Get dataset_id from metadata and create DatasetAPIClient
+        # 2423 TODO This is based on the understanding that the dataset_id will be the value associated with the dcterms:identifier predicate in metadata.json
         dataset_id = get_value_from_metadata(metadata, "dcterms:identifier")
         dataset_api_client = get_dataset_api_client(dataset_api_url, dataset_id)
 
         # Check that the Dataset API endpoint exists
         try:
             dataset_api_response = dataset_api_client.get_path()
-            # 2423 Q: do we need to handle the difference between a nonsense dataset_id (i.e. one that shouldn't exist) and a valid dataset_id that doesn't yet exist in the Dataset API? Or will this be done within the API?
+            # 2423 TODO do we need to handle the difference between a nonsense dataset_id (i.e. one that shouldn't exist) and a valid dataset_id that doesn't yet exist in the Dataset API? Or will this be done within the API?
             if dataset_api_response.status_code == 404:
-                # 2423 TODO This doesn't actually print, because the error is handled in BaseHTTPClient._handle_request()
+                # 2423 TODO This doesn't actually print, because of how the error is handled in BaseHTTPClient._handle_request()
                 print(
                     "Dataset ID does not exist in Dataset API - submit POST request to add new dataset"
                 )
