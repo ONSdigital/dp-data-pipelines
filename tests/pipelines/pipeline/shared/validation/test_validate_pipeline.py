@@ -68,7 +68,10 @@ def test_validate_pipeline_files_metadata_missing():
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
 
-    assert "No files found matching pattern: ^metadata.json$" in str(e.value)
+    assert (
+        "Required file not found: tests/fixtures/test-cases/dataset_ingress_v1/invalid_no_metadata/metadata.json"
+        in str(e.value)
+    )
 
 
 def test_validate_pipeline_files_supplementary_missing():

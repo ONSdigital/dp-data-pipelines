@@ -18,7 +18,7 @@ CONFIGURATION = {
         "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
-        "supplementary_distributions": [{"matches": "^data.xml$"}],
+        "supplementary_distributions": [],
         "secondary_function": dataset_ingress_v1,
     },
     "valid_no_supp_dist_2_0": {

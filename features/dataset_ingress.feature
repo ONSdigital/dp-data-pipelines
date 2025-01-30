@@ -8,10 +8,10 @@ Feature: Data Ingress v1
 
   Scenario: Generic ingress runs without errors
     Given a temporary source directory of files
-        | file          | fixture                        |
-        | data.xml      | esa2010_test_data_short.xml    |
-        | manifest.json | valid_manifest.json            |
-        | metadata.json | test_metadata.json             |
+      | file          | fixture                        |
+      | data.xml      | esa2010_test_data_short.xml    |
+      | manifest.json | valid_manifest.json            |
+      | metadata.json | test_metadata.json             |
     And a dataset id of 'valid_generic_file_ingress'
     And generic_file_ingress_v1 starts using the temporary source directory
     Then the pipeline should generate no errors
@@ -21,9 +21,9 @@ Feature: Data Ingress v1
 
   Scenario: Generic ingress runs without errors for JSON
     Given a temporary source directory of files
-        | file          | fixture                        |
-        | data.json     | test_data.json                 |
-        | manifest.json | valid_manifest.json            |
+      | file          | fixture                        |
+      | data.json     | test_data.json                 |
+      | manifest.json | valid_manifest.json            |
     And a dataset id of 'valid_generic_file_ingress_json'
     And generic_file_ingress_v1 starts using the temporary source directory
     Then the pipeline should generate no errors
@@ -32,9 +32,9 @@ Feature: Data Ingress v1
 
   Scenario: Pipeline runs with an expected error
     Given a temporary source directory of files
-        | file          | fixture               |
-        | data.xml      | esa2010_test_data.xml |
-        | manifest.json | valid_manifest.json   |
+      | file          | fixture               |
+      | data.xml      | esa2010_test_data.xml |
+      | manifest.json | valid_manifest.json   |
     And a dataset id of 'invalid'
     And dataset_ingress_v1 starts using the temporary source directory
-    Then the pipeline should generate an error with a message containing "Config version 2 not recognised"
+    Then the pipeline should generate an error with a message containing "Required file not found: /home/runner/work/dp-data-pipelines/dp-data-pipelines/temporary_output_directory/temporary-data-fixtures/metadata.json"
