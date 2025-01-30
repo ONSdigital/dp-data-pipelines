@@ -197,7 +197,8 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     enable_logs=enable_logs,
                     enable_notification=enable_notification,
                 )
-    except:
+    except Exception:
+        # Continuing to data upload.
         pass
 
     # TODO - validate the metadata once we have a schema for it.
