@@ -13,13 +13,14 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
     Main validation function that returns validated objects.
     """
     # 1. Check core required files
-    required_files = ["manifest.json"]
+    required_files = ["metadata.json", "manifest.json"]
     for file_name in required_files:
         validate_file_exists_and_not_empty(files_dir / file_name)
 
-    # 2. Validate manifest.json
+    # 2. Validate manifest.json and metadata.json
     manifest_dict = validate_json_file(files_dir / "manifest.json")
     validate_manifest_vars(manifest_dict)
+    metadata_dict = validate_json_file(files_dir / "metadata.json")
 
     # 3. Validate config-required files
     config_files = []
@@ -35,6 +36,7 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
 
     return {
         "manifest": manifest_dict,
+        "metadata": metadata_dict,
         "input_files": config_files,
         "config_files": config_files,
         "supplementary_files": supplementary_files,
