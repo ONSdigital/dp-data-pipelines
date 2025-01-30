@@ -13,7 +13,7 @@ Feature: Data Ingress v1
         | manifest.json | valid_manifest.json            |
         | metadata.json | test_metadata.json             |
     And a dataset id of 'valid_generic_file_ingress'
-    And generic_file_ingress_v1 starts using the temporary source directory
+    And dataset_ingress_v1 starts using the temporary source directory
     Then the pipeline should generate no errors
     Then I read the xml output 'data.xml'
     And the xml output should have length '3895'
@@ -25,7 +25,7 @@ Feature: Data Ingress v1
         | data.json     | test_data.json                 |
         | manifest.json | valid_manifest.json            |
     And a dataset id of 'valid_generic_file_ingress_json'
-    And generic_file_ingress_v1 starts using the temporary source directory
+    And dataset_ingress_v1 starts using the temporary source directory
     Then the pipeline should generate no errors
     Then I read the json output 'data.json'
     And the json output contains 'test'

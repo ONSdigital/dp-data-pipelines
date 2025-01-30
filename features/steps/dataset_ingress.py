@@ -4,7 +4,6 @@ import pandas as pd
 from behave import *
 from dictdiffer import diff
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
-from dpypelines.pipeline.generic_file_ingress_v1 import generic_file_ingress_v1
 from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
     sdmx_compact_2_0_prototype_1,
     sdmx_compact_2_1_prototype,
@@ -50,7 +49,7 @@ CONFIGURATION = {
             {"matches": "^metadata.json$"},
         ],
         "supplementary_distributions": [],
-        "secondary_function": generic_file_ingress_v1,
+        "secondary_function": dataset_ingress_v1,
     },
     "valid_generic_file_ingress_json": {
         "config_version": 1,
@@ -59,7 +58,7 @@ CONFIGURATION = {
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.json$"}],
         "supplementary_distributions": [],
-        "secondary_function": generic_file_ingress_v1,
+        "secondary_function": dataset_ingress_v1,
     },
     "invalid": {
         "config_version": 2,
@@ -105,17 +104,6 @@ def step_impl(context, source_id):
 def step_impl(context):
     try:
         dataset_ingress_v1(
-            context.temporary_directory.absolute(), context.pipeline_config
-        )
-        context.exception = None
-    except Exception as exc:
-        context.exception = exc
-
-
-@given("generic_file_ingress_v1 starts using the temporary source directory")
-def step_impl(context):
-    try:
-        generic_file_ingress_v1(
             context.temporary_directory.absolute(), context.pipeline_config
         )
         context.exception = None

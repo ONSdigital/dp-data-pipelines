@@ -170,31 +170,35 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             )
 
     # Extract the patterns for supplementary distributions from the pipeline configuration
-    supp_dist_patterns = get_matching_pattern(
-        pipeline_config, "supplementary_distributions"
-    )
-    logger.info(
-        "Retrieved supplementary distribution patterns from pipeline config",
-        data={"supplementary_distribution_patterns": supp_dist_patterns},
-    )
+    # For now, we don't do this if we are running on a generic file input. If it fails, continue on to upload as if it is a generic file.
+    try:
+        supp_dist_patterns = get_matching_pattern(
+            pipeline_config, "supplementary_distributions"
+        )
+        logger.info(
+            "Retrieved supplementary distribution patterns from pipeline config",
+            data={"supplementary_distribution_patterns": supp_dist_patterns},
+        )
 
-    # Check for the existence of each supplementary distribution
-    for supp_dist_pattern in supp_dist_patterns:
-        if not local_store.has_lone_file_matching(supp_dist_pattern):
-            error_handler(
-                section="1.1",
-                error="Supplementary distribution not found.",
-                data={
-                    "supplementary_distribution": supp_dist_pattern,
-                    "supplementary_distribution_patterns": supp_dist_patterns,
-                    "files_in_directory": files_in_directory,
-                    "pipeline_config": pipeline_config,
-                },
-                submitter_email=submitter_email,
-                enable_email=enable_email,
-                enable_logs=enable_logs,
-                enable_notification=enable_notification,
-            )
+        # Check for the existence of each supplementary distribution
+        for supp_dist_pattern in supp_dist_patterns:
+            if not local_store.has_lone_file_matching(supp_dist_pattern):
+                error_handler(
+                    section="1.1",
+                    error="Supplementary distribution not found.",
+                    data={
+                        "supplementary_distribution": supp_dist_pattern,
+                        "supplementary_distribution_patterns": supp_dist_patterns,
+                        "files_in_directory": files_in_directory,
+                        "pipeline_config": pipeline_config,
+                    },
+                    submitter_email=submitter_email,
+                    enable_email=enable_email,
+                    enable_logs=enable_logs,
+                    enable_notification=enable_notification,
+                )
+    except:
+        pass
 
     # TODO - validate the metadata once we have a schema for it.
 
