@@ -20,10 +20,7 @@ from dpypelines.pipeline.shared.utils import (
     get_mimetype,
     get_submitter_email,
 )
-from dpypelines.pipeline.utils import (
-    get_notifier,
-    get_value_from_metadata,
-)
+from dpypelines.pipeline.utils import get_notifier, get_value_from_metadata
 from dpypelines.pipeline.validate_ingest_files import (
     file_size_0,
     metadata_json_is_parseable,
