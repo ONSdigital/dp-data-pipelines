@@ -15,6 +15,7 @@ MIMETYPES = {
     ".csv": "text/csv",
     ".xml": "application/xml",
     ".json": "application/json",
+    ".json$": "application/json$",
     ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     ".csdb": "application/octet-stream",
 }
