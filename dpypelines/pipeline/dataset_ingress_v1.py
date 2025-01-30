@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 from dpytools.http.upload.upload_service_client import UploadServiceClient
+from dpytools.http.api.dataset_api_client import DatasetAPIClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
@@ -132,18 +133,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             assert (
                 upload_url is not None
             ), "UPLOAD_SERVICE_URL environment variable not set"
-        except Exception:
-            error_handler(
-                section="1.1",
-                error="Failed to retrieve Upload Service URL",
-                data=None,
-                submitter_email=submitter_email,
-                enable_email=enable_email,
-                enable_logs=enable_logs,
-                enable_notification=enable_notification,
-            )
-
-        try:
             dataset_api_url = os.environ.get("DATASET_API_URL", None)
             assert (
                 dataset_api_url is not None
@@ -151,7 +140,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         except Exception:
             error_handler(
                 section="1.1",
-                error="Failed to retrieve Dataset API URL",
+                error="Failed to retrieve Upload Service/Dataset API URL",
                 data=None,
                 submitter_email=submitter_email,
                 enable_email=enable_email,
@@ -342,15 +331,18 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             de_notifier.failure()
             raise err
 
-        # Get dataset_id from metadata and create DatasetAPIClient
-        # 2423 TODO This is based on the understanding that the dataset_id will be the value associated with the dcterms:identifier predicate in metadata.json
-        dataset_id = get_value_from_metadata(metadata, "dcterms:identifier")
-        dataset_api_client = get_dataset_api_client(dataset_api_url, dataset_id)
-
-        # Check that the Dataset API endpoint exists
+        # Submit metadata to Dataset API endpoint
         try:
-            dataset_api_response = dataset_api_client.get_path()
+            # 2423 TODO This is based on the understanding that the dataset_id will be the value associated with the dcterms:identifier predicate in metadata.json
+
+            # Get dataset_id from metadata and create DatasetAPIClient
+            dataset_id = get_value_from_metadata(metadata, "dcterms:identifier")
+            dataset_api_client = DatasetAPIClient(dataset_api_url, dataset_id)
+
+            # Check that the Dataset API endpoint exists
             # 2423 TODO do we need to handle the difference between a nonsense dataset_id (i.e. one that shouldn't exist) and a valid dataset_id that doesn't yet exist in the Dataset API? Or will this be done within the API?
+            dataset_api_response = dataset_api_client.get_path()
+
             if dataset_api_response.status_code == 404:
                 # 2423 TODO This doesn't actually print, because of how the error is handled in BaseHTTPClient._handle_request()
                 print(

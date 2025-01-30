@@ -51,24 +51,6 @@ def get_upload_service_client(upload_url):
         raise err
 
 
-def get_dataset_api_client(dataset_api_url: str, dataset_id: str) -> DatasetAPIClient:
-    # Create DatasetAPIClient from dataset_api_url and dataset_id
-    try:
-        client = DatasetAPIClient(dataset_api_url, dataset_id)
-        logger.info(
-            "DatasetAPIClient created for dataset_id provided",
-            data={"dataset_api_url": dataset_api_url, "dataset_id": dataset_id},
-        )
-        return client
-    except Exception as err:
-        logger.error(
-            "Error creating DatasetAPIClient",
-            err,
-            data={"dataset_api_url": dataset_api_url, "dataset_id": dataset_id},
-        )
-        raise err
-
-
 def get_secondary_function(config_dict: dict):
     return config_dict["secondary_function"]
 
