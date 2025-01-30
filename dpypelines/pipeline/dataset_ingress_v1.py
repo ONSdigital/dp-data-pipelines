@@ -222,6 +222,22 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
         try:
             for required_file_path in required_file_patterns:
+                try:
+                    required_file_path = local_store.get_pathlike_of_file_matching(
+                        required_file
+                    )
+                    logger.info(
+                        "File to be uploaded retrieved",
+                        data={"file_path": required_file_path},
+                    )
+                except Exception as err:
+                    logger.error(
+                        "Failed to retrieve file to be uploaded",
+                        err,
+                        data={"file_name": required_file},
+                    )
+                    de_notifier.failure()
+                    raise err
                 mimetype = get_mimetype(Path(required_file_path).suffix)
                 if mimetype:
                     upload_client.upload_new(required_file_path, mimetype)
