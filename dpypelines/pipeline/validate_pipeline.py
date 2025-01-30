@@ -1,7 +1,7 @@
-from pathlib import Path
-from typing import Dict, List
 import json
 import re
+from pathlib import Path
+from typing import Dict, List
 
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.utils import get_submitter_email
@@ -23,10 +23,14 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
 
     # 3. Validate config-required files
     config_files = []
-    config_files.extend(validate_pattern_files(files_dir, pipeline_config, "required_files"))
+    config_files.extend(
+        validate_pattern_files(files_dir, pipeline_config, "required_files")
+    )
 
     # 4. Validate supplementary files
-    supplementary_files = validate_pattern_files(files_dir, pipeline_config, "supplementary_distributions")
+    supplementary_files = validate_pattern_files(
+        files_dir, pipeline_config, "supplementary_distributions"
+    )
     config_files.extend(supplementary_files)
 
     return {

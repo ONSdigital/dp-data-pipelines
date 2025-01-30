@@ -1,5 +1,4 @@
 import os
-import re
 from pathlib import Path
 
 from dpytools.http.upload.upload_service_client import UploadServiceClient
@@ -12,10 +11,7 @@ from dpypelines.pipeline.shared.email_templates import (
     successful_file_upload_email,
 )
 from dpypelines.pipeline.shared.error_handler_module import error_handler
-from dpypelines.pipeline.shared.utils import (
-    get_email_client,
-    get_mimetype,
-)
+from dpypelines.pipeline.shared.utils import get_email_client, get_mimetype
 from dpypelines.pipeline.utils import get_notifier
 from dpypelines.pipeline.validate_pipeline import validate_pipeline_files
 
@@ -38,9 +34,14 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Validate the pipeline
     try:
         validation_results = validate_pipeline_files(files_dir, pipeline_config)
-        logger.info("Pipeline validation completed successfully", data={"files_dir": str(files_dir)})
+        logger.info(
+            "Pipeline validation completed successfully",
+            data={"files_dir": str(files_dir)},
+        )
     except Exception as e:
-        logger.error("Pipeline validation failed", error=e, data={"files_dir": str(files_dir)})
+        logger.error(
+            "Pipeline validation failed", error=e, data={"files_dir": str(files_dir)}
+        )
         raise
 
     # Create notifier from webhook env var

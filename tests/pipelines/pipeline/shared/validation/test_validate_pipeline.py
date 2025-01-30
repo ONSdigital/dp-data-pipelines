@@ -1,13 +1,13 @@
 from pathlib import Path
+
 import pytest
-import json
 
 from dpypelines.pipeline.validate_pipeline import (
-    validate_pipeline_files,
-    validate_pattern_files,
     validate_file_exists_and_not_empty,
     validate_json_file,
     validate_manifest_vars,
+    validate_pattern_files,
+    validate_pipeline_files,
 )
 
 test_cases_base_dir = Path("tests/fixtures/test-cases/dataset_ingress_v1")
@@ -24,9 +24,7 @@ def test_validate_pipeline_files():
             {"matches": "^data.csv$"},
             {"matches": "^metadata.json$"},
         ],
-        "supplementary_distributions": [
-            {"matches": "^supplementary.txt$"}
-        ],
+        "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
     }
     result = validate_pipeline_files(files, pipeline_config)
     assert "manifest" in result
@@ -46,9 +44,7 @@ def test_validate_pipeline_files_data_missing():
             {"matches": "^data.csv$"},
             {"matches": "^metadata.json$"},
         ],
-        "supplementary_distributions": [
-            {"matches": "^supplementary.txt$"}
-        ],
+        "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
     }
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
@@ -67,9 +63,7 @@ def test_validate_pipeline_files_metadata_missing():
             {"matches": "^data.csv$"},
             {"matches": "^metadata.json$"},
         ],
-        "supplementary_distributions": [
-            {"matches": "^supplementary.txt$"}
-        ],
+        "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
     }
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
@@ -88,9 +82,7 @@ def test_validate_pipeline_files_supplementary_missing():
             {"matches": "^data.csv$"},
             {"matches": "^metadata.json$"},
         ],
-        "supplementary_distributions": [
-            {"matches": "^supplementary.txt$"}
-        ],
+        "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
     }
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
@@ -109,14 +101,15 @@ def test_validate_pipeline_files_manifest_missing():
             {"matches": "^data.csv$"},
             {"matches": "^metadata.json$"},
         ],
-        "supplementary_distributions": [
-            {"matches": "^supplementary.txt$"}
-        ],
+        "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
     }
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
 
-    assert "Required file not found: tests/fixtures/test-cases/dataset_ingress_v1/invalid_no_manifest/manifest.json" in str(e.value)
+    assert (
+        "Required file not found: tests/fixtures/test-cases/dataset_ingress_v1/invalid_no_manifest/manifest.json"
+        in str(e.value)
+    )
 
 
 def test_validate_pattern_files():
