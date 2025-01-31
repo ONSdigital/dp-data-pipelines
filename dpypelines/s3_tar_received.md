@@ -76,5 +76,4 @@ If the `s3_tar_received.start()` function encounters any problems, an error will
 The final step of the `s3_tar_received.start()` function calls the `secondary_function` specified in the pipeline configuration details. For more information on functions available at this step, please click on the links below:
 
 - [`dataset_ingress_v1`](./pipeline/dataset_ingress_v1.md)
-- [`generic_data_ingress_v1`](./pipeline/generic_file_ingress_v1.md)
 
