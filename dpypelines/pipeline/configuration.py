@@ -1,6 +1,5 @@
 import re
 
-from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared.transforms.sanity_check import sdmx_sanity_check_v1
 from dpypelines.pipeline.shared.transforms.sdmx.v20 import sdmx_compact_2_0_prototype_1
 from dpypelines.pipeline.shared.transforms.sdmx.v21 import sdmx_generic_2_1_prototype_1
@@ -16,7 +15,7 @@ CONFIGURATION = {
         "transform_inputs": {".*data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
         "required_files": [{"matches": ".*data.xml$"}],
-        "supplementary_distributions": [{"matches": ".*data.xml$"}]
+        "supplementary_distributions": [{"matches": ".*data.xml$"}],
     },
     "^.*_generic_sdmx_v2_1$": {
         "config_version": 1,
@@ -24,7 +23,7 @@ CONFIGURATION = {
         "transform_inputs": {".*data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
         "required_files": [{"matches": ".*data.xml$"}],
-        "supplementary_distributions": [{"matches": ".*data.xml$"}]
+        "supplementary_distributions": [{"matches": ".*data.xml$"}],
     },
     "^.*_move$": {
         "config_version": 1,
@@ -35,7 +34,7 @@ CONFIGURATION = {
             {"matches": ".*data.csv$"},
             {"matches": ".*metadata.json$"},
         ],
-        "supplementary_distributions": {}
+        "supplementary_distributions": {},
     },
 }
 
