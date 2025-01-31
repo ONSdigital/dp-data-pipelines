@@ -18,7 +18,6 @@ CONFIGURATION = {
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [{"matches": "^data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
     },
     "valid_no_supp_dist_2_0": {
         "config_version": 1,
@@ -27,7 +26,6 @@ CONFIGURATION = {
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [],
-        "secondary_function": dataset_ingress_v1,
     },
     "valid_no_supp_dist_2_1": {
         "config_version": 1,
@@ -36,7 +34,6 @@ CONFIGURATION = {
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [],
-        "secondary_function": dataset_ingress_v1,
     },
     "valid_generic_file_ingress": {
         "config_version": 1,
@@ -49,7 +46,6 @@ CONFIGURATION = {
             {"matches": "^metadata.json$"},
         ],
         "supplementary_distributions": [],
-        "secondary_function": dataset_ingress_v1,
     },
     "valid_generic_file_ingress_json": {
         "config_version": 1,
@@ -58,7 +54,6 @@ CONFIGURATION = {
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.json$"}],
         "supplementary_distributions": [],
-        "secondary_function": dataset_ingress_v1,
     },
     "invalid": {
         "config_version": 2,
@@ -67,7 +62,6 @@ CONFIGURATION = {
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [{"matches": "^data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
     },
 }
 

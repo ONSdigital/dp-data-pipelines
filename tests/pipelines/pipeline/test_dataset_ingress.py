@@ -25,7 +25,6 @@ def test_dataset_ingress_v1():
             {"matches": "^metadata.json$"},
         ],
         "supplementary_distributions": {},
-        "secondary_function": dataset_ingress_v1,
     }
     assert dataset_ingress_v1(files, pipeline_config) is True
 
@@ -48,7 +47,6 @@ def test_dataset_ingress_v1_data_missing():
             {"matches": "^metadata.json$"},
         ],
         "supplementary_distributions": {},
-        "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(Exception) as e:
         dataset_ingress_v1(files, pipeline_config)
@@ -74,7 +72,6 @@ def test_dataset_ingress_v1_metadata_missing():
             {"matches": "^metadata.json$"},
         ],
         "supplementary_distributions": {},
-        "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(Exception) as e:
         dataset_ingress_v1(files, pipeline_config)
@@ -101,7 +98,6 @@ def test_dataset_ingress_v1_metadata_missing():
 #             {"matches": "^metadata.json$"},
 #         ],
 #         "supplementary_distributions": {},
-#         "secondary_function": dataset_ingress_v1,
 #     }
 #     with pytest.raises(Exception) as e:
 #         dataset_ingress_v1(files, pipeline_config)

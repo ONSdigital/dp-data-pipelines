@@ -16,8 +16,7 @@ CONFIGURATION = {
         "transform_inputs": {".*data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
         "required_files": [{"matches": ".*data.xml$"}],
-        "supplementary_distributions": [{"matches": ".*data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
+        "supplementary_distributions": [{"matches": ".*data.xml$"}]
     },
     "^.*_generic_sdmx_v2_1$": {
         "config_version": 1,
@@ -25,8 +24,7 @@ CONFIGURATION = {
         "transform_inputs": {".*data.xml$": sdmx_sanity_check_v1},
         "transform_kwargs": {},
         "required_files": [{"matches": ".*data.xml$"}],
-        "supplementary_distributions": [{"matches": ".*data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
+        "supplementary_distributions": [{"matches": ".*data.xml$"}]
     },
     "^.*_move$": {
         "config_version": 1,
@@ -37,8 +35,7 @@ CONFIGURATION = {
             {"matches": ".*data.csv$"},
             {"matches": ".*metadata.json$"},
         ],
-        "supplementary_distributions": {},
-        "secondary_function": dataset_ingress_v1,
+        "supplementary_distributions": {}
     },
 }
 

@@ -232,13 +232,15 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                         data={"file_path": required_file_path},
                     )
                 except Exception as err:
-                    logger.error(
-                        "Failed to retrieve file to be uploaded",
-                        err,
-                        data={"file_name": required_file},
+                    error_handler(
+                        section="1.1",
+                        error="Failed to retrieve file to be uploaded",
+                        data={"file_path": required_file_path},
+                        submitter_email=submitter_email,
+                        enable_email=enable_email,
+                        enable_logs=enable_logs,
+                        enable_notification=enable_notification,
                     )
-                    de_notifier.failure()
-                    raise err
                 mimetype = get_mimetype(Path(required_file_path).suffix)
                 if mimetype:
                     upload_client.upload_new(required_file_path, mimetype)

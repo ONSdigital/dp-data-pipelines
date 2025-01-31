@@ -5,10 +5,10 @@ from dpytools.s3.basic import decompress_s3_tar
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.validation.json.validation import validate_json_schema
 
+from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.configuration import get_pipeline_config
 from dpypelines.pipeline.utils import (
-    get_notifier,
-    get_secondary_function,
+    get_notifier
     get_source_id,
 )
 
@@ -117,20 +117,18 @@ def start(s3_object_name: str):
     # Get the path to the directory
     files_dir = local_store.get_current_source_pathlike()
 
-    # Call the secondary_function specified in pipeline_config
+    # Call the dataset_ingress_v1 function
     try:
-        secondary_function = get_secondary_function(pipeline_config)
-        secondary_function(files_dir, pipeline_config)
+        dataset_ingress_v1(files_dir, pipeline_config)
         logger.info(
-            "Successfully executed secondary function specified in pipeline_config",
+            "Successfully executed dataset_ingress_v1",
             data={
-                "secondary_function": secondary_function,
                 "pipeline_config": pipeline_config,
             },
         )
     except Exception as err:
         logger.error(
-            "Failed to executed secondary function specified in pipeline_config",
+            "Failed to execute dataset_ingress_v1",
             err,
             data={"pipeline_config": pipeline_config, "files_dir": files_dir},
         )
