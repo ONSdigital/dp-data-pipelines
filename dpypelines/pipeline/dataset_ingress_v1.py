@@ -231,7 +231,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                         "File to be uploaded retrieved",
                         data={"file_path": required_file_path},
                     )
-                except Exception as err:
+                except Exception:
                     error_handler(
                         section="1.1",
                         error="Failed to retrieve file to be uploaded",
