@@ -8,7 +8,7 @@ from dpytools.validation.json.validation import validate_json_schema
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.configuration import get_pipeline_config
 from dpypelines.pipeline.utils import (
-    get_notifier
+    get_notifier,
     get_source_id,
 )
 
