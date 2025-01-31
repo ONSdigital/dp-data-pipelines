@@ -329,13 +329,12 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
         # Submit metadata to Dataset API endpoint
         try:
-            # 2423 TODO This is based on the understanding that the dataset_id will be the value associated with the dcterms:identifier predicate in metadata.json
             # Get dataset_id from metadata and create DatasetAPIClient
+            # This is based on the understanding that the dataset_id will be the value associated with the dcterms:identifier predicate in metadata.json
             dataset_id = get_value_from_metadata(metadata, "dcterms:identifier")
             dataset_api_client = DatasetAPIClient(dataset_api_url, dataset_id)
 
             # Check that the Dataset API endpoint exists
-            # 2423 TODO do we need to handle the difference between a nonsense dataset_id (i.e. one that shouldn't exist) and a valid dataset_id that doesn't yet exist in the Dataset API? Or will this be done within the API?
             dataset_api_response = dataset_api_client.get_path()
 
             if dataset_api_response.status_code == 200:
@@ -349,7 +348,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 dataset_api_response.raise_for_status()
             else:
                 print(f"Unhandled status code {dataset_api_response.status_code}")
-                # 2423 TODO raise for status here?
+                dataset_api_response.raise_for_status()
         except Exception:
             error_handler(
                 section="1.1",
