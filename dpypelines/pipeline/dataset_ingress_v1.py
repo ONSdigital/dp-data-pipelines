@@ -259,7 +259,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     },
                 )
                 email_content = successful_file_upload_email(
-                    Path(required_file_pattern).name
+                    Path(required_file_path).name
                 )
                 email_client.send(
                     submitter_email, email_content.subject, email_content.message
