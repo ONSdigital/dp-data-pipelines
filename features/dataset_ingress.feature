@@ -20,7 +20,7 @@ Feature: Data Ingress v1
   Scenario: Generic ingress using CSV runs without errors.
     Given a temporary source directory of files
         | file          | fixture                        |
-        | data.json     | test_data.csv                  |
+        | data.csv      | test_data.csv                  |
         | manifest.json | valid_manifest.json            |
         | metadata.json | test_metadata.json             |
     And a dataset id of 'valid_generic_file_ingress_csv'
