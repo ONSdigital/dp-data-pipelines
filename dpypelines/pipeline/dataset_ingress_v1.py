@@ -2,6 +2,7 @@ import os
 import re
 from pathlib import Path
 
+from dpytools.http.api.dataset_api_client import DatasetAPIClient
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
@@ -19,7 +20,7 @@ from dpypelines.pipeline.shared.utils import (
     get_mimetype,
     get_submitter_email,
 )
-from dpypelines.pipeline.utils import get_notifier
+from dpypelines.pipeline.utils import get_notifier, get_value_from_metadata
 from dpypelines.pipeline.validate_ingest_files import (
     file_size_0,
     metadata_json_is_parseable,
@@ -31,11 +32,9 @@ logger = DpLogger("data-ingress-pipelines")
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     """
     Version 1 of the dataset ingress pipeline.
-
     Args:
         files_dir (str): Path to the directory where the input files for this pipeline are located.
         pipeline_config (dict): Dictionary of configuration details required to run the pipeline (determined by dataset id)
-
     Raises:
         Exception: If any unexpected error occurs.
     """
@@ -123,17 +122,21 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
     skip_data_upload = str_to_bool(skip_data_upload)
 
-    # Retrieve Upload Service URL from environment variable
+    # Retrieve Upload Service and Dataset API URLs from environment variables
     if not skip_data_upload:
         try:
             upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
             assert (
                 upload_url is not None
             ), "UPLOAD_SERVICE_URL environment variable not set"
+            dataset_api_url = os.environ.get("DATASET_API_URL", None)
+            assert (
+                dataset_api_url is not None
+            ), "DATASET_API_URL environment variable is not set"
         except Exception:
             error_handler(
                 section="1.1",
-                error="Failed to retrieve Upload Service URL",
+                error="Failed to retrieve Upload Service/Dataset API URL",
                 data=None,
                 submitter_email=submitter_email,
                 enable_email=enable_email,
@@ -256,7 +259,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     },
                 )
                 email_content = successful_file_upload_email(
-                    Path(required_file_path).name
+                    Path(required_file_pattern).name
                 )
                 email_client.send(
                     submitter_email, email_content.subject, email_content.message
@@ -286,7 +289,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     len(supp_dist_matching_files) == 1
                 ), f"Error finding file matching pattern {supp_dist_pattern}: matching files are {supp_dist_matching_files}"
 
-                # Create a directory to save supplementary distribution
+                # Get filepath of supplementary distribution in local store
                 supp_dist_path = local_store.get_pathlike_of_file_matching(
                     supp_dist_pattern
                 )
@@ -331,6 +334,54 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                         enable_logs=enable_logs,
                         enable_notification=enable_notification,
                     )
+
+        # Submit metadata to Dataset API
+        try:
+            metadata = local_store.get_lone_matching_json_as_dict("^metadata.json$")
+            logger.info(
+                "Retrieved metadata.json",
+                data={"metadata": metadata},
+            )
+        except Exception as err:
+            logger.error("Failed to retrieve metadata.json", err)
+            de_notifier.failure()
+            raise err
+
+        # Submit metadata to Dataset API endpoint
+        try:
+            # Get dataset_id from metadata and create DatasetAPIClient
+            # This is based on the understanding that the dataset_id will be the value associated with the dcterms:identifier predicate in metadata.json
+            dataset_id = get_value_from_metadata(metadata, "dcterms:identifier")
+            dataset_api_client = DatasetAPIClient(dataset_api_url, dataset_id)
+
+            # Check that the Dataset API endpoint exists
+            dataset_api_response = dataset_api_client.get_path()
+
+            if dataset_api_response.status_code == 200:
+                print(
+                    "Dataset ID exists in Dataset API - submit PUT request to update existing dataset"
+                )
+            elif dataset_api_response.status_code == 404:
+                print(
+                    "Dataset ID does not exist in Dataset API - submit POST request to add new dataset"
+                )
+                dataset_api_response.raise_for_status()
+            else:
+                print(f"Unhandled status code {dataset_api_response.status_code}")
+                dataset_api_response.raise_for_status()
+        except Exception:
+            error_handler(
+                section="1.1",
+                error="Error getting Dataset API path for given dataset_id",
+                data={
+                    "dataset_api_url": dataset_api_url,
+                    "dataset_id": dataset_id,
+                },
+                submitter_email=submitter_email,
+                enable_email=enable_email,
+                enable_logs=enable_logs,
+                enable_notification=enable_notification,
+            )
 
     email_content = submission_processed_email()
     email_client.send(submitter_email, email_content.subject, email_content.message)
