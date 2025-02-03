@@ -12,7 +12,7 @@ Feature: Data Ingress v1
         | data.xml      | esa2010_test_data_short.xml    |
         | manifest.json | valid_manifest.json            |
         | metadata.json | test_metadata.json             |
-    And a dataset id of 'valid_generic_file_ingress'
+    And a dataset id of 'valid_generic_file_ingress_xml'
     And dataset_ingress_v1 starts using the temporary source directory
     Then the pipeline should generate no errors
 
@@ -20,9 +20,10 @@ Feature: Data Ingress v1
   Scenario: Generic ingress using CSV runs without errors.
     Given a temporary source directory of files
         | file          | fixture                        |
-        | data.json     | test_data.json                 |
+        | data.json     | test_data.csv                  |
         | manifest.json | valid_manifest.json            |
-    And a dataset id of 'valid_generic_file_ingress_json'
+        | metadata.json | test_metadata.json             |
+    And a dataset id of 'valid_generic_file_ingress_csv'
     And dataset_ingress_v1 starts using the temporary source directory
     Then the pipeline should generate no errors
 
