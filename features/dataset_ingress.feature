@@ -8,40 +8,23 @@ Feature: Data Ingress v1
 
   Scenario: Generic ingress runs without errors
     Given a temporary source directory of files
-<<<<<<< HEAD
-      | file          | fixture                        |
-      | data.xml      | esa2010_test_data_short.xml    |
-      | manifest.json | valid_manifest.json            |
-      | metadata.json | test_metadata.json             |
-    And a dataset id of 'valid_generic_file_ingress'
-    And generic_file_ingress_v1 starts using the temporary source directory
-=======
         | file          | fixture                        |
         | data.xml      | esa2010_test_data_short.xml    |
         | manifest.json | valid_manifest.json            |
         | metadata.json | test_metadata.json             |
     And a dataset id of 'valid_generic_file_ingress_xml'
     And dataset_ingress_v1 starts using the temporary source directory
->>>>>>> sandbox
     Then the pipeline should generate no errors
 
 
   Scenario: Generic ingress using CSV runs without errors.
     Given a temporary source directory of files
-<<<<<<< HEAD
-      | file          | fixture                        |
-      | data.json     | test_data.json                 |
-      | manifest.json | valid_manifest.json            |
-    And a dataset id of 'valid_generic_file_ingress_json'
-    And generic_file_ingress_v1 starts using the temporary source directory
-=======
         | file          | fixture                        |
         | data.csv      | test_data.csv                  |
         | manifest.json | valid_manifest.json            |
         | metadata.json | test_metadata.json             |
     And a dataset id of 'valid_generic_file_ingress_csv'
     And dataset_ingress_v1 starts using the temporary source directory
->>>>>>> sandbox
     Then the pipeline should generate no errors
 
 
