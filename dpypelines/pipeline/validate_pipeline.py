@@ -12,6 +12,7 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
     """
     Main validation function that returns validated objects.
     """
+    required_keys = ["manifestVersion", "source_id", "fileAuthorEmail"]
     # 1. Check core required files
     required_files = ["metadata.json", "manifest.json"]
     for file_name in required_files:
@@ -19,7 +20,7 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
 
     # 2. Validate manifest.json and metadata.json
     manifest_dict = validate_json_file(files_dir / "manifest.json")
-    validate_manifest_vars(manifest_dict)
+    validate_manifest_vars(manifest_dict,required_keys)
     metadata_dict = validate_json_file(files_dir / "metadata.json")
 
     # 3. Validate config-required files
@@ -82,10 +83,8 @@ def validate_json_file(file_path: Path) -> dict:
     except json.JSONDecodeError as e:
         raise ValueError(f"File is not valid JSON: {str(e)}")
 
-
-def validate_manifest_vars(manifest_dict: dict) -> None:
+def validate_manifest_vars(manifest_dict: dict, required_keys: list) -> None:
     """Validate manifest dictionary has required fields."""
-    required_keys = ["manifestVersion", "source_id", "fileAuthorEmail"]
     missing_keys = [key for key in required_keys if key not in manifest_dict]
 
     if missing_keys:

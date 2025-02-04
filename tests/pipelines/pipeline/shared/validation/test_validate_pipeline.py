@@ -11,14 +11,7 @@ from dpypelines.pipeline.validate_pipeline import (
 )
 
 test_cases_base_dir = Path("tests/fixtures/test-cases/dataset_ingress_v1")
-
-
-def test_validate_pipeline_files():
-    """
-    Tests that `validate_pipeline_files()` returns the expected dictionary if valid files are provided.
-    """
-    files = test_cases_base_dir / "valid"
-    pipeline_config = {
+pipeline_config = {
         "config_version": 1,
         "required_files": [
             {"matches": "^data.csv$"},
@@ -26,6 +19,12 @@ def test_validate_pipeline_files():
         ],
         "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
     }
+
+def test_validate_pipeline_files():
+    """
+    Tests that `validate_pipeline_files()` returns the expected dictionary if valid files are provided.
+    """
+    files = test_cases_base_dir / "valid"
     result = validate_pipeline_files(files, pipeline_config)
     assert "manifest" in result
     assert "input_files" in result
@@ -38,14 +37,6 @@ def test_validate_pipeline_files_data_missing():
     Tests that `validate_pipeline_files()` raises FileNotFoundError if the data file is missing.
     """
     files = test_cases_base_dir / "invalid_no_data"
-    pipeline_config = {
-        "config_version": 1,
-        "required_files": [
-            {"matches": "^data.csv$"},
-            {"matches": "^metadata.json$"},
-        ],
-        "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
-    }
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
 
@@ -57,14 +48,6 @@ def test_validate_pipeline_files_metadata_missing():
     Tests that `validate_pipeline_files()` raises FileNotFoundError if the metadata file is missing.
     """
     files = test_cases_base_dir / "invalid_no_metadata"
-    pipeline_config = {
-        "config_version": 1,
-        "required_files": [
-            {"matches": "^data.csv$"},
-            {"matches": "^metadata.json$"},
-        ],
-        "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
-    }
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
 
@@ -79,14 +62,6 @@ def test_validate_pipeline_files_supplementary_missing():
     Tests that `validate_pipeline_files()` raises FileNotFoundError if the supplementary file is missing.
     """
     files = test_cases_base_dir / "invalid_no_supplementary"
-    pipeline_config = {
-        "config_version": 1,
-        "required_files": [
-            {"matches": "^data.csv$"},
-            {"matches": "^metadata.json$"},
-        ],
-        "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
-    }
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
 
@@ -98,14 +73,6 @@ def test_validate_pipeline_files_manifest_missing():
     Tests that `validate_pipeline_files()` raises FileNotFoundError if the manifest file is missing.
     """
     files = test_cases_base_dir / "invalid_no_manifest"
-    pipeline_config = {
-        "config_version": 1,
-        "required_files": [
-            {"matches": "^data.csv$"},
-            {"matches": "^metadata.json$"},
-        ],
-        "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
-    }
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
 
@@ -120,13 +87,6 @@ def test_validate_pattern_files():
     Tests that `validate_pattern_files()` returns the expected list of files if valid files are provided.
     """
     files = test_cases_base_dir / "valid"
-    pipeline_config = {
-        "config_version": 1,
-        "required_files": [
-            {"matches": "^data.csv$"},
-            {"matches": "^metadata.json$"},
-        ],
-    }
     result = validate_pattern_files(files, pipeline_config, "required_files")
     assert len(result) == 2
     assert files / "data.csv" in result
@@ -205,8 +165,9 @@ def test_validate_manifest_vars():
         "manifestVersion": 1,
         "source_id": "test",
     }
+    required_keys = ["manifestVersion", "source_id", "fileAuthorEmail"]
     with pytest.raises(KeyError) as e:
-        validate_manifest_vars(manifest_dict)
+        validate_manifest_vars(manifest_dict, required_keys)
 
     assert "Missing required keys in manifest: fileAuthorEmail" in str(e.value)
 
@@ -220,7 +181,8 @@ def test_validate_manifest_vars_valid():
         "source_id": "test",
         "fileAuthorEmail": "test@valid.com",
     }
+    required_keys = ["manifestVersion", "source_id", "fileAuthorEmail"]
     try:
-        validate_manifest_vars(manifest_dict)
+        validate_manifest_vars(manifest_dict, required_keys)
     except KeyError:
         pytest.fail("validate_manifest_vars() raised KeyError unexpectedly!")
