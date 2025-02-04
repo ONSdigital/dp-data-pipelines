@@ -1,7 +1,5 @@
 import re
 
-from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
-from dpypelines.pipeline.generic_file_ingress_v1 import generic_file_ingress_v1
 from dpypelines.pipeline.shared.transforms.sanity_check import sdmx_sanity_check_v1
 from dpypelines.pipeline.shared.transforms.sdmx.v20 import sdmx_compact_2_0_prototype_1
 from dpypelines.pipeline.shared.transforms.sdmx.v21 import sdmx_generic_2_1_prototype_1
@@ -18,7 +16,6 @@ CONFIGURATION = {
         "transform_kwargs": {},
         "required_files": [{"matches": ".*data.xml$"}],
         "supplementary_distributions": [{"matches": ".*data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
     },
     "^.*_generic_sdmx_v2_1$": {
         "config_version": 1,
@@ -27,7 +24,6 @@ CONFIGURATION = {
         "transform_kwargs": {},
         "required_files": [{"matches": ".*data.xml$"}],
         "supplementary_distributions": [{"matches": ".*data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
     },
     "^.*_move$": {
         "config_version": 1,
@@ -39,7 +35,6 @@ CONFIGURATION = {
             {"matches": ".*metadata.json$"},
         ],
         "supplementary_distributions": {},
-        "secondary_function": generic_file_ingress_v1,
     },
 }
 

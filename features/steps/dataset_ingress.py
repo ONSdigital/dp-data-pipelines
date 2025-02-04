@@ -4,7 +4,6 @@ import pandas as pd
 from behave import *
 from dictdiffer import diff
 from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
-from dpypelines.pipeline.generic_file_ingress_v1 import generic_file_ingress_v1
 from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
     sdmx_compact_2_0_prototype_1,
     sdmx_compact_2_1_prototype,
@@ -28,7 +27,6 @@ CONFIGURATION = {
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [],
-        "secondary_function": dataset_ingress_v1,
     },
     "valid_no_supp_dist_2_1": {
         "config_version": 1,
@@ -37,9 +35,8 @@ CONFIGURATION = {
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [],
-        "secondary_function": dataset_ingress_v1,
     },
-    "valid_generic_file_ingress": {
+    "valid_generic_file_ingress_xml": {
         "config_version": 1,
         "transform": None,
         "transform_inputs": {},
@@ -50,16 +47,18 @@ CONFIGURATION = {
             {"matches": "^metadata.json$"},
         ],
         "supplementary_distributions": [],
-        "secondary_function": generic_file_ingress_v1,
     },
-    "valid_generic_file_ingress_json": {
+    "valid_generic_file_ingress_csv": {
         "config_version": 1,
         "transform": None,
         "transform_inputs": {},
         "transform_kwargs": {},
-        "required_files": [{"matches": "^data.json$"}],
+        "required_files": [
+            {"matches": "^manifest.json$"},
+            {"matches": "^data.csv$"},
+            {"matches": "^metadata.json$"},
+        ],
         "supplementary_distributions": [],
-        "secondary_function": generic_file_ingress_v1,
     },
     "invalid": {
         "config_version": 2,
@@ -68,9 +67,9 @@ CONFIGURATION = {
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [{"matches": "^data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
     },
 }
+
 
 @given("a temporary source directory of files")
 def step_impl(context):
@@ -112,17 +111,6 @@ def step_impl(context):
         context.exception = exc
 
 
-@given("generic_file_ingress_v1 starts using the temporary source directory")
-def step_impl(context):
-    try:
-        generic_file_ingress_v1(
-            context.temporary_directory.absolute(), context.pipeline_config
-        )
-        context.exception = None
-    except Exception as exc:
-        context.exception = exc
-
-
 @then("the pipeline should generate no errors")
 def step_impl(context):
     if context.exception is not None:
@@ -133,15 +121,18 @@ def step_impl(context):
 def step_impl(context, csv_output):
     context.csv_output = pd.read_csv(csv_output)
 
+
 @then("I read the xml output '{xml_output}'")
 def step_impl(context, xml_output):
     with open(context.temporary_directory / xml_output, "r") as f:
         context.xml_content = f.read()
 
+
 @then("I read the json output '{json_output}'")
 def step_impl(context, json_output):
     with open(context.temporary_directory / json_output, "r") as f:
         context.json_content = json.load(f)
+
 
 @then("the csv output should have '{number}' rows")
 def step_impl(context, number):
@@ -156,12 +147,14 @@ def step_impl(context, length):
         length
     ), f"XML should have length {length}, but has length {xml_length}"
 
+
 @then("the json output should have length '{length}'")
 def step_impl(context, length):
     json_length = len(context.json_content)
     assert json_length == int(
         length
     ), f"JSON should have length {length}, but has length {json_length}"
+
 
 @then("the csv output has the columns")
 def step_impl(context):
@@ -178,11 +171,13 @@ def step_impl(context, xml):
         xml in context.xml_content
     ), f"XML should contain {xml} but this is not present"
 
+
 @then("the json output contains '{json_key}'")
 def step_impl(context, json_key):
     assert (
         json_key in context.json_content
     ), f"JSON should contain {json_key} but this is not present"
+
 
 @then("I read the metadata output '{metadata_output}'")
 def step_impl(context, metadata_output):

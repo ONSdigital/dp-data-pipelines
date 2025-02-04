@@ -1,6 +1,5 @@
 import pytest
 
-from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
 from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
     sdmx_compact_2_0_prototype_1,
@@ -20,7 +19,6 @@ def test_get_transform_details_transform_function():
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [{"matches": "^data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
     }
     result = get_transform_details(config, "transform")
     assert result.__name__ == "sdmx_compact_2_0_prototype_1"
@@ -38,7 +36,6 @@ def test_get_transform_details_inputs():
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [{"matches": "^data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
     }
     result = get_transform_details(config, "transform_inputs")
     assert "^data.xml$" in result.keys()
@@ -57,7 +54,6 @@ def test_get_transform_details_kwargs():
         "transform_kwargs": {"kwarg1": "value1"},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [{"matches": "^data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
     }
     result = get_transform_details(config, "transform_kwargs")
     assert result == {"kwarg1": "value1"}
@@ -74,7 +70,6 @@ def test_get_transform_inputs_missing():
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [{"matches": "^data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(AssertionError) as err:
         get_transform_details(config, "transform_inputs")
@@ -92,7 +87,6 @@ def test_get_transform_missing():
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [{"matches": "^data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(AssertionError) as err:
         get_transform_details(config, "transform")
@@ -110,7 +104,6 @@ def test_get_transform_kwargs_missing():
         "transform": sdmx_compact_2_0_prototype_1,
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [{"matches": "^data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(AssertionError) as err:
         get_transform_details(config, "transform_kwargs")
@@ -129,7 +122,6 @@ def test_get_transform_details_invalid_config_version():
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [{"matches": "^data.xml$"}],
-        "secondary_function": dataset_ingress_v1,
     }
     with pytest.raises(NotImplementedError) as err:
         get_transform_details(config, "transform_inputs")

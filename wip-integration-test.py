@@ -14,8 +14,7 @@ config = {
             {"matches": ".*data.csv$"},
             {"matches": ".*metadata.json$"},
         ],
-        "supplementary_distributions": {},
-        "secondary_function": dataset_ingress_v1,
+        "supplementary_distributions": {}
     }
 
 

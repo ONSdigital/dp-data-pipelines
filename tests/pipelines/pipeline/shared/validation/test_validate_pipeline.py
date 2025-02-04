@@ -12,13 +12,14 @@ from dpypelines.pipeline.validate_pipeline import (
 
 test_cases_base_dir = Path("tests/fixtures/test-cases/dataset_ingress_v1")
 pipeline_config = {
-        "config_version": 1,
-        "required_files": [
-            {"matches": "^data.csv$"},
-            {"matches": "^metadata.json$"},
-        ],
-        "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
-    }
+    "config_version": 1,
+    "required_files": [
+        {"matches": "^data.csv$"},
+        {"matches": "^metadata.json$"},
+    ],
+    "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
+}
+
 
 def test_validate_pipeline_files():
     """

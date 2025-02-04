@@ -21,11 +21,9 @@ logger = DpLogger("data-ingress-pipelines")
 def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     """
     Version 1 of the dataset ingress pipeline.
-
     Args:
         files_dir (str): Path to the directory where the input files for this pipeline are located.
         pipeline_config (dict): Dictionary of configuration details required to run the pipeline (determined by dataset id)
-
     Raises:
         Exception: If any unexpected error occurs.
     """
@@ -99,17 +97,21 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", "False")
     skip_data_upload = str_to_bool(skip_data_upload)
 
-    # Retrieve Upload Service URL from environment variable
+    # Retrieve Upload Service and Dataset API URLs from environment variables
     if not skip_data_upload:
         try:
             upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
             assert (
                 upload_url is not None
             ), "UPLOAD_SERVICE_URL environment variable not set"
+            dataset_api_url = os.environ.get("DATASET_API_URL", None)
+            assert (
+                dataset_api_url is not None
+            ), "DATASET_API_URL environment variable is not set"
         except Exception:
             error_handler(
                 section="1.1",
-                error="Failed to retrieve Upload Service URL",
+                error="Failed to retrieve Upload Service/Dataset API URL",
                 data=None,
                 submitter_email=submitter_email,
                 enable_email=enable_email,

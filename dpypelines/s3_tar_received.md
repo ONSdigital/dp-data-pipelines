@@ -31,7 +31,7 @@ The `s3_tar_received.start()` function performs the following steps:
 1. Decompresses the `my-data.tar` file to the workspace.
 2. Creates a local directory store using the decompressed files.
 3. Retrieves pipeline configuration details for the given dataset using the `source_id` field in `manifest.json`.
-4. Calls the secondary function specified in the pipeline configuration details. This secondary function defines which transform functionality should be applied to the dataset.
+4. Calls the dataset_ingress_v1 function.
 
 ## `manifest.json` file
 
@@ -61,7 +61,6 @@ The `source_id` field in `manifest.json` is used to get pipeline configuration d
 | `transform_kwargs`            | A dictionary that supports the propagation of keyword arguments throughout the pipeline, where the key is the keyword argument name, and the value is the keyword argument value to be propagated.           |
 | `required_files`              | A list of regex patterns matching required files that form part of the submission.                                                                                                                           |
 | `supplementary_distributions` | A list of regex patterns matching supplementary distributions that form part of the submission.                                                                                                              |
-| `secondary_function`          | The pipeline function that should be applied to the dataset.                                                                                                                                                 |
 
 ## Error handling
 
@@ -71,10 +70,9 @@ If the `s3_tar_received.start()` function encounters any problems, an error will
     NotImplementedError: This function currently only handles archives using the tar extension. Got "my-bucket/data.csv"
 ```
 
-## Secondary functions
+## dataset_ingress_v1 function
 
-The final step of the `s3_tar_received.start()` function calls the `secondary_function` specified in the pipeline configuration details. For more information on functions available at this step, please click on the links below:
+The final step of the `s3_tar_received.start()` function calls the `dataset_ingress_v1` function. For more information on this function, please click on the link below:
 
 - [`dataset_ingress_v1`](./pipeline/dataset_ingress_v1.md)
-- [`generic_data_ingress_v1`](./pipeline/generic_file_ingress_v1.md)
 
