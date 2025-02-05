@@ -20,7 +20,9 @@ pipeline_config = {
     "supplementary_distributions": [],
 }
 pipeline_config_wsup = pipeline_config
-pipeline_config_wsup["supplementary_distributions"] = [{"matches": "^supplementary.txt$"}]
+pipeline_config_wsup["supplementary_distributions"] = [
+    {"matches": "^supplementary.txt$"}
+]
 
 
 def test_validate_pipeline_files():
