@@ -17,8 +17,10 @@ pipeline_config = {
         {"matches": "^data.csv$"},
         {"matches": "^metadata.json$"},
     ],
-    "supplementary_distributions": [{"matches": "^supplementary.txt$"}],
+    "supplementary_distributions": [],
 }
+pipeline_config_wsup = pipeline_config
+pipeline_config_wsup["supplementary_distributions"] = [{"matches": "^supplementary.txt$"}]
 
 
 def test_validate_pipeline_files():
@@ -26,7 +28,7 @@ def test_validate_pipeline_files():
     Tests that `validate_pipeline_files()` returns the expected dictionary if valid files are provided.
     """
     files = test_cases_base_dir / "valid"
-    result = validate_pipeline_files(files, pipeline_config)
+    result = validate_pipeline_files(files, pipeline_config_wsup)
     assert "manifest" in result
     assert "input_files" in result
     assert "config_files" in result
@@ -64,7 +66,7 @@ def test_validate_pipeline_files_supplementary_missing():
     """
     files = test_cases_base_dir / "invalid_no_supplementary"
     with pytest.raises(FileNotFoundError) as e:
-        validate_pipeline_files(files, pipeline_config)
+        validate_pipeline_files(files, pipeline_config_wsup)
 
     assert "No files found matching pattern: ^supplementary.txt$" in str(e.value)
 
