@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from dpytools.logging.logger import DpLogger
-from dpytools.s3.basic import decompress_s3_tar
+from dpytools.s3.basic import s3_folder_recieved
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.validation.json.validation import validate_json_schema
 
@@ -29,7 +29,7 @@ def start(s3_object_name: str):
 
     # Decompress the tar file to the workspace
     try:
-        decompress_s3_tar(s3_object_name, "input")
+        s3_folder_recieved(s3_object_name, "input")
         logger.info(
             "S3 `.tar` object received and decompressed to ./input",
             data={"s3_object_name": s3_object_name},
