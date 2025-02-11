@@ -35,4 +35,4 @@ Feature: Data Ingress v1
       | manifest.json | valid_manifest.json   |
     And a dataset id of 'invalid'
     And dataset_ingress_v1 starts using the temporary source directory
-    Then the pipeline should generate an error with a message containing "Config version 2 not recognised"
+    Then the pipeline should generate an error with a message containing "Required file not found: /home/runner/work/dp-data-pipelines/dp-data-pipelines/temporary_output_directory/temporary-data-fixtures/metadata.json"
