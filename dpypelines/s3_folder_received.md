@@ -1,23 +1,23 @@
-# `s3_tar_received` pipeline
+# `s3_folder_received` pipeline
 
-The `s3_tar_received` pipeline handles datasets that are received as a `.tar` file. The pipeline is triggered upon receipt of the `.tar` file into an AWS S3 bucket, which calls the `s3_tar_received.start()` function, with the S3 object name of the `.tar` file as an argument. The files contained within `my-bucket/my-data.tar` can be any format. The onwards pipeline is then configured by a combination of file extensions and a `manifest.json` file which **must** be included in `my-data.tar`.
+The `s3_folder_received` pipeline handles datasets that are received in a directory. The pipeline is triggered upon receipt of the directory containing the files into an AWS S3 bucket, which calls the `s3_folder_received.start()` function, with the S3 object name of the folder as an argument. The onwards pipeline is then configured by a combination of file extensions and a `manifest.json` file which **must** be included in `folder-containing-data`.
 
 
-## `s3_tar_received.start()` function
+## `s3_folder_received.start()` function
 
-In order to run the `s2_tar_received.start()` function, you will need to set an environment variable indicating which AWS environment the S3 bucket is located in. To do this, open your terminal and enter the following command:
+In order to run the `s3_folder_received.start()` function, you will need to set an environment variable indicating which AWS environment the S3 bucket is located in. To do this, open your terminal and enter the following command:
 
 ```bash
 export AWS_PROFILE=<aws_profile_value>
 ```
 
-In the example below, `my-bucket/my-data.tar` is the S3 object name of the `.tar` file to be processed:
+In the example below, `my-bucket/folder-containing-data` is the S3 object name of the folder containing the `.csv` and two `.json` files:
 
 `myscript.py`
 ```python
-from dpypelines import s3_tar_received
+from dpypelines import s3_folder_received
 
-s3_tar_received.start('my-bucket/my-data.tar')
+s3_folder_received.start('my-bucket/folder-containing-data')
 ```
 
 To run this script, open your terminal and enter the following command:
@@ -26,16 +26,15 @@ To run this script, open your terminal and enter the following command:
 poetry run python3 ./myscript.py
 ```
 
-The `s3_tar_received.start()` function performs the following steps:
+The `s3_folder_received.start()` function performs the following steps:
 
-1. Decompresses the `my-data.tar` file to the workspace.
-2. Creates a local directory store using the decompressed files.
-3. Retrieves pipeline configuration details for the given dataset using the `source_id` field in `manifest.json`.
-4. Calls the dataset_ingress_v1 function.
+1. Downloads the files contained in `folder-containing-data` into a local directory.
+2. Retrieves pipeline configuration details for the given dataset using the `source_id` field in `manifest.json`.
+3. Calls the secondary function specified in the pipeline configuration details. This secondary function defines which transform functionality should be applied to the dataset.
 
 ## `manifest.json` file
 
-The `.tar` file submitted to the pipeline **must** contain a file named `manifest.json`, which contains configuration details required for successful pipeline processing of submissions. Details of required fields are in the table below:
+The `folder-containing-data` file submitted to the pipeline **must** contain a file named `manifest.json`, which contains configuration details required for successful pipeline processing of submissions. Details of required fields are in the table below:
 
 | Field                | Required? | Description                                                                                                                                                                                          | Default value                                                               |
 |----------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
@@ -61,18 +60,10 @@ The `source_id` field in `manifest.json` is used to get pipeline configuration d
 | `transform_kwargs`            | A dictionary that supports the propagation of keyword arguments throughout the pipeline, where the key is the keyword argument name, and the value is the keyword argument value to be propagated.           |
 | `required_files`              | A list of regex patterns matching required files that form part of the submission.                                                                                                                           |
 | `supplementary_distributions` | A list of regex patterns matching supplementary distributions that form part of the submission.                                                                                                              |
+| `secondary_function`          | The pipeline function that should be applied to the dataset.                                                                                                                                                 |
+## Secondary functions
 
-## Error handling
-
-If the `s3_tar_received.start()` function encounters any problems, an error will be raised that includes information on the issue encountered, to help you resolve the problem. For example, if you attempt to call the `s3_tar_received.start()` function on a file without the `.tar` extension - in this case, `my-bucket/data.csv` - the following error will be raised:
-
-```bash
-    NotImplementedError: This function currently only handles archives using the tar extension. Got "my-bucket/data.csv"
-```
-
-## dataset_ingress_v1 function
-
-The final step of the `s3_tar_received.start()` function calls the `dataset_ingress_v1` function. For more information on this function, please click on the link below:
+The final step of the `s3_folder_received.start()` function calls the `secondary_function` specified in the pipeline configuration details. For more information on functions available at this step, please click on the links below:
 
 - [`dataset_ingress_v1`](./pipeline/dataset_ingress_v1.md)
 
