@@ -25,9 +25,9 @@ def test_dataset_ingress_v1():
             {"matches": "^metadata.json$"},
         ],
         "supplementary_distributions": {},
-        "secondary_function": dataset_ingress_v1,
     }
-    assert dataset_ingress_v1(files, pipeline_config) is True
+    result = dataset_ingress_v1(files, pipeline_config)
+    assert result is True
 
 
 def test_dataset_ingress_v1_data_missing():
@@ -48,12 +48,10 @@ def test_dataset_ingress_v1_data_missing():
             {"matches": "^metadata.json$"},
         ],
         "supplementary_distributions": {},
-        "secondary_function": dataset_ingress_v1,
     }
-    with pytest.raises(Exception) as e:
+    with pytest.raises(FileNotFoundError) as e:
         dataset_ingress_v1(files, pipeline_config)
-
-    assert "Required file not found" in str(e)
+    assert "No files found matching pattern: ^data.csv$" in str(e.value)
 
 
 def test_dataset_ingress_v1_metadata_missing():
@@ -74,12 +72,13 @@ def test_dataset_ingress_v1_metadata_missing():
             {"matches": "^metadata.json$"},
         ],
         "supplementary_distributions": {},
-        "secondary_function": dataset_ingress_v1,
     }
-    with pytest.raises(Exception) as e:
+    with pytest.raises(FileNotFoundError) as e:
         dataset_ingress_v1(files, pipeline_config)
-
-    assert "Required file not found" in str(e)
+    assert (
+        "Required file not found: tests/fixtures/test-cases/dataset_ingress_v1/invalid_no_metadata/metadata.json"
+        in str(e.value)
+    )
 
 
 # TODO Change assertion and reinstate test once validation of existence of manifest added
@@ -101,8 +100,7 @@ def test_dataset_ingress_v1_metadata_missing():
 #             {"matches": "^metadata.json$"},
 #         ],
 #         "supplementary_distributions": {},
-#         "secondary_function": dataset_ingress_v1,
 #     }
-#     with pytest.raises(Exception) as e:
+#     with pytest.raises(FileNotFoundError) as e:
 #         dataset_ingress_v1(files, pipeline_config)
-#     assert "Failed to create email client" in str(e)
+#     assert "Required file not found: tests/fixtures/test-cases/dataset_ingress_v1/invalid_no_manifest/manifest.json" in str(e.value)

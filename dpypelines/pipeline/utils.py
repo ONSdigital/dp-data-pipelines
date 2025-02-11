@@ -1,3 +1,5 @@
+from typing import Optional
+
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 
@@ -32,7 +34,7 @@ def get_notifier():
         raise err
 
 
-def get_upload_client(upload_url):
+def get_upload_service_client(upload_url):
     # Upload output files to Upload Service
     try:
         # Create UploadClient from upload_url
@@ -48,5 +50,12 @@ def get_upload_client(upload_url):
         raise err
 
 
-def get_secondary_function(config_dict: dict):
-    return config_dict["secondary_function"]
+def get_value_from_metadata(metadata: dict, key: str) -> Optional[str]:
+    # Get the value for the specified key from metadata
+    try:
+        return metadata[key]
+    except KeyError as err:
+        logger.error(
+            "Value not found in metadata for given key", err, data={"key": key}
+        )
+        raise err

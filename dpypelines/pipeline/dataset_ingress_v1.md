@@ -50,6 +50,11 @@ The files created locally by the pipeline will be:
 - A JSON file of the metadata associated with the CSV file.
 - Each file listed under `supplementary_distributions` of the pipeline configuration details used.
 
+If running the pipeline locally on a generic file input (that has an accepted file format),the files created locally by the pipeline will be:
+
+- Each file listed under `required_files` of the pipeline configuration details used.
+- Each file listed under `supplementary_distributions` of the pipeline configuration details used.
+
 ### Scenario 2: Run the pipeline and upload outputs to Digital Publishing
 
 This is the scenario to use if:
@@ -69,8 +74,13 @@ export SERVICE_TOKEN_FOR_UPLOAD=<service_token_for_upload>
 
 Then run `myscript.py` as [described above](#running-locally). This will run the full transform and upload outputs to the [dp-upload-service](https://github.com/ONSdigital/dp-upload-service).
 
-The files created by the pipeline and uploaded to the DP Upload Service will be:
+If running the pipeline on a dataset, the files created by the pipeline and uploaded to the DP Upload Service will be:
 
 - A CSV file of the source data.
 - A JSON file of the metadata associated with the CSV file.
+- Each file listed under `supplementary_distributions` of the pipeline configuration details used.
+
+If running the pipeline on a generic file (that is within accepted file formats), the files created by the pipeline and uploaded to the DP Upload Service will be:
+
+- Each file listed under `required_files` of the pipeline configuration details used.
 - Each file listed under `supplementary_distributions` of the pipeline configuration details used.
