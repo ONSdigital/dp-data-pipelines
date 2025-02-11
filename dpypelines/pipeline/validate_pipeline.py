@@ -1,11 +1,11 @@
 import json
+import os
 import re
 from pathlib import Path
 from typing import Dict, List
 
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.utils import get_submitter_email
-from dpypelines.pipeline.validate_ingest_files import file_size_0
 
 
 def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
@@ -70,7 +70,7 @@ def validate_file_exists_and_not_empty(file_path: Path) -> None:
     if not file_path.exists():
         raise FileNotFoundError(f"Required file not found: {file_path}")
 
-    if file_size_0(file_path, give_error=True):
+    if os.stat(file_path).st_size == 0:
         raise ValueError(f"'{file_path}' is empty")
 
 
