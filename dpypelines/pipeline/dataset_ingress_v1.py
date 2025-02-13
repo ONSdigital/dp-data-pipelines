@@ -11,6 +11,7 @@ from dpytools.utilities.utilities import str_to_bool
 from dpypelines.pipeline.shared.email_templates import (
     submission_processed_email,
     successful_file_upload_email,
+    successful_metadata_submission,
     successful_validation_email,
 )
 from dpypelines.pipeline.shared.error_handler_module import error_handler
@@ -20,7 +21,10 @@ from dpypelines.pipeline.shared.utils import (
     get_mimetype,
     get_submitter_email,
 )
-from dpypelines.pipeline.utils import get_notifier, get_value_from_metadata
+from dpypelines.pipeline.utils import (
+    get_notifier,
+    get_post_request_values_from_metadata,
+)
 from dpypelines.pipeline.validate_ingest_files import (
     file_size_0,
     metadata_json_is_parseable,
@@ -335,47 +339,73 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                         enable_notification=enable_notification,
                     )
 
-        # Submit metadata to Dataset API
+        # Get metadata.json as a dict
         try:
             metadata = local_store.get_lone_matching_json_as_dict("^metadata.json$")
             logger.info(
                 "Retrieved metadata.json",
                 data={"metadata": metadata},
             )
-        except Exception as err:
-            logger.error("Failed to retrieve metadata.json", err)
-            de_notifier.failure()
-            raise err
-
-        # Submit metadata to Dataset API endpoint
-        try:
-            # Get dataset_id from metadata and create DatasetAPIClient
-            # This is based on the understanding that the dataset_id will be the value associated with the dcterms:identifier predicate in metadata.json
-            dataset_id = get_value_from_metadata(metadata, "dcterms:identifier")
-            dataset_api_client = DatasetAPIClient(dataset_api_url, dataset_id)
-
-            # Check that the Dataset API endpoint exists
-            dataset_api_response = dataset_api_client.get_path()
-
-            if dataset_api_response.status_code == 200:
-                print(
-                    "Dataset ID exists in Dataset API - submit PUT request to update existing dataset"
-                )
-            elif dataset_api_response.status_code == 404:
-                print(
-                    "Dataset ID does not exist in Dataset API - submit POST request to add new dataset"
-                )
-                dataset_api_response.raise_for_status()
-            else:
-                print(f"Unhandled status code {dataset_api_response.status_code}")
-                dataset_api_response.raise_for_status()
         except Exception:
             error_handler(
                 section="1.1",
-                error="Error getting Dataset API path for given dataset_id",
+                error="Failed to retrieve metadata.json",
+                data=None,
+                submitter_email=submitter_email,
+                enable_email=enable_email,
+                enable_logs=enable_logs,
+                enable_notification=enable_notification,
+            )
+
+        # Submit metadata to Dataset API endpoint
+        try:
+            # Get dataset_path and edition_path values from metadata and create DatasetAPIClient
+            # This is based on the understanding that the dataset_path/edition_path will be the values associated with the `dcterms:identifier` predicate in metadata.json
+            dataset_path, edition_path, request_body = (
+                get_post_request_values_from_metadata(metadata)
+            )
+            dataset_api_client = DatasetAPIClient(
+                dataset_api_url, dataset_path, edition_path
+            )
+            # Check that the Dataset API endpoint exists
+            dataset_api_get_path_response = dataset_api_client.get_path()
+            logger.info(
+                "Dataset API endpoint exists",
+                data={"dataset_api_endpoint": dataset_api_client.full_url},
+            )
+
+            # If the endpoint exists, submit POST request
+            if dataset_api_get_path_response.status_code == 200:
+                try:
+                    dataset_api_client.post_json(request_body)
+                    logger.info(
+                        "Metadata submitted to Dataset API endpoint",
+                        data={"dataset_api_endpoint": dataset_api_client.full_url},
+                    )
+                    email_content = successful_metadata_submission(dataset_path)
+                    email_client.send(
+                        submitter_email, email_content.subject, email_content.message
+                    )
+                except Exception:
+                    error_handler(
+                        section="1.1",
+                        error="POST request to Dataset API failed",
+                        data=None,
+                        submitter_email=submitter_email,
+                        enable_email=enable_email,
+                        enable_logs=enable_logs,
+                        enable_notification=enable_notification,
+                    )
+            else:
+                dataset_api_get_path_response.raise_for_status()
+        except Exception:
+            error_handler(
+                section="1.1",
+                error="Error getting Dataset API path for given dataset_path and edition_path",
                 data={
                     "dataset_api_url": dataset_api_url,
-                    "dataset_id": dataset_id,
+                    "dataset_path": dataset_path,
+                    "edition_path": edition_path,
                 },
                 submitter_email=submitter_email,
                 enable_email=enable_email,
