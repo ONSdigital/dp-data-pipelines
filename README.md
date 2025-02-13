@@ -52,9 +52,10 @@ export <ENVIRONMENT_VARIABLE_NAME>=<environment_variable_value>
 | DE_SLACK_WEBHOOK      |  None   | Webhook for the Data Engineering Slack channel | Set **either** `DE_SLACK_WEBHOOK` **or** `DISABLE_NOTIFICATIONS` |
 | DISABLE_NOTIFICATIONS |  False  | Toggle Slack notifications on or off           | Set **either** `DE_SLACK_WEBHOOK` **or** `DISABLE_NOTIFICATIONS` |
 | AWS_PROFILE              |  None   | The AWS environment                                     |
-| SKIP_DATA_UPLOAD         |  False  | Toggle upload functionality on or off                   | Set **either** `SKIP_DATA_UPLOAD` **or** `UPLOAD_SERVICE_URL` **and** `SERVICE_TOKEN_FOR_UPLOAD` |
+| SKIP_DATA_UPLOAD         |  False  | Toggle upload functionality on or off                   | Set **either** `SKIP_DATA_UPLOAD` **or** `UPLOAD_SERVICE_URL` **and** `DATASET_API_URL` **and** `SERVICE_TOKEN_FOR_UPLOAD` |
 | UPLOAD_SERVICE_URL       |  None   | The URL of the Upload Service                           | Set **either** `SKIP_DATA_UPLOAD` **or** `UPLOAD_SERVICE_URL` **and** `SERVICE_TOKEN_FOR_UPLOAD` |
-| SERVICE_TOKEN_FOR_UPLOAD |  None   | The service token required to access the Upload Service | Set **either** `SKIP_DATA_UPLOAD` **or** `UPLOAD_SERVICE_URL` **and** `SERVICE_TOKEN_FOR_UPLOAD` |
+| DATASET_API_URL          |  None   | The URL of the Dataset API                              | Set **either** `SKIP_DATA_UPLOAD` **or** `DATASET_API_URL` **and** `SERVICE_TOKEN_FOR_UPLOAD` |
+| SERVICE_TOKEN_FOR_UPLOAD |  None   | The service token required to access the Upload Service and Dataset API | Set **either** `SKIP_DATA_UPLOAD` **or** `UPLOAD_SERVICE_URL` **and** `DATASET_API_URL` **and** `SERVICE_TOKEN_FOR_UPLOAD` |
 
 Licence
 -------
