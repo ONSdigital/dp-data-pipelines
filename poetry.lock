@@ -430,7 +430,7 @@ optional = false
 python-versions = ">=3.9, <3.12"
 groups = ["main"]
 files = []
-develop = true
+develop = false
 
 [package.dependencies]
 backoff = "^2.2.1"
@@ -439,11 +439,12 @@ email-validator = "^2.1.1"
 jsonschema = "^4.21.1"
 requests = "^2.31.0"
 structlog = "^23.2.0"
-urllib3 = "1.26.19"
 
 [package.source]
-type = "directory"
-url = "../dp-python-tools"
+type = "git"
+url = "https://github.com/ONSdigital/dp-python-tools.git"
+reference = "v0.5.4"
+resolved_reference = "7bd7a54e9b2158996482f9536512a70680cc26c9"
 
 [[package]]
 name = "email-validator"
@@ -1303,4 +1304,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9.0,<3.10.0"
-content-hash = "b7c728ea4f9b7f190a936c501f53d2988ee380e2d1a49d22f82512e162b7aa39"
+content-hash = "c30fa629823957980d2c91e06da6317e117f2cc725f10fc2f4a61685e960eae4"
