@@ -8,3 +8,5 @@ poetry build
 
 # Put object to S3 bucket
 aws s3api put-object --bucket $s3Bucket --body $wheelPath --key $wheelKey
+
+rm -r dist
