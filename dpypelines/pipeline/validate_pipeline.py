@@ -4,6 +4,8 @@ import re
 from pathlib import Path
 from typing import Dict, List
 
+from dpytools.validation.json.validation import validate_json_schema
+
 from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
 from dpypelines.pipeline.shared.utils import get_submitter_email
 
@@ -18,9 +20,10 @@ def validate_pipeline_files(files_dir: Path, pipeline_config: dict) -> Dict:
     for file_name in required_files:
         validate_file_exists_and_not_empty(files_dir / file_name)
 
-    # 2. Validate manifest.json and metadata.json
-    manifest_dict = validate_json_file(files_dir / "manifest.json")
-    validate_manifest_vars(manifest_dict, required_keys)
+    # 2. Retrieve and validate manifest.json and metadata.json
+    manifest_dict = retrieve_and_validate_manifest(
+        files_dir / "manifest.json", required_keys
+    )
     metadata_dict = validate_json_file(files_dir / "metadata.json")
 
     # 3. Validate config-required files
@@ -93,3 +96,28 @@ def validate_manifest_vars(manifest_dict: dict, required_keys: list) -> None:
 
     # Validate submitter email
     get_submitter_email(manifest_dict)
+
+
+def validate_manifest_schema(manifest_dict: dict) -> None:
+    """Validate manifest dictionary against the schema."""
+    try:
+        file_path = Path(__file__).parent
+        schema_path = Path(file_path / "schemas/manifest_v1_schema.json")
+        validate_json_schema(
+            schema_path=schema_path,
+            data_dict=manifest_dict,
+            error_msg="Invalid manifest",
+        )
+    except Exception as e:
+        raise ValueError(f"Manifest schema validation failed: {str(e)}")
+
+
+def retrieve_and_validate_manifest(manifest_path: Path, required_keys: list) -> dict:
+    """Retrieve and validate the manifest.json file."""
+    try:
+        manifest_dict = validate_json_file(manifest_path)
+        validate_manifest_vars(manifest_dict, required_keys)
+        validate_manifest_schema(manifest_dict)
+        return manifest_dict
+    except Exception as e:
+        raise ValueError(f"Failed to retrieve and validate manifest: {str(e)}")

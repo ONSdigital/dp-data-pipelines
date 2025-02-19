@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -25,7 +26,8 @@ pipeline_config_wsup["supplementary_distributions"] = [
 ]
 
 
-def test_validate_pipeline_files():
+@patch("dpypelines.pipeline.validate_pipeline.validate_json_schema")
+def test_validate_pipeline_files(mock_validate_json_schema):
     """
     Tests that `validate_pipeline_files()` returns the expected dictionary if valid files are provided.
     """
@@ -37,14 +39,14 @@ def test_validate_pipeline_files():
     assert "supplementary_files" in result
 
 
-def test_validate_pipeline_files_data_missing():
+@patch("dpypelines.pipeline.validate_pipeline.validate_json_schema")
+def test_validate_pipeline_files_data_missing(mock_validate_json_schema):
     """
     Tests that `validate_pipeline_files()` raises FileNotFoundError if the data file is missing.
     """
     files = test_cases_base_dir / "invalid_no_data"
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
-
     assert "No files found matching pattern: ^data.csv$" in str(e.value)
 
 
@@ -55,21 +57,20 @@ def test_validate_pipeline_files_metadata_missing():
     files = test_cases_base_dir / "invalid_no_metadata"
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
-
     assert (
         "Required file not found: tests/fixtures/test-cases/dataset_ingress_v1/invalid_no_metadata/metadata.json"
         in str(e.value)
     )
 
 
-def test_validate_pipeline_files_supplementary_missing():
+@patch("dpypelines.pipeline.validate_pipeline.validate_json_schema")
+def test_validate_pipeline_files_supplementary_missing(mock_validate_json_schema):
     """
     Tests that `validate_pipeline_files()` raises FileNotFoundError if the supplementary file is missing.
     """
     files = test_cases_base_dir / "invalid_no_supplementary"
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config_wsup)
-
     assert "No files found matching pattern: ^supplementary.txt$" in str(e.value)
 
 
@@ -80,7 +81,6 @@ def test_validate_pipeline_files_manifest_missing():
     files = test_cases_base_dir / "invalid_no_manifest"
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
-
     assert (
         "Required file not found: tests/fixtures/test-cases/dataset_ingress_v1/invalid_no_manifest/manifest.json"
         in str(e.value)
