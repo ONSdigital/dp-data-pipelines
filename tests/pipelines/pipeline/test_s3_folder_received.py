@@ -5,7 +5,7 @@ import pytest
 
 from dpypelines.s3_folder_received import (
     decompress_tar_file,
-    retrieve_config_and_files_dir,
+    retrieve_config_and_files,
     send_submission_confirmation,
     setup_clients,
     start,
@@ -64,7 +64,7 @@ def test_retrieve_config_and_files(
     mock_get_pipeline_config_for_source.return_value = mock_pipeline_config
     mock_local_store.get_current_source_pathlike.return_value = mock_files_dir
 
-    manifest_dict, pipeline_config, files_dir = retrieve_config_and_files_dir(
+    manifest_dict, pipeline_config, files_dir = retrieve_config_and_files(
         mock_local_store
     )
 
@@ -161,11 +161,11 @@ def test_start_valid_data(
     mock_validation_results = {"manifest": "value"}
     mock_validate_pipeline.return_value = mock_validation_results
 
-    result = start("example_s3_object_name")
+    result = start("dummy_s3_object_name")
 
     assert result is True
     mock_setup_clients.assert_called_once()
-    mock_decompress_tar_file.assert_called_once_with("example_s3_object_name")
+    mock_decompress_tar_file.assert_called_once_with("dummy_s3_object_name")
     mock_retrieve_config_and_files.assert_called_once_with(mock_local_store)
     mock_validate_pipeline.assert_called_once_with(mock_files_dir, mock_pipeline_config)
     mock_upload_files.assert_called_once_with(
@@ -208,7 +208,7 @@ def test_start_missing_files(
     mock_validate_pipeline.side_effect = FileNotFoundError("Required file not found")
 
     with pytest.raises(Exception, match="Required file not found"):
-        start("example_s3_object_name")
+        start("dummy_s3_object_name")
 
 
 @patch("dpypelines.s3_folder_received.setup_clients")
@@ -242,4 +242,4 @@ def test_start_invalid_manifest(
     mock_validate_pipeline.side_effect = ValueError("Invalid manifest file")
 
     with pytest.raises(Exception, match="Invalid manifest file"):
-        start("example_s3_object_name")
+        start("dummy_s3_object_name")

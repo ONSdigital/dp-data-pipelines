@@ -39,7 +39,7 @@ def start(s3_object_name: str):
         # Step 2: Validate configuration and files.
         local_store = decompress_tar_file(s3_object_name)
 
-        manifest_dict, pipeline_config, files_dir = retrieve_config_and_files_dir(
+        manifest_dict, pipeline_config, files_dir = retrieve_config_and_files(
             local_store
         )
         validation_results = validate_pipeline(files_dir, pipeline_config)
@@ -109,7 +109,7 @@ def decompress_tar_file(s3_object_name):
     return local_store
 
 
-def retrieve_config_and_files_dir(local_store):
+def retrieve_config_and_files(local_store):
     """Retrieve configuration and files from the local directory."""
     manifest_dict = retrieve_manifest(local_store)
     source_id = get_source_id_from_manifest(manifest_dict)
