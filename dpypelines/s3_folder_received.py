@@ -25,12 +25,15 @@ ENABLE_LOGS = True
 ENABLE_EMAIL = True
 
 
-def start(s3_object_name: str):
+def start(s3_object_name: str, *args, **kwargs):
     """
     Handles the required behaviour when receiving a `.tar` file indicated by an s3 object name.
-
+    Allows extra arguments to be passed (if used as a secondary function in the pipeline config).
+    
     Args:
         s3_object_name (str): The S3 object name of the tar file to be processed.
+        *args: Optional extra positional arguments.
+        **kwargs: Optional extra keyword arguments.
     """
     try:
         # Step 1: Set up clients.
