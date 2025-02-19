@@ -3,35 +3,38 @@ import json
 import pandas as pd
 from behave import *
 from dictdiffer import diff
-from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
-from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
-    sdmx_compact_2_0_prototype_1,
-    sdmx_compact_2_1_prototype,
-    sdmx_sanity_check_v1,
+from dpypelines.s3_folder_received import (
+    start,
+    setup_clients,
+    decompress_tar_file,
+    retrieve_config_and_files,
+    validate_pipeline,
+    upload_files,
+    send_submission_confirmation,
 )
 
 CONFIGURATION = {
     "valid": {
         "config_version": 1,
-        "transform": sdmx_compact_2_0_prototype_1,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform": None,  
+        "transform_inputs": {"^data.xml$": None},  
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [],
-        "secondary_function": dataset_ingress_v1,
+        "secondary_function": start,
     },
     "valid_no_supp_dist_2_0": {
         "config_version": 1,
-        "transform": sdmx_compact_2_0_prototype_1,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform": None, 
+        "transform_inputs": {"^data.xml$": None},  
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [],
     },
     "valid_no_supp_dist_2_1": {
         "config_version": 1,
-        "transform": sdmx_compact_2_1_prototype,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform": None,  
+        "transform_inputs": {"^data.xml$": None},  
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [],
@@ -62,8 +65,8 @@ CONFIGURATION = {
     },
     "invalid": {
         "config_version": 2,
-        "transform": sdmx_compact_2_0_prototype_1,
-        "transform_inputs": {"^data.xml$": sdmx_sanity_check_v1},
+        "transform": None,  
+        "transform_inputs": {"^data.xml$": None},  
         "transform_kwargs": {},
         "required_files": [{"matches": "^data.xml$"}],
         "supplementary_distributions": [{"matches": "^data.xml$"}],
@@ -100,10 +103,10 @@ def step_impl(context, source_id):
     context.pipeline_config = CONFIGURATION[source_id]
 
 
-@given("dataset_ingress_v1 starts using the temporary source directory")
+@given("s3_folder_received starts using the temporary source directory")
 def step_impl(context):
     try:
-        dataset_ingress_v1(
+        start(
             context.temporary_directory.absolute(), context.pipeline_config
         )
         context.exception = None
