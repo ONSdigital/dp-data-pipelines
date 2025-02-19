@@ -13,7 +13,7 @@ Feature: Data Ingress v1
         | manifest.json | valid_manifest.json            |
         | metadata.json | test_metadata.json             |
     And a dataset id of 'valid_generic_file_ingress_xml'
-    And dataset_ingress_v1 starts using the temporary source directory
+    And s3_folder_received starts using the temporary source directory
     Then the pipeline should generate no errors
 
 
@@ -24,7 +24,7 @@ Feature: Data Ingress v1
         | manifest.json | valid_manifest.json            |
         | metadata.json | test_metadata.json             |
     And a dataset id of 'valid_generic_file_ingress_csv'
-    And dataset_ingress_v1 starts using the temporary source directory
+    And s3_folder_received starts using the temporary source directory
     Then the pipeline should generate no errors
 
 
@@ -34,5 +34,5 @@ Feature: Data Ingress v1
       | data.xml      | esa2010_test_data.xml |
       | manifest.json | valid_manifest.json   |
     And a dataset id of 'invalid'
-    And dataset_ingress_v1 starts using the temporary source directory
+    And s3_folder_received starts using the temporary source directory
     Then the pipeline should generate an error with a message containing "Required file not found: /home/runner/work/dp-data-pipelines/dp-data-pipelines/temporary_output_directory/temporary-data-fixtures/metadata.json"
