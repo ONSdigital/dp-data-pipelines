@@ -187,66 +187,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                 enable_notification=enable_notification,
             )
 
-        # # Check for supplementary distributions to upload
-        # if supp_dist_patterns:
-        #     # Get all files in local store
-        #     all_files = local_store.get_file_names()
-
-        #     for supp_dist_pattern in supp_dist_patterns:
-        #         # Get supplementary distribution filename matching pattern from local store
-        #         supp_dist_matching_files = [
-        #             f for f in all_files if re.search(supp_dist_pattern, f)
-        #         ]
-        #         assert (
-        #             len(supp_dist_matching_files) == 1
-        #         ), f"Error finding file matching pattern {supp_dist_pattern}: matching files are {supp_dist_matching_files}"
-
-        #         # Get filepath of supplementary distribution in local store
-        #         supp_dist_path = local_store.get_pathlike_of_file_matching(
-        #             supp_dist_pattern
-        #         )
-        #         logger.info(
-        #             "Retrieved supplementary distribution",
-        #             data={
-        #                 "supplementary_distribution": supp_dist_path,
-        #                 "file_extension": supp_dist_path.suffix,
-        #             },
-        #         )
-
-        #         # Upload supplementary distribution to Upload Service
-        #         try:
-        #             mimetype = get_mimetype(supp_dist_path.suffix)
-        #             if mimetype:
-        #                 upload_client.upload_new(supp_dist_path, mimetype)
-        #             else:
-        #                 raise NotImplementedError(
-        #                     f"Uploading files of type {supp_dist_path.suffix} not supported."
-        #                 )
-        #             logger.info(
-        #                 "Supplementary distribution uploaded",
-        #                 data={
-        #                     "supplementary_distribution": supp_dist_path,
-        #                     "upload_url": upload_url,
-        #                 },
-        #             )
-        #             email_content = successful_file_upload_email(supp_dist_path.name)
-        #             email_client.send(
-        #                 submitter_email, email_content.subject, email_content.message
-        #             )
-        #         except Exception:
-        #             error_handler(
-        #                 section="1.1",
-        #                 error="Failed to upload supplementary distribution",
-        #                 data={
-        #                     "supplementary_distribution": supp_dist_path,
-        #                     "upload_url": upload_url,
-        #                 },
-        #                 submitter_email=submitter_email,
-        #                 enable_email=enable_email,
-        #                 enable_logs=enable_logs,
-        #                 enable_notification=enable_notification,
-        #             )
-
         # Get metadata.json as a dict
         try:
             metadata = local_store.get_lone_matching_json_as_dict("^metadata.json$")
