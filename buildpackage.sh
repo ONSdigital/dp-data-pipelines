@@ -1,5 +1,5 @@
 # Constants for AWS commands
-s3Bucket="dp-sandbox-whl-package-upload"
+s3Bucket="dp-sandbox-whl-package-upload-bucket"
 wheelPath="dist/dpypelines-0.1.0-py3-none-any.whl"
 wheelKey="dpypelines-0.1.0-py3-none-any.whl"
 
