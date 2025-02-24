@@ -20,6 +20,9 @@ test: install ## Run pytest and check test coverage
 feature: install
 	poetry run behave
 
+deploy:
+	./buildpackage.sh
+
 
 symlink:
 	# Switch to production version
