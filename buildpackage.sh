@@ -8,6 +8,6 @@ wheelKey="dpypelines-0.1.0-py3-none-any.whl"
 poetry build
 
 # Put object to S3 bucket
-aws s3api put-object --bucket $s3Bucket --body $wheelPath --key $wheelKey
+aws s3api put-object --bucket $s3Bucket --body $wheelPath --key $wheelKey --profile $AWS_PROFILE
 
 rm -r dist
