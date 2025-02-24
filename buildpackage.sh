@@ -1,5 +1,6 @@
 # Constants for AWS commands
-s3Bucket="dp-sandbox-whl-package-upload-bucket"
+s3Bucketpostfix="-whl-package-upload-bucket"
+s3Bucket=$AWS_PROFILE$s3Bucketpostfix
 wheelPath="dist/dpypelines-0.1.0-py3-none-any.whl"
 wheelKey="dpypelines-0.1.0-py3-none-any.whl"
 
