@@ -12,6 +12,8 @@ from dpypelines.s3_folder_received import (
     upload_files,
     send_submission_confirmation,
 )
+from unittest.mock import patch, MagicMock
+import os
 
 CONFIGURATION = {
     "valid": {
@@ -106,9 +108,20 @@ def step_impl(context, source_id):
 @given("s3_folder_received starts using the temporary source directory")
 def step_impl(context):
     try:
-        start(
-            context.temporary_directory.absolute(), context.pipeline_config
-        )
+        # Add mocking for S3 interactions before calling start()
+        with patch('dpytools.s3.basic.client') as mock_client:
+            # Configure the mock to return a successful response
+            mock_response = {'Contents': []}
+            mock_client.list_objects_v2.return_value = mock_response
+            
+            # Set environment variables for testing
+            os.environ["AWS_S3_BUCKET_NAME"] = "test-bucket-name"
+            
+            # Now call start() which will use our mocked S3 client
+            start(
+                context.temporary_directory.absolute(), context.pipeline_config
+            )
+            
         context.exception = None
     except Exception as exc:
         context.exception = exc
