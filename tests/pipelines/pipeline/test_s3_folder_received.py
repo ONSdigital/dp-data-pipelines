@@ -56,7 +56,7 @@ def test_retrieve_config_and_files(
     mock_manifest_dict = {"key": "value"}
     mock_source_id = "source_id"
     mock_pipeline_config = {"config": "value"}
-    mock_files_dir = Path("files_dir") 
+    mock_files_dir = Path("files_dir")
 
     mock_retrieve_manifest.return_value = mock_manifest_dict
     mock_get_source_id_from_manifest.return_value = mock_source_id
