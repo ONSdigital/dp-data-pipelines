@@ -109,10 +109,10 @@ def step_impl(context, source_id):
 def step_impl(context):
     try:
         # Add mocking for S3 interactions before calling start()
-        with patch('dpytools.s3.basic.client') as mock_client:
+        with patch('dpypelines.s3_folder_received.s3_folder_recieved') as mock_s3_folder_received:
             # Configure the mock to return a successful response
             mock_response = {'Contents': []}
-            mock_client.list_objects_v2.return_value = mock_response
+            mock_s3_folder_received.list_objects_v2.return_value = mock_response
             
             # Set environment variables for testing
             os.environ["AWS_S3_BUCKET_NAME"] = "test-bucket-name"
