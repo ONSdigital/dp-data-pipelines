@@ -96,8 +96,13 @@ def setup_clients():
 
 def decompress_tar_file(s3_object_name):
     """Decompress the tar file to the local directory."""
-    s3_folder_recieved(str(s3_object_name), "input")
-    local_store = LocalDirectoryStore("input")
+    if isinstance(s3_object_name, (str, Path)) and Path(s3_object_name).exists():
+        local_store = LocalDirectoryStore(s3_object_name)
+    else:
+        # Create input directory if it doesn't exist
+        Path("input").mkdir(exist_ok=True)
+        local_store = LocalDirectoryStore("input")
+    
     files = local_store.get_file_names()
 
     if not files:
