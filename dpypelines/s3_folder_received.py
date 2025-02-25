@@ -3,7 +3,6 @@ from pathlib import Path
 
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
-from dpytools.s3.basic import s3_folder_recieved
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.utilities.utilities import str_to_bool
 
@@ -29,7 +28,7 @@ def start(s3_object_name: str, *args, **kwargs):
     """
     Handles the required behaviour when receiving a `.tar` file indicated by an s3 object name.
     Allows extra arguments to be passed (if used as a secondary function in the pipeline config).
-    
+
     Args:
         s3_object_name (str): The S3 object name of the tar file to be processed.
         *args: Optional extra positional arguments.
@@ -96,13 +95,8 @@ def setup_clients():
 
 def decompress_tar_file(s3_object_name):
     """Decompress the tar file to the local directory."""
-    if isinstance(s3_object_name, (str, Path)) and Path(s3_object_name).exists():
-        local_store = LocalDirectoryStore(s3_object_name)
-    else:
-        # Create input directory if it doesn't exist
-        Path("input").mkdir(exist_ok=True)
-        local_store = LocalDirectoryStore("input")
-    
+
+    local_store = LocalDirectoryStore(s3_object_name)
     files = local_store.get_file_names()
 
     if not files:
@@ -122,7 +116,7 @@ def retrieve_config_and_files(local_store):
     manifest_dict = retrieve_manifest(local_store)
     source_id = get_source_id_from_manifest(manifest_dict)
     pipeline_config = get_pipeline_config_for_source(source_id)
-    files_dir = local_store.get_current_source_pathlike()
+    files_dir = Path(local_store.get_current_source_pathlike())
 
     if not manifest_dict or not source_id or not pipeline_config or not files_dir:
         err_msg = "Failed to retrieve configuration and files from the local directory."
@@ -173,7 +167,7 @@ def get_pipeline_config_for_source(source_id):
     return pipeline_config
 
 
-def validate_pipeline(files_dir, pipeline_config):
+def validate_pipeline(files_dir: Path, pipeline_config: dict):
     """Validate the pipeline files against the configuration."""
     validation_results = validate_pipeline_files(files_dir, pipeline_config)
 

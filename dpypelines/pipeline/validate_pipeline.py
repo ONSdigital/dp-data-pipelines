@@ -1,5 +1,4 @@
 import json
-import os
 import re
 from pathlib import Path
 from typing import Dict, List
@@ -69,12 +68,11 @@ def validate_pattern_files(
 
 
 def validate_file_exists_and_not_empty(file_path: Path) -> None:
-    """Validate file exists and has content."""
-    if not file_path.exists():
-        raise FileNotFoundError(f"Required file not found: {file_path}")
-
-    if os.stat(file_path).st_size == 0:
-        raise ValueError(f"'{file_path}' is empty")
+    """Ensure file exists and is not empty."""
+    if not file_path.is_file():
+        raise FileNotFoundError(f"Required file not found: {file_path.name}")
+    if file_path.stat().st_size == 0:
+        raise ValueError(f"File is empty: {file_path.name}")
 
 
 def validate_json_file(file_path: Path) -> dict:
@@ -101,15 +99,15 @@ def validate_manifest_vars(manifest_dict: dict, required_keys: list) -> None:
 def validate_manifest_schema(manifest_dict: dict) -> None:
     """Validate manifest dictionary against the schema."""
     try:
-        file_path = Path(__file__).parent
-        schema_path = Path(file_path / "schemas/manifest_v1_schema.json")
+        file_path = Path(__file__).parent.parent
+        schema_path = file_path / "schemas" / "manifest_v1_schema.json"
         validate_json_schema(
             schema_path=schema_path,
             data_dict=manifest_dict,
             error_msg="Invalid manifest",
         )
     except Exception as e:
-        raise ValueError(f"Manifest schema validation failed: {str(e)}")
+        raise ValueError(f"Manifest schema validation failed: {e}")
 
 
 def retrieve_and_validate_manifest(manifest_path: Path, required_keys: list) -> dict:

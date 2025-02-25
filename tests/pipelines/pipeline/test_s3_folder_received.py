@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -30,8 +31,7 @@ def test_setup_clients(mock_get_email_client, mock_get_notifier):
 
 
 @patch("dpypelines.s3_folder_received.LocalDirectoryStore")
-@patch("dpypelines.s3_folder_received.s3_folder_recieved")
-def test_decompress_tar_file(mock_s3_folder_recieved, mock_LocalDirectoryStore):
+def test_decompress_tar_file(mock_LocalDirectoryStore):
     """Test that `decompress_tar_file()` returns the expected local store."""
     mock_local_store = MagicMock()
     mock_LocalDirectoryStore.return_value = mock_local_store
@@ -40,8 +40,7 @@ def test_decompress_tar_file(mock_s3_folder_recieved, mock_LocalDirectoryStore):
     local_store = decompress_tar_file("s3_object_name")
 
     assert local_store == mock_local_store
-    mock_s3_folder_recieved.assert_called_once_with("s3_object_name", "input")
-    mock_LocalDirectoryStore.assert_called_once_with("input")
+    mock_LocalDirectoryStore.assert_called_once_with("s3_object_name")
 
 
 @patch("dpypelines.s3_folder_received.retrieve_manifest")
@@ -57,7 +56,7 @@ def test_retrieve_config_and_files(
     mock_manifest_dict = {"key": "value"}
     mock_source_id = "source_id"
     mock_pipeline_config = {"config": "value"}
-    mock_files_dir = "files_dir"
+    mock_files_dir = Path("files_dir") 
 
     mock_retrieve_manifest.return_value = mock_manifest_dict
     mock_get_source_id_from_manifest.return_value = mock_source_id

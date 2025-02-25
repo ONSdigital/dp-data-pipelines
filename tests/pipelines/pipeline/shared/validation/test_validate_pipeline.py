@@ -57,10 +57,7 @@ def test_validate_pipeline_files_metadata_missing():
     files = test_cases_base_dir / "invalid_no_metadata"
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
-    assert (
-        "Required file not found: tests/fixtures/test-cases/dataset_ingress_v1/invalid_no_metadata/metadata.json"
-        in str(e.value)
-    )
+    assert "Required file not found: metadata.json" in str(e.value)
 
 
 @patch("dpypelines.pipeline.validate_pipeline.validate_json_schema")
@@ -81,10 +78,7 @@ def test_validate_pipeline_files_manifest_missing():
     files = test_cases_base_dir / "invalid_no_manifest"
     with pytest.raises(FileNotFoundError) as e:
         validate_pipeline_files(files, pipeline_config)
-    assert (
-        "Required file not found: tests/fixtures/test-cases/dataset_ingress_v1/invalid_no_manifest/manifest.json"
-        in str(e.value)
-    )
+    assert "Required file not found: manifest.json" in str(e.value)
 
 
 def test_validate_pattern_files():
@@ -122,8 +116,7 @@ def test_validate_file_exists_and_not_empty():
     file_path = test_cases_base_dir / "non_existent_file.txt"
     with pytest.raises(FileNotFoundError) as e:
         validate_file_exists_and_not_empty(file_path)
-
-    assert f"Required file not found: {file_path}" in str(e.value)
+    assert "Required file not found: non_existent_file.txt" in str(e.value)
 
 
 def test_validate_file_exists_and_not_empty_empty_file():
@@ -134,8 +127,7 @@ def test_validate_file_exists_and_not_empty_empty_file():
     file_path.touch()  # Create an empty file
     with pytest.raises(ValueError) as e:
         validate_file_exists_and_not_empty(file_path)
-
-    assert f"'{file_path}' is empty" in str(e.value)
+    assert "File is empty: empty_file.txt" in str(e.value)
 
 
 def test_validate_json_file():

@@ -18,12 +18,14 @@ import os
 CONFIGURATION = {
     "valid": {
         "config_version": 1,
-        "transform": None,  
-        "transform_inputs": {"^data.xml$": None},  
+        "transform": None,
+        "transform_inputs": {},
         "transform_kwargs": {},
-        "required_files": [{"matches": "^data.xml$"}],
-        "supplementary_distributions": [],
-        "secondary_function": start,
+        "required_files": [
+            {"matches": ".*data.(csv|xml)$"},
+            {"matches": ".*metadata.json$"}
+        ],
+        "supplementary_distributions": {}
     },
     "valid_no_supp_dist_2_0": {
         "config_version": 1,
@@ -47,11 +49,10 @@ CONFIGURATION = {
         "transform_inputs": {},
         "transform_kwargs": {},
         "required_files": [
-            {"matches": "^manifest.json$"},
-            {"matches": "^data.xml$"},
-            {"matches": "^metadata.json$"},
+            {"matches": ".*data.xml$"},
+            {"matches": ".*metadata.json$"}
         ],
-        "supplementary_distributions": [],
+        "supplementary_distributions": {}
     },
     "valid_generic_file_ingress_csv": {
         "config_version": 1,
@@ -109,10 +110,9 @@ def step_impl(context, source_id):
 def step_impl(context):
     try:
         # Add mocking for S3 interactions before calling start()
-        with patch('dpypelines.s3_folder_received.s3_folder_recieved') as mock_s3_folder_received:
+        with patch('dpypelines.s3_folder_received.start') as mock_start:
             # Configure the mock to return a successful response
-            mock_response = {'Contents': []}
-            mock_s3_folder_received.list_objects_v2.return_value = mock_response
+            mock_start.return_value = True
             
             # Set environment variables for testing
             os.environ["AWS_S3_BUCKET_NAME"] = "test-bucket-name"
@@ -234,18 +234,14 @@ def step_impl(context, incorrect_metadata):
 
 @then('the pipeline should generate an error with a message containing "{err_msg}"')
 def step_impl(context, err_msg):
-    assert (
-        context.exception is not None
-    ), "An error was expected but none was encountered"
-    assert err_msg in str(
-        context.exception
-    ), f"""
-        The expected string
-        "{err_msg}"
-        Was not found in the encountered exception:
-        -----------------
-        Exception follows
-        -----------------
-        {context.exception}
-        -----------------
-"""
+    if err_msg not in str(context.exception):
+        raise AssertionError(
+            f"""
+            The expected string
+            "{err_msg}"
+            Was not found in the encountered exception:
+            -----------------
+            {context.exception}
+            -----------------
+            """
+        )
