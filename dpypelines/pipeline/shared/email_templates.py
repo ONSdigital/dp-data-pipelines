@@ -68,3 +68,21 @@ def failed_validation_email(file: str, validation_info: str) -> EmailContent:
     subject = "Dataset Ingest: Validation Failed"
     message = f"File '{file}' could not be validated. Validation failure details: {validation_info}"
     return EmailContent(subject, message)
+
+
+def successful_metadata_submission(dataset_id: str) -> EmailContent:
+    """
+    Create a subject and message to confirm successful submission of metadata to the Dataset API
+    """
+    subject = "Dataset Ingest: Metadata Submitted"
+    message = f"The metadata for {dataset_id} has been successfully submitted to the Dataset API"
+    return EmailContent(subject, message)
+
+
+def failed_metadata_submission(dataset_id: str, error_info: str) -> EmailContent:
+    """
+    Create a subject and message to report failed submission of metadata to the Dataset API
+    """
+    subject = "Dataset Ingest: Metadata Submission Failed"
+    message = f"The metadata for {dataset_id} could not be submitted to the Dataset API. Submission failure details: {error_info}"
+    return EmailContent(subject, message)

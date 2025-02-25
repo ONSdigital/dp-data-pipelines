@@ -20,16 +20,19 @@ test: install ## Run pytest and check test coverage
 feature: install
 	poetry run behave
 
+deploy:
+	./buildpackage.sh
+
 
 symlink:
 	# Switch to production version
-	sed -i '' 's|{ git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "v0.5.1" }|{path = "../dp-python-tools",  develop = true}|' pyproject.toml
+	sed -i '' 's|{ git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "v0.5.5" }|{path = "../dp-python-tools",  develop = true}|' pyproject.toml
 	poetry lock
 	poetry install
 
 
 unlink:
 	# Switch to production version
-	sed -i '' 's|{path = "../dp-python-tools",  develop = true}|{ git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "v0.5.1" }|' pyproject.toml
+	sed -i '' 's|{path = "../dp-python-tools",  develop = true}|{ git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "v0.5.5" }|' pyproject.toml
 	poetry lock
 	poetry install
