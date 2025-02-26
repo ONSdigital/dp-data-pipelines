@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 from dpytools.logging.logger import DpLogger
 from dpytools.utilities.utilities import str_to_bool
