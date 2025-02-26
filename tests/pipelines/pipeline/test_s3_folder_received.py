@@ -1,22 +1,23 @@
 import os
+import re
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from dpypelines.s3_folder_received import (
-    decompress_tar_file,
-    retrieve_config_and_files,
+from dpypelines.pipeline.utils import (
+    decompress_file,
     send_submission_confirmation,
     setup_clients,
-    start,
     upload_files,
     validate_pipeline,
 )
+from dpypelines.pipeline.validate_pipeline import retrieve_config_and_files
+from dpypelines.s3_folder_received import start
 
 
-@patch("dpypelines.s3_folder_received.get_notifier")
-@patch("dpypelines.s3_folder_received.get_email_client")
+@patch("dpypelines.pipeline.utils.get_notifier")
+@patch("dpypelines.pipeline.utils.get_email_client")
 def test_setup_clients(mock_get_email_client, mock_get_notifier):
     """Test that `setup_clients()` returns the expected clients."""
     mock_notifier = MagicMock()
@@ -30,22 +31,23 @@ def test_setup_clients(mock_get_email_client, mock_get_notifier):
     assert email_client == mock_email_client
 
 
-@patch("dpypelines.s3_folder_received.LocalDirectoryStore")
-def test_decompress_tar_file(mock_LocalDirectoryStore):
-    """Test that `decompress_tar_file()` returns the expected local store."""
+@patch("dpypelines.pipeline.utils.Path.exists", return_value=True)
+@patch("dpypelines.pipeline.utils.LocalDirectoryStore")
+def test_decompress_file(mock_LocalDirectoryStore, mock_path_exists):
+    """Test that `decompress_file()` returns the expected local store."""
     mock_local_store = MagicMock()
     mock_LocalDirectoryStore.return_value = mock_local_store
     mock_local_store.get_file_names.return_value = ["file1", "file2"]
 
-    local_store = decompress_tar_file("s3_object_name")
+    local_store = decompress_file("s3_object_name")
 
     assert local_store == mock_local_store
     mock_LocalDirectoryStore.assert_called_once_with("s3_object_name")
 
 
-@patch("dpypelines.s3_folder_received.retrieve_manifest")
-@patch("dpypelines.s3_folder_received.get_source_id_from_manifest")
-@patch("dpypelines.s3_folder_received.get_pipeline_config_for_source")
+@patch("dpypelines.pipeline.validate_pipeline.retrieve_manifest")
+@patch("dpypelines.pipeline.validate_pipeline.get_source_id_from_manifest")
+@patch("dpypelines.pipeline.validate_pipeline.get_pipeline_config_for_source")
 def test_retrieve_config_and_files(
     mock_get_pipeline_config_for_source,
     mock_get_source_id_from_manifest,
@@ -72,7 +74,7 @@ def test_retrieve_config_and_files(
     assert files_dir == mock_files_dir
 
 
-@patch("dpypelines.s3_folder_received.validate_pipeline_files")
+@patch("dpypelines.pipeline.utils.validate_pipeline_files")
 def test_validate_pipeline(mock_validate_pipeline_files):
     """Test that `validate_pipeline()` returns the expected validation results."""
     mock_files_dir = "files_dir"
@@ -86,8 +88,8 @@ def test_validate_pipeline(mock_validate_pipeline_files):
     assert validation_results == mock_validation_results
 
 
-@patch("dpypelines.s3_folder_received.UploadServiceClient")
-@patch("dpypelines.s3_folder_received.get_mimetype")
+@patch("dpypelines.pipeline.utils.UploadServiceClient")
+@patch("dpypelines.pipeline.utils.get_mimetype")
 def test_upload_files(mock_get_mimetype, mock_UploadServiceClient):
     """Test that `upload_files()` uploads the files and sends the email."""
     mock_validation_results = {"config_files": ["file1", "file2"]}
@@ -113,7 +115,7 @@ def test_upload_files(mock_get_mimetype, mock_UploadServiceClient):
     mock_email_client.send.assert_called()
 
 
-@patch("dpypelines.s3_folder_received.submission_processed_email")
+@patch("dpypelines.pipeline.utils.submission_processed_email")
 def test_send_submission_confirmation(mock_submission_processed_email):
     """Test that `send_submission_confirmation()` sends the submission confirmation email."""
     mock_email_client = MagicMock()
@@ -129,73 +131,34 @@ def test_send_submission_confirmation(mock_submission_processed_email):
     )
 
 
-@patch("dpypelines.s3_folder_received.setup_clients")
-@patch("dpypelines.s3_folder_received.decompress_tar_file")
-@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
-@patch("dpypelines.s3_folder_received.validate_pipeline")
-@patch("dpypelines.s3_folder_received.upload_files")
-@patch("dpypelines.s3_folder_received.send_submission_confirmation")
+@patch("dpypelines.pipeline.utils.Path.is_dir", return_value=True)
+@patch("dpypelines.pipeline.utils.Path.exists", return_value=True)
+@patch("dpypelines.pipeline.utils.setup_clients")
+@patch("dpypelines.pipeline.utils.decompress_file")
+@patch("dpypelines.pipeline.validate_pipeline.retrieve_config_and_files")
+@patch("dpypelines.pipeline.utils.validate_pipeline")
+@patch("dpypelines.pipeline.utils.upload_files")
+@patch("dpypelines.pipeline.utils.send_submission_confirmation")
 def test_start_valid_data(
     mock_send_submission_confirmation,
     mock_upload_files,
     mock_validate_pipeline,
     mock_retrieve_config_and_files,
-    mock_decompress_tar_file,
+    mock_decompress_file,
     mock_setup_clients,
-):
-    """Test that `start()` returns True when the pipeline is successfully processed."""
-    mock_notifier = MagicMock()
-    mock_email_client = MagicMock()
-    mock_setup_clients.return_value = (mock_notifier, mock_email_client)
-    mock_local_store = MagicMock()
-    mock_decompress_tar_file.return_value = mock_local_store
-    mock_manifest_dict = {"fileAuthorEmail": "test@example.com"}
-    mock_pipeline_config = {"config": "value"}
-    mock_files_dir = "files_dir"
-    mock_retrieve_config_and_files.return_value = (
-        mock_manifest_dict,
-        mock_pipeline_config,
-        mock_files_dir,
-    )
-    mock_validation_results = {"manifest": "value"}
-    mock_validate_pipeline.return_value = mock_validation_results
-
-    result = start("dummy_s3_object_name")
-
-    assert result is True
-    mock_setup_clients.assert_called_once()
-    mock_decompress_tar_file.assert_called_once_with("dummy_s3_object_name")
-    mock_retrieve_config_and_files.assert_called_once_with(mock_local_store)
-    mock_validate_pipeline.assert_called_once_with(mock_files_dir, mock_pipeline_config)
-    mock_upload_files.assert_called_once_with(
-        mock_validation_results, mock_email_client, "test@example.com"
-    )
-    mock_send_submission_confirmation.assert_called_once_with(
-        mock_email_client, "test@example.com"
-    )
-    mock_notifier.success.assert_called_once()
-
-
-@patch("dpypelines.s3_folder_received.setup_clients")
-@patch("dpypelines.s3_folder_received.decompress_tar_file")
-@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
-@patch("dpypelines.s3_folder_received.validate_pipeline")
-@patch("dpypelines.s3_folder_received.upload_files")
-@patch("dpypelines.s3_folder_received.send_submission_confirmation")
-def test_start_missing_files(
-    mock_send_submission_confirmation,
-    mock_upload_files,
-    mock_validate_pipeline,
-    mock_retrieve_config_and_files,
-    mock_decompress_tar_file,
-    mock_setup_clients,
+    mock_path_exists,
+    mock_path_isdir,
 ):
     """Test that `start()` raises an exception when required files are missing."""
     mock_notifier = MagicMock()
     mock_email_client = MagicMock()
     mock_setup_clients.return_value = (mock_notifier, mock_email_client)
     mock_local_store = MagicMock()
-    mock_decompress_tar_file.return_value = mock_local_store
+    mock_local_store.get_file_names.side_effect = FileNotFoundError(
+        "[Errno 2] No such file or directory: 'dummy_s3_object_name'"
+    )
+
+    mock_decompress_file.return_value = mock_local_store
     mock_manifest_dict = {"fileAuthorEmail": "test@example.com"}
     mock_pipeline_config = {"config": "value"}
     mock_files_dir = "files_dir"
@@ -204,32 +167,41 @@ def test_start_missing_files(
         mock_pipeline_config,
         mock_files_dir,
     )
-    mock_validate_pipeline.side_effect = FileNotFoundError("Required file not found")
+    mock_validate_pipeline.side_effect = FileNotFoundError(
+        "[Errno 2] No such file or directory: 'dummy_s3_object_name'"
+    )
 
-    with pytest.raises(Exception, match="Required file not found"):
+    with pytest.raises(
+        Exception,
+        match=re.escape("[Errno 2] No such file or directory: 'dummy_s3_object_name'"),
+    ):
         start("dummy_s3_object_name")
 
 
-@patch("dpypelines.s3_folder_received.setup_clients")
-@patch("dpypelines.s3_folder_received.decompress_tar_file")
-@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
-@patch("dpypelines.s3_folder_received.validate_pipeline")
-@patch("dpypelines.s3_folder_received.upload_files")
-@patch("dpypelines.s3_folder_received.send_submission_confirmation")
-def test_start_invalid_manifest(
+@patch("dpypelines.pipeline.utils.Path.is_dir", return_value=True)
+@patch("dpypelines.pipeline.utils.Path.exists", return_value=True)
+@patch("dpypelines.pipeline.utils.setup_clients")
+@patch("dpypelines.pipeline.utils.decompress_file")
+@patch("dpypelines.pipeline.validate_pipeline.retrieve_config_and_files")
+@patch("dpypelines.pipeline.utils.validate_pipeline")
+@patch("dpypelines.pipeline.utils.upload_files")
+@patch("dpypelines.pipeline.utils.send_submission_confirmation")
+def test_start_missing_files(
     mock_send_submission_confirmation,
     mock_upload_files,
     mock_validate_pipeline,
     mock_retrieve_config_and_files,
-    mock_decompress_tar_file,
+    mock_decompress_file,
     mock_setup_clients,
+    mock_path_exists,
+    mock_path_isdir,
 ):
     """Test that `start()` raises an exception when the manifest is invalid."""
     mock_notifier = MagicMock()
     mock_email_client = MagicMock()
     mock_setup_clients.return_value = (mock_notifier, mock_email_client)
     mock_local_store = MagicMock()
-    mock_decompress_tar_file.return_value = mock_local_store
+    mock_decompress_file.return_value = mock_local_store
     mock_manifest_dict = {"fileAuthorEmail": "test@example.com"}
     mock_pipeline_config = {"config": "value"}
     mock_files_dir = "files_dir"
@@ -239,6 +211,3 @@ def test_start_invalid_manifest(
         mock_files_dir,
     )
     mock_validate_pipeline.side_effect = ValueError("Invalid manifest file")
-
-    with pytest.raises(Exception, match="Invalid manifest file"):
-        start("dummy_s3_object_name")

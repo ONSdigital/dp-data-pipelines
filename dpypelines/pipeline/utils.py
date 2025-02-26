@@ -1,19 +1,28 @@
-from dpytools.logging.logger import DpLogger
+import os
+from pathlib import Path
 
+from dpytools.http.api.dataset_api_client import DatasetAPIClient
+from dpytools.http.upload.upload_service_client import UploadServiceClient
+from dpytools.logging.logger import DpLogger
+from dpytools.stores.directory.local import LocalDirectoryStore
+
+from dpypelines.pipeline.shared.email_templates import (
+    submission_processed_email,
+    successful_file_upload_email,
+    successful_metadata_submission,
+)
 from dpypelines.pipeline.shared.notification import (
     PipelineNotifier,
     notifier_from_env_var_webhook,
 )
-from dpypelines.pipeline.shared.utils import get_local_time
+from dpypelines.pipeline.shared.utils import (
+    get_email_client,
+    get_local_time,
+    get_mimetype,
+)
+from dpypelines.pipeline.validate_pipeline import validate_pipeline_files
 
 logger = DpLogger("data-ingress-pipelines")
-
-
-def get_source_id(manifest_dict: dict) -> str:
-    """
-    This function returns the `source_id` form the provided manifest_dict (which is the data in the manifest.json file).
-    """
-    return manifest_dict["source_id"]
 
 
 def get_notifier():
@@ -100,3 +109,142 @@ def get_download_details_for_request(distributions: list) -> dict:
             err,
             data={"distributions": distributions},
         )
+
+
+def setup_clients():
+    """Set up clients for notification and email."""
+    notifier = get_notifier()
+    email_client = get_email_client()
+
+    if not notifier or not email_client:
+        err_msg = "Failed to set up notification or email client."
+        logger.error(err_msg)
+        raise RuntimeError(err_msg)
+
+    logger.info(
+        "Clients set up successfully",
+        data={"notifier": notifier, "email_client": email_client},
+    )
+    return notifier, email_client
+
+
+def decompress_file(s3_object_name):
+    """Decompress the file to the local directory."""
+
+    local_store = LocalDirectoryStore(s3_object_name)
+    files = local_store.get_file_names()
+
+    if not files:
+        err_msg = f"Decompressed directory 'input' is empty for s3_object: {s3_object_name}. Available files: {files}"
+        logger.error(err_msg, data={"local_store": files})
+        raise FileNotFoundError(err_msg)
+
+    logger.info(
+        "S3 `.tar` object received and decompressed to ./input",
+        data={"s3_object_name": s3_object_name},
+    )
+    return local_store
+
+
+def validate_pipeline(files_dir: Path, pipeline_config: dict):
+    """Validate the pipeline files against the configuration."""
+    validation_results = validate_pipeline_files(files_dir, pipeline_config)
+
+    if not validation_results.get("manifest"):
+        err_msg = f"Manifest validation failed for files in {files_dir} using config: {pipeline_config}."
+        logger.error(
+            err_msg,
+            data={
+                "files_dir": str(files_dir),
+                "validation_results": validation_results,
+            },
+        )
+        raise ValueError(err_msg)
+
+    logger.info(
+        "Pipeline validation completed successfully", data={"files_dir": str(files_dir)}
+    )
+    return validation_results
+
+
+def upload_metadata(local_store, email_client, submitter_email):
+    """Upload metadata and send notifications."""
+    dataset_api_url = os.environ.get("DATASET_API_URL")
+    if not dataset_api_url:
+        err_msg = (
+            f"Required environment variable(s) not set: "
+            f"DATASET_API_URL: {dataset_api_url}."
+        )
+        logger.error(err_msg)
+        raise EnvironmentError(err_msg)
+
+    metadata = local_store.get_lone_matching_json_as_dict("^metadata.json$")
+    if not metadata:
+        err_msg = "metadata.json not found in the local store."
+        logger.error(err_msg)
+        raise FileNotFoundError(err_msg)
+
+    dataset_path, edition_path, request_body = get_post_request_values_from_metadata(
+        metadata
+    )
+    dataset_api_client = DatasetAPIClient(dataset_api_url, dataset_path, edition_path)
+    dataset_api_get_path_response = dataset_api_client.get_path()
+    logger.info(
+        "Dataset API endpoint exists",
+        data={"dataset_api_endpoint": dataset_api_client.full_url},
+    )
+
+    if dataset_api_get_path_response.status_code == 200:
+        dataset_api_client.post_json(request_body)
+        logger.info(
+            "Metadata submitted to Dataset API endpoint",
+            data={"dataset_api_endpoint": dataset_api_client.full_url},
+        )
+        email_content = successful_metadata_submission(dataset_path)
+        email_client.send(submitter_email, email_content.subject, email_content.message)
+    else:
+        dataset_api_get_path_response.raise_for_status()
+
+
+def upload_files(validation_results, email_client, submitter_email):
+    """Upload files and send notifications."""
+    upload_url = os.environ.get("UPLOAD_SERVICE_URL")
+    dataset_api_url = os.environ.get("DATASET_API_URL")
+    if not upload_url or not dataset_api_url:
+        err_msg = (
+            f"Required environment variable(s) not set: "
+            f"UPLOAD_SERVICE_URL: {upload_url}, DATASET_API_URL: {dataset_api_url}."
+        )
+        logger.error(err_msg)
+        raise EnvironmentError(err_msg)
+
+    upload_client = UploadServiceClient(upload_url)
+    for required_file_path in validation_results["config_files"]:
+        mimetype = get_mimetype(Path(required_file_path).suffix)
+        if not mimetype:
+            err_msg = f"Uploading file type {Path(required_file_path).suffix} not supported for file: {required_file_path}."
+            logger.error(err_msg)
+            raise NotImplementedError(err_msg)
+
+        upload_client.upload_new(required_file_path, mimetype)
+        logger.info(
+            "File uploaded",
+            data={"file_path": required_file_path, "upload_url": upload_url},
+        )
+        email_content = successful_file_upload_email(Path(required_file_path).name)
+        email_client.send(submitter_email, email_content.subject, email_content.message)
+        logger.info(
+            "Upload notification email sent",
+            data={"submitter_email": submitter_email, "file": required_file_path},
+        )
+
+
+def send_submission_confirmation(email_client, submitter_email):
+    """Send submission confirmation email."""
+    email_content = submission_processed_email()
+    if not email_content:
+        err_msg = "Submission email content is empty."
+        logger.error(err_msg)
+        raise ValueError(err_msg)
+    email_client.send(submitter_email, email_content.subject, email_content.message)
+    logger.info("Confirmation email sent", data={"submitter_email": submitter_email})
