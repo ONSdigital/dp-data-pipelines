@@ -182,22 +182,17 @@ Message:	An error has occurred in section: 1.1
 
 ```json
 {
-    "severity": 3,
-    "created_at": "2025-02-21T13:42:35.036179+00:00",
-    "namespace": "data-ingress-pipelines",
-    "trace_id": "not-implemented",
-    "span_id": "not-implemented",
-    "data": {
-        "dataset_api_url": "http://localhost:22000/datasets",
-        "dataset_path": "invalid",
-        "edition_path": "time-series",
-        "level": "INFO",
-    },
-    "response_dict": "null",
-    "raw": "null",
-    "errors": "null",
-    "event": "Error in section: 1.1 Error getting Dataset API path for given dataset_path and edition_path",
-    "timestamp": "2025-02-21T13:42:35.036260Z",
+    "severity": 3, 
+     "created_at": "2025-02-27T14:23:08.271245+00:00", 
+    "namespace": "data-ingress-pipelines", 
+    "trace_id": "not-implemented", 
+    "span_id": "not-implemented", 
+    "data": {"level": "INFO"}, 
+    "response_dict": null, 
+    "raw": null, 
+    "errors": null, 
+    "event": "Error in section: 1.1 Metadata submission to Dataset API failed", 
+    "timestamp": "2025-02-27T14:23:08.271308Z"
 }
 ```
 
@@ -205,7 +200,7 @@ Message:	An error has occurred in section: 1.1
 
 ```
 Traceback (most recent call last):
-  File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/dataset_ingress_v1.py", line 248, in dataset_ingress_v1
+  File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/dataset_ingress_v1.py", line 242, in dataset_ingress_v1
     dataset_api_get_path_response.raise_for_status()
   File "/Users/sarahjohnson/code/dp-data-pipelines/.venv/lib/python3.9/site-packages/requests/models.py", line 1024, in raise_for_status
     raise HTTPError(http_error_msg, response=self)
@@ -214,13 +209,13 @@ requests.exceptions.HTTPError: 404 Client Error: Not Found for url: http://local
 During handling of the above exception, another exception occurred:
 
 Traceback (most recent call last):
-  File "/Users/sarahjohnson/code/dp-data-pipelines/behave_debug.py", line 50, in <module>
+  File "/Users/sarahjohnson/code/dp-data-pipelines/behave_debug.py", line 52, in <module>
     dataset_ingress_v1(files_dir="data/invalid_metadata/dataset_id", pipeline_config=config)
-  File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/dataset_ingress_v1.py", line 250, in dataset_ingress_v1
+  File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/dataset_ingress_v1.py", line 244, in dataset_ingress_v1
     error_handler(
   File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/shared/error_handler_module.py", line 52, in error_handler
     raise Exception(error)
-Exception: Error getting Dataset API path for given dataset_path and edition_path
+Exception: Metadata submission to Dataset API failed
 ```
 
 ### Invalid metadata (`edition_id`)
@@ -266,22 +261,17 @@ Message:	An error has occurred in section: 1.1
 
 ```json
 {
-    "severity": 3,
-    "created_at": "2025-02-21T13:53:20.643951+00:00",
-    "namespace": "data-ingress-pipelines",
-    "trace_id": "not-implemented",
-    "span_id": "not-implemented",
-    "data": {
-        "dataset_api_url": "http://localhost:22000/datasets",
-        "dataset_path": "trade",
-        "edition_path": "invalid",
-        "level": "INFO",
-    },
-    "response_dict": "null",
-    "raw": "null",
-    "errors": "null",
-    "event": "Error in section: 1.1 Error getting Dataset API path for given dataset_path and edition_path",
-    "timestamp": "2025-02-21T13:53:20.643996Z",
+  "severity": 3, 
+  "created_at": "2025-02-27T14:28:08.587223+00:00", 
+  "namespace": "data-ingress-pipelines", 
+  "trace_id": "not-implemented", 
+  "span_id": "not-implemented", 
+  "data": {"level": "INFO"}, 
+  "response_dict": null, 
+  "raw": null, 
+  "errors": null, 
+  "event": "Error in section: 1.1 Metadata submission to Dataset API failed", 
+  "timestamp": "2025-02-27T14:28:08.587287Z"
 }
 ```
 
@@ -289,7 +279,7 @@ Message:	An error has occurred in section: 1.1
 
 ```
 Traceback (most recent call last):
-  File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/dataset_ingress_v1.py", line 248, in dataset_ingress_v1
+  File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/dataset_ingress_v1.py", line 242, in dataset_ingress_v1
     dataset_api_get_path_response.raise_for_status()
   File "/Users/sarahjohnson/code/dp-data-pipelines/.venv/lib/python3.9/site-packages/requests/models.py", line 1024, in raise_for_status
     raise HTTPError(http_error_msg, response=self)
@@ -298,13 +288,13 @@ requests.exceptions.HTTPError: 404 Client Error: Not Found for url: http://local
 During handling of the above exception, another exception occurred:
 
 Traceback (most recent call last):
-  File "/Users/sarahjohnson/code/dp-data-pipelines/behave_debug.py", line 50, in <module>
+  File "/Users/sarahjohnson/code/dp-data-pipelines/behave_debug.py", line 52, in <module>
     dataset_ingress_v1(files_dir="data/invalid_metadata/edition_id", pipeline_config=config)
-  File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/dataset_ingress_v1.py", line 250, in dataset_ingress_v1
+  File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/dataset_ingress_v1.py", line 244, in dataset_ingress_v1
     error_handler(
   File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/shared/error_handler_module.py", line 52, in error_handler
     raise Exception(error)
-Exception: Error getting Dataset API path for given dataset_path and edition_path
+Exception: Metadata submission to Dataset API failed
 ```
 
 ### Invalid metadata (missing required field)
@@ -1253,7 +1243,7 @@ config = {
     "supplementary_distributions": [],
 }
 
-dataset_ingress_v1(files_dir="data/missing/valid_email", pipeline_config=config)
+dataset_ingress_v1(files_dir="data/missing/invalid_email", pipeline_config=config)
 ```
 
 #### Acceptance criteria
