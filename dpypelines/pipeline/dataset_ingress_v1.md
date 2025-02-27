@@ -59,9 +59,9 @@ If running the pipeline locally on a generic file input (that has an accepted fi
 
 This is the scenario to use if:
 (a) you want to test the full pipeline functionality;
-(b) you want to manually load and transform a file from your local machine and upload the results to the encrypted output S3 bucket, skipping the submission S3 bucket and AWS Glue job entirely.
+(b) you want to manually load and transform a file from your local machine and upload the results to the encrypted output S3 bucket and Dataset API, skipping the submission S3 bucket and AWS Glue job entirely.
 
-**Note:** In order to upload outputs to the S3 bucket, you will need to have access to relevant Digital Publishing systems, and be able to generate a valid service token. Contact your Tech Lead in the first instance to arrange this.
+**Note:** In order to upload outputs to the S3 bucket and post the metadata to the Dataset API, you will need to have access to relevant Digital Publishing systems, and be able to generate a valid service token. Contact your Tech Lead in the first instance to arrange this.
 
 Set the required environment variables by opening your terminal and entering the following commands:
 
@@ -69,6 +69,7 @@ Set the required environment variables by opening your terminal and entering the
 export DISABLE_NOTIFICATIONS=true
 export SKIP_DATA_UPLOAD=false
 export UPLOAD_SERVICE_URL=<upload_service_url>
+export DATASET_API_URL=<dataset_api_url>
 export SERVICE_TOKEN_FOR_UPLOAD=<service_token_for_upload>
 ```
 

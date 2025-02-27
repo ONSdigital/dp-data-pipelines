@@ -131,16 +131,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
     # Retrieve Upload Service URL from environment variable
     if not skip_data_upload:
         try:
-            upload_url = os.environ.get("UPLOAD_SERVICE_URL", None)
-            assert (
-                upload_url is not None
-            ), "UPLOAD_SERVICE_URL environment variable not set"
-        except Exception as err:
-            logger.error("Failed to retrieve Upload Service URL", err)
-            de_notifier.failure()
-            raise err
-
-        try:
             # Create UploadClient from upload_url
             upload_client = UploadServiceClient(upload_url)
         except Exception:
@@ -161,7 +151,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     upload_client.upload_new(required_file_path, mimetype)
                 else:
                     raise NotImplementedError(
-                        f"Uploading file type {Path(required_file_path).suffix} not currently supported."
+                        f"Uploading file type '{Path(required_file_path).suffix}' not currently supported."
                     )
                 logger.info(
                     "File uploaded",
@@ -189,7 +179,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
 
         # Get metadata.json as a dict
         try:
-            metadata = local_store.get_lone_matching_json_as_dict("^metadata.json$")
+            metadata = validation_results["metadata"]
             logger.info(
                 "Retrieved metadata.json",
                 data={"metadata": metadata},
@@ -208,7 +198,7 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
         # Submit metadata to Dataset API endpoint
         try:
             # Get dataset_path and edition_path values from metadata and create DatasetAPIClient
-            # This is based on the understanding that the dataset_path/edition_path will be the values associated with the `dcterms:identifier` predicate in metadata.json
+            # This is based on the understanding that the dataset_path/edition_path will be the values associated with the dataset/edition `dcterms:identifier` predicate in metadata.json
             dataset_path, edition_path, request_body = (
                 get_post_request_values_from_metadata(metadata)
             )
@@ -217,35 +207,6 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
             )
             # Check that the Dataset API endpoint exists
             dataset_api_get_path_response = dataset_api_client.get_path()
-            logger.info(
-                "Dataset API endpoint exists",
-                data={"dataset_api_endpoint": dataset_api_client.full_url},
-            )
-
-            # If the endpoint exists, submit POST request
-            if dataset_api_get_path_response.status_code == 200:
-                try:
-                    dataset_api_client.post_json(request_body)
-                    logger.info(
-                        "Metadata submitted to Dataset API endpoint",
-                        data={"dataset_api_endpoint": dataset_api_client.full_url},
-                    )
-                    email_content = successful_metadata_submission(dataset_path)
-                    email_client.send(
-                        submitter_email, email_content.subject, email_content.message
-                    )
-                except Exception:
-                    error_handler(
-                        section="1.1",
-                        error="POST request to Dataset API failed",
-                        data=None,
-                        submitter_email=submitter_email,
-                        enable_email=enable_email,
-                        enable_logs=enable_logs,
-                        enable_notification=enable_notification,
-                    )
-            else:
-                dataset_api_get_path_response.raise_for_status()
         except Exception:
             error_handler(
                 section="1.1",
@@ -255,6 +216,35 @@ def dataset_ingress_v1(files_dir: str, pipeline_config: dict):
                     "dataset_path": dataset_path,
                     "edition_path": edition_path,
                 },
+                submitter_email=submitter_email,
+                enable_email=enable_email,
+                enable_logs=enable_logs,
+                enable_notification=enable_notification,
+            )
+
+        # If the endpoint exists, submit POST request
+        try:
+            if dataset_api_get_path_response.status_code == 200:
+                logger.info(
+                    "Dataset API endpoint exists",
+                    data={"dataset_api_endpoint": dataset_api_client.full_url},
+                )
+                dataset_api_client.post_json(request_body)
+                logger.info(
+                    "Metadata submitted to Dataset API endpoint",
+                    data={"dataset_api_endpoint": dataset_api_client.full_url},
+                )
+                email_content = successful_metadata_submission(dataset_path)
+                email_client.send(
+                    submitter_email, email_content.subject, email_content.message
+                )
+            else:
+                dataset_api_get_path_response.raise_for_status()
+        except Exception:
+            error_handler(
+                section="1.1",
+                error="Metadata submission to Dataset API failed",
+                data=None,
                 submitter_email=submitter_email,
                 enable_email=enable_email,
                 enable_logs=enable_logs,

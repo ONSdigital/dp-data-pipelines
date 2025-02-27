@@ -34,30 +34,28 @@
             "foaf:homepage": "publisher.href.string_required"
         }
     ],
-    "TBC:edition": [
-        {
-            "@type": "dcat:Dataset",
-            "dcterms:identifier": "time-series",
-            "TBC:quality_designation": "QualityDesignationEnum",
-            "TBC:usage_notes": [
-                {
-                    "TBC:title": "usage_notes.title.string",
-                    "TBC:note": "usage_notes.note.string"
-                }
-            ],
-            "TBC:alerts": [
-                {
-                    "TBC:type": "AlertTypeEnum",
-                    "adms:versionNotes": "alerts.description.string_required"
-                }
-            ],
-            "dcat:distribution": [
-                {
-                    "dcterms:title": "distribution.title.string_required",
-                    "dcat:mediaType": "MediaTypeEnum",
-                    "TBC:distributionFormat": "DistributionFormatEnum"
-                }
-            ]
-        }
-    ]
+    "TBC:edition": {
+        "@type": "dcat:Dataset",
+        "dcterms:identifier": "time-series",
+        "TBC:quality_designation": "QualityDesignationEnum",
+        "TBC:usage_notes": [
+            {
+                "TBC:title": "usage_notes.title.string",
+                "TBC:note": "usage_notes.note.string"
+            }
+        ],
+        "TBC:alerts": [
+            {
+                "TBC:type": "AlertTypeEnum",
+                "adms:versionNotes": "alerts.description.string_required"
+            }
+        ],
+        "dcat:distribution": [
+            {
+                "dcterms:title": "distribution.title.string_required",
+                "dcat:mediaType": "MediaTypeEnum",
+                "TBC:distributionFormat": "DistributionFormatEnum"
+            }
+        ]
+    }
 }
