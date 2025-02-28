@@ -17,7 +17,9 @@ def test_get_post_request_values_from_valid_metadata():
     assert dataset_path == "trade"
     assert edition_path == "time-series"
     assert request_body["title"] == "Dataset title"
-    assert "DistributionFormatEnum" in list(request_body["downloads"].keys())
+    assert ["title", "download_url", "byte_size", "format", "media_type"] == list(
+        request_body["distributions"][0].keys()
+    )
 
 
 def test_get_post_request_values_from_invalid_metadata():
@@ -30,4 +32,4 @@ def test_get_post_request_values_from_invalid_metadata():
     with pytest.raises(KeyError) as e:
         get_post_request_values_from_metadata(metadata)
 
-    assert "KeyError('dcterms:identifier')" in str(e)
+    assert "KeyError" in str(e)

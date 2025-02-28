@@ -75,7 +75,7 @@ def successful_metadata_submission(dataset_id: str) -> EmailContent:
     Create a subject and message to confirm successful submission of metadata to the Dataset API
     """
     subject = "Dataset Ingest: Metadata Submitted"
-    message = f"The metadata for {dataset_id} has been successfully submitted to the Dataset API"
+    message = f"The metadata for {dataset_id} has been successfully submitted to the Dataset API."
     return EmailContent(subject, message)
 
 
