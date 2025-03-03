@@ -3,7 +3,9 @@ from typing import List
 
 
 def get_matching_pattern(config: dict, pattern: str) -> List[str]:
-    """ """
+    """
+    Retrieves a matching given pattern from the input config dictionary.
+    """
     if config["config_version"] == 1:
         assert (
             pattern in config.keys()

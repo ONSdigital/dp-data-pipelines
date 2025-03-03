@@ -26,6 +26,9 @@ class NopEmailClient:
 
 
 def get_email_client():
+    """
+    Creates an email client object to be used for sending notification/error report emails.
+    """
     emails_disabled = os.environ.get("DISABLE_EMAILS", "True")
     emails_disabled = str_to_bool(emails_disabled)
 
@@ -64,6 +67,9 @@ def get_submitter_email(manifest_dict: dict) -> str:
 
 
 def get_commit_id() -> str:
+    """
+    Gets the current commit ID from the repository.
+    """
     try:
         repo = Repo()
     except Exception:
@@ -81,6 +87,9 @@ def get_commit_id() -> str:
 
 
 def get_environment() -> str:
+    """
+    Gets the current environment.
+    """
     try:
         repo = Repo()
         heads = repo.heads
@@ -100,6 +109,9 @@ def get_environment() -> str:
 
 
 def get_local_time():
+    """
+    Utility function for retrieving a string of the date/time.
+    """
     # Get the timezone object for London
     tz_London = pytz.timezone("Europe/London")
 

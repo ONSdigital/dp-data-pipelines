@@ -34,19 +34,9 @@ The `s3_folder_received.start()` function performs the following steps:
 
 ## `manifest.json` file
 
-The `folder-containing-data` file submitted to the pipeline **must** contain a file named `manifest.json`, which contains configuration details required for successful pipeline processing of submissions. Details of required fields are in the table below:
+The `folder-containing-data` file submitted to the pipeline **must** contain a file named `manifest.json`, which contains configuration details required for successful pipeline processing of submissions. 
+Details of required fields for a `manifest.json` file can be found in the [Requirements](../requirements.md#fields) page:
 
-| Field                | Required? | Description                                                                                                                                                                                          | Default value                                                               |
-|----------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| `manifestVersion`    | Mandatory | A version number to support different manifest versions in the future, if required. Used to validate the submitted `manifest.json` file against a JSON schema to ensure required fields are present. | None                                                                        |
-| `source_id`          | Mandatory | Used to get pipeline configuration details.                                                                                                                                                          | None                                                                        |
-| `fileAuthorEmail`    | Mandatory | Email address of the file author. Used for notifications generated during pipeline processing.                                                                                                       | None                                                                        |
-| `fileAuthorUsername` | Mandatory | Username of the file author. Used for notifications generated during pipeline processing.                                                                                                            | None                                                                        |
-| `isPublishable`      | Optional  | Whether the file is intended to by published to web and API users by the static file system.                                                                                                         | False                                                                       |
-| `licence`            | Optional  | The licence that applies to the file once published to web and API users.                                                                                                                            | "Open Government Licence v3.0"                                              |
-| `licenceUrl`         | Optional  | The URL where the licence described by the `licence` field is located.                                                                                                                               | "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" |
-| `title`              | Optional  | The title of the file.                                                                                                                                                                               | Filename without extension                                                  |
-| `aliasName`          | Optional  | Alias for the file to be uploaded to the static file system.                                                                                                                                         | Filename with extension                                                     |
 
 ## Pipeline configuration details
 
