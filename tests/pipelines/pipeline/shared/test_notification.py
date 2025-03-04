@@ -8,7 +8,7 @@ from dpypelines.pipeline.shared.notification import (
     PipelineNotifier,
     notifier_from_env_var_webhook,
 )
-from dpypelines.pipeline.shared.utils import get_commit_id
+from dpypelines.pipeline.utils import get_commit_id
 
 
 def test_notification_constructor():
