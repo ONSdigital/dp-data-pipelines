@@ -2,15 +2,15 @@ from unittest.mock import patch
 
 import pytest
 
-from dpypelines.pipeline.shared.error_handler_module import (
+from dpypelines.pipeline.messages.error_handler_module import (
     error_handler,
     send_error_email,
 )
 
 
-@patch("dpypelines.pipeline.shared.error_handler_module.logger")
-@patch("dpypelines.pipeline.shared.error_handler_module.get_email_client")
-@patch("dpypelines.pipeline.shared.error_handler_module.get_notifier")
+@patch("dpypelines.pipeline.messages.error_handler_module.logger")
+@patch("dpypelines.pipeline.messages.error_handler_module.get_email_client")
+@patch("dpypelines.pipeline.messages.error_handler_module.get_notifier")
 class TestErrorHandler:
 
     def test_error_handler_fail(self, mock_notifier, mock_email_client, mock_logger):

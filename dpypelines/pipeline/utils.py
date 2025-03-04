@@ -13,12 +13,12 @@ from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 
-from dpypelines.pipeline.shared.email_templates import (
+from dpypelines.pipeline.messages.email_templates import (
     submission_processed_email,
     successful_file_upload_email,
     successful_metadata_submission,
 )
-from dpypelines.pipeline.shared.notification import (
+from dpypelines.pipeline.messages.notification import (
     PipelineNotifier,
     notifier_from_env_var_webhook,
 )

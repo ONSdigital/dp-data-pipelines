@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
-from dpypelines.pipeline.shared.notification import (
+from dpypelines.pipeline.messages.notification import (
     NopNotifier,
     PipelineNotifier,
     notifier_from_env_var_webhook,

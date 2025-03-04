@@ -1,5 +1,5 @@
 """
-Transform validation functions to be used by dpypelines.pipeline.shared.transforms.sdmx.generic.v21.prototype.v1
+Transform validation functions to be used by dpypelines.pipeline.transforms.sdmx.generic.v21.prototype.v1
 ie -  generic sdmx data version 2_1
 """
 

@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from dpypelines.pipeline.shared.pipelineconfig.transform import get_transform_details
+from dpypelines.pipeline.pipelineconfig.transform import get_transform_details
 
 logger = logging.getLogger("transform_processing")
 
