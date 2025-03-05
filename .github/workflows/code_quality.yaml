@@ -27,4 +27,4 @@ jobs:
         run: poetry run isort dpypelines tests --diff --check-only
 
       - name: Check ruff has been ran (make lint)
-        run: poetry run ruff check dpypelines tests
+        run: poetry run ruff check dpypelines testsx
