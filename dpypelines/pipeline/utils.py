@@ -24,6 +24,7 @@ from dpypelines.pipeline.messages.utils import (
 
 logger = DpLogger("data-ingress-pipelines")
 
+
 def get_notifier():
     # Create notifier from webhook env var
     try:
