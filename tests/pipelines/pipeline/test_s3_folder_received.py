@@ -17,7 +17,7 @@ from dpypelines.s3_folder_received import start
 
 
 @patch("dpypelines.pipeline.utils.get_notifier")
-@patch("dpypelines.pipeline.messages.utils.get_email_client")
+@patch("dpypelines.pipeline.utils.get_email_client")
 def test_setup_clients(mock_get_email_client, mock_get_notifier):
     """Test that `setup_clients()` returns the expected clients."""
     mock_notifier = MagicMock()
