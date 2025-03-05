@@ -1,0 +1,55 @@
+name: Release on Merge to Sandbox
+
+on:
+  push:
+    branches:
+      - sandbox
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install poetry
+        run: pip install poetry
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Increment version
+        id: version
+        run: |
+          poetry version patch
+          echo "version=$(poetry version -s)" >> $GITHUB_ENV
+
+      - name: Tag commit with new version
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git tag v${{ env.version }}
+          git push origin --tags
+
+      - name: Build wheel
+        run: poetry build
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.version }}
+          release_name: Release v${{ env.version }}
+          draft: false
+          prerelease: false
+          files: dist/*.whl
