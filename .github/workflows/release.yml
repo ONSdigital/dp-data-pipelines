@@ -1,55 +1,57 @@
+# Description:
+#   This workflow uses python-semantic-release to fully automate semantic versioning.
+#   Based on commit messages it determines version bumps (patch/minor/major),
+#   updates the changelog and version number, tags the commit, builds the wheel and creates a GitHub release.
+
 name: Release on Merge to Sandbox
 
 on:
   push:
     branches:
       - sandbox
-
-permissions:
-  contents: write
-  packages: write
+  pull_request:
+    branches:
+      - sandbox
+  workflow_dispatch:
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/sandbox'
+    permissions:
+      contents: write
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Force Branch to Latest Commit
+        run: |
+          git reset --hard ${{ github.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Install poetry
-        run: pip install poetry
-
-      - name: Install dependencies
-        run: poetry install
-
-      - name: Increment version
-        id: version
+      - name: Install Dependencies
         run: |
-          poetry version patch
-          echo "version=$(poetry version -s)" >> $GITHUB_ENV
+          pip install poetry python-semantic-release
+          poetry install
 
-      - name: Tag commit with new version
+      - name: Bump Version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git tag v${{ env.version }}
-          git push origin --tags
+          semantic-release version --no-ci --yes
+
+      - name: Publish Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          semantic-release publish --yes
 
       - name: Build wheel
         run: poetry build
-
-      - name: Create GitHub Release
-        uses: actions/create-release@v1.1.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ env.version }}
-          release_name: Release v${{ env.version }}
-          draft: false
-          prerelease: false
-          files: dist/*.whl
