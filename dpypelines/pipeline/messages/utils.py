@@ -1,12 +1,12 @@
 import os
-from git import Repo
-
-import pytz
 from datetime import datetime
 from typing import Optional
+
+import pytz
 from dpytools.email.ses.client import SesClient
 from dpytools.utilities.utilities import str_to_bool
 from email_validator import EmailNotValidError, validate_email
+from git import Repo
 
 MIMETYPES = {
     ".csv": "text/csv",

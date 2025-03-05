@@ -15,12 +15,12 @@ from dpypelines.pipeline.messages.notification import (
     PipelineNotifier,
     notifier_from_env_var_webhook,
 )
-from dpypelines.pipeline.validate_pipeline import validate_pipeline_files
 from dpypelines.pipeline.messages.utils import (
     get_email_client,
     get_local_time,
     get_mimetype,
 )
+from dpypelines.pipeline.validate_pipeline import validate_pipeline_files
 
 logger = DpLogger("data-ingress-pipelines")
 
