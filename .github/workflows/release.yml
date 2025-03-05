@@ -1,17 +1,27 @@
+# Description:
+#   This workflow will automatically increments the version (patch/minor/major) using Poetry,
+#   tag the commit with the new version, builds the Python wheel and creates a GitHub release.
+
+
 name: Release on Merge to Sandbox
 
 on:
   push:
     branches:
       - sandbox
-
-permissions:
-  contents: write
-  packages: write
+  workflow_dispatch:
+    inputs:
+      increment_type:
+        description: 'Version increment type (patch, minor, major)'
+        required: false
+        default: 'patch'
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -27,10 +37,15 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
+      - name: Determine version increment type
+        id: increment_type
+        run: |
+          echo "INCREMENT_TYPE=${{ github.event.inputs.increment_type || 'patch' }}" >> $GITHUB_ENV
+
       - name: Increment version
         id: version
         run: |
-          poetry version patch
+          poetry version ${{ env.INCREMENT_TYPE }}
           echo "version=$(poetry version -s)" >> $GITHUB_ENV
 
       - name: Tag commit with new version
@@ -44,7 +59,7 @@ jobs:
         run: poetry build
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1.1.0
+        uses: actions/create-release@v1.1.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
