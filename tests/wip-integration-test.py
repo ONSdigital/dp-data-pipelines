@@ -1,6 +1,6 @@
-from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
-
 from dotenv import load_dotenv
+
+from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
 
 load_dotenv()
 
