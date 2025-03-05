@@ -11,14 +11,32 @@ from dpypelines.pipeline.messages.email_templates import (
     successful_file_upload_email,
     successful_metadata_submission,
 )
+from dpypelines.pipeline.messages.notification import (
+    PipelineNotifier,
+    notifier_from_env_var_webhook,
+)
 from dpypelines.pipeline.validate_pipeline import validate_pipeline_files
 from dpypelines.pipeline.messages.utils import (
     get_email_client,
-    get_notifier,
+    get_local_time,
     get_mimetype,
 )
 
 logger = DpLogger("data-ingress-pipelines")
+
+def get_notifier():
+    # Create notifier from webhook env var
+    try:
+        process_start_time = get_local_time()
+        notifier: PipelineNotifier = notifier_from_env_var_webhook(
+            "DE_SLACK_WEBHOOK",
+            process_start_time=process_start_time,
+        )
+        logger.info("Notifier created", data={"notifier": notifier})
+        return notifier
+    except Exception as err:
+        logger.error("Error occurred when creating notifier", err)
+        raise err
 
 
 def get_post_request_values_from_metadata(metadata: dict):

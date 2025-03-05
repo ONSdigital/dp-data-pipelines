@@ -8,11 +8,6 @@ from dpytools.email.ses.client import SesClient
 from dpytools.utilities.utilities import str_to_bool
 from email_validator import EmailNotValidError, validate_email
 
-from dpypelines.pipeline.messages.notification import (
-    PipelineNotifier,
-    notifier_from_env_var_webhook,
-)
-
 MIMETYPES = {
     ".csv": "text/csv",
     ".xml": "application/xml",
@@ -66,21 +61,6 @@ def get_submitter_email(manifest_dict: dict) -> str:
         raise ValueError(f"Invalid email address: {submitter_email}. Error: {str(e)}")
 
     return submitter_email
-
-
-def get_notifier():
-    # Create notifier from webhook env var
-    try:
-        process_start_time = get_local_time()
-        notifier: PipelineNotifier = notifier_from_env_var_webhook(
-            "DE_SLACK_WEBHOOK",
-            process_start_time=process_start_time,
-        )
-        logger.info("Notifier created", data={"notifier": notifier})
-        return notifier
-    except Exception as err:
-        logger.error("Error occurred when creating notifier", err)
-        raise err
 
 
 def get_commit_id() -> str:
