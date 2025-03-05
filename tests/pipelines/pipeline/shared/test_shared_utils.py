@@ -2,7 +2,7 @@ import subprocess
 
 import pytest
 
-from dpypelines.pipeline.utils import (
+from dpypelines.pipeline.messages.utils import (
     get_commit_id,
     get_mimetype,
     get_submitter_email,

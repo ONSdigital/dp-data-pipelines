@@ -2,8 +2,8 @@ from typing import Optional
 
 from dpytools.logging.logger import DpLogger
 
-from dpypelines.pipeline.utils import get_email_client
-from dpypelines.pipeline.utils import get_notifier
+from dpypelines.pipeline.messages.utils import get_email_client
+from dpypelines.pipeline.messages.utils import get_notifier
 
 logger = DpLogger("data-ingress-pipelines")
 

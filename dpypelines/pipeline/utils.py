@@ -1,13 +1,6 @@
 import os
 from pathlib import Path
-from datetime import datetime
-from typing import Optional
 
-import pytz
-from git import Repo
-from dpytools.email.ses.client import SesClient
-from dpytools.utilities.utilities import str_to_bool
-from email_validator import EmailNotValidError, validate_email
 from dpytools.http.api.dataset_api_client import DatasetAPIClient
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
@@ -18,103 +11,14 @@ from dpypelines.pipeline.messages.email_templates import (
     successful_file_upload_email,
     successful_metadata_submission,
 )
-from dpypelines.pipeline.messages.notification import (
-    PipelineNotifier,
-    notifier_from_env_var_webhook,
-)
 from dpypelines.pipeline.validate_pipeline import validate_pipeline_files
+from dpypelines.pipeline.messages.utils import (
+    get_email_client,
+    get_notifier,
+    get_mimetype,
+)
 
 logger = DpLogger("data-ingress-pipelines")
-
-MIMETYPES = {
-    ".csv": "text/csv",
-    ".xml": "application/xml",
-    ".json": "application/json",
-    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    ".csdb": "application/octet-stream",
-}
-
-class NopEmailClient:
-    def send(self, *args, **kwargs):
-        print("Email feature is turned off. No email was sent.")
-
-
-def get_notifier():
-    # Create notifier from webhook env var
-    try:
-        process_start_time = get_local_time()
-        notifier: PipelineNotifier = notifier_from_env_var_webhook(
-            "DE_SLACK_WEBHOOK",
-            process_start_time=process_start_time,
-        )
-        logger.info("Notifier created", data={"notifier": notifier})
-        return notifier
-    except Exception as err:
-        logger.error("Error occurred when creating notifier", err)
-        raise err
-
-
-def get_email_client():
-    """
-    Creates an email client object to be used for sending notification/error report emails.
-    """
-    emails_disabled = os.environ.get("DISABLE_EMAILS", "True")
-    emails_disabled = str_to_bool(emails_disabled)
-
-    if emails_disabled:
-        return NopEmailClient()
-
-    ses_email_identity = os.environ["SES_EMAIL_IDENTITY"]
-    email_client = SesClient(ses_email_identity, "eu-west-2")
-
-    return email_client
-
-
-def get_submitter_email(manifest_dict: dict) -> str:
-    """
-    This function returns the submitter email from the provided manifest_dict (which is generated from the manifest.json file)
-    """
-
-    # Temporary email address for testing purposes
-    # Needs to be updated once we know where the submitter email can be extracted from
-    submitter_email = manifest_dict["fileAuthorEmail"]
-
-    if manifest_dict["manifestVersion"] != 1:
-        raise ValueError(
-            f'The manifest version does not match required version(which should be 1) suppllied version: {manifest_dict["manifestVersion"]}.'
-        )
-
-    if submitter_email is None:
-        raise NotImplementedError("Submitter email address not found.")
-
-    try:
-        validate_email(submitter_email)
-    except EmailNotValidError as e:
-        raise ValueError(f"Invalid email address: {submitter_email}. Error: {str(e)}")
-
-    return submitter_email
-
-
-def get_local_time():
-    """
-    Utility function for retrieving a string of the date/time.
-    """
-    # Get the timezone object for London
-    tz_London = pytz.timezone("Europe/London")
-
-    # Get the current time in London
-    datetime_London = datetime.now(tz_London)
-
-    # Format London date time into hours, minutes, and seconds
-    formatted_datetime_London = datetime_London.strftime("%H:%M:%S")
-
-    # Format the time as a string and print it
-    return formatted_datetime_London
-
-
-def get_mimetype(file: str) -> Optional[str]:
-    # TODO Set default to "application/octet-stream"?
-    return MIMETYPES.get(file, None)
 
 
 def get_post_request_values_from_metadata(metadata: dict):
@@ -346,45 +250,3 @@ def send_submission_confirmation(email_client, submitter_email):
         raise ValueError(err_msg)
     email_client.send(submitter_email, email_content.subject, email_content.message)
     logger.info("Confirmation email sent", data={"submitter_email": submitter_email})
-
-
-def get_commit_id() -> str:
-    """
-    Gets the current commit ID from the repository.
-    """
-    try:
-        repo = Repo()
-    except Exception:
-        environment = os.environ["ENVIRONMENT"]
-        if not os.path.exists("/tmp/dp-data-pipelines"):
-            repo = Repo.clone_from(
-                "https://github.com/ONSdigital/dp-data-pipelines.git",
-                "/tmp/dp-data-pipelines",
-                branch=environment,
-            )
-        else:
-            repo = Repo("/tmp/dp-data-pipelines")
-
-    return str(repo.head.commit)
-
-
-def get_environment() -> str:
-    """
-    Gets the current environment.
-    """
-    try:
-        repo = Repo()
-        heads = repo.heads
-        if "sandbox" in str(heads):
-            return "sandbox"
-        elif "staging" in str(heads):
-            return "staging"
-        elif "production" in str(heads):
-            return "production"
-        else:
-            return "Environment is unknown"
-
-    except Exception:
-        # found in env variables
-        environment = os.environ["ENVIRONMENT"]
-        return environment
