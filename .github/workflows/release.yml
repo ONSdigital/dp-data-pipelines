@@ -5,12 +5,17 @@ on:
     branches:
       - sandbox
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -26,25 +31,25 @@ jobs:
         id: version
         run: |
           poetry version patch
-          echo "::set-output name=version::$(poetry version -s)"
+          echo "version=$(poetry version -s)" >> $GITHUB_ENV
 
       - name: Tag commit with new version
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git tag v$(poetry version -s)
+          git tag v${{ env.version }}
           git push origin --tags
 
       - name: Build wheel
         run: poetry build
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
+        uses: actions/create-release@v1.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          release_name: Release v${{ steps.version.outputs.version }}
+          tag_name: v${{ env.version }}
+          release_name: Release v${{ env.version }}
           draft: false
           prerelease: false
           files: dist/*.whl
