@@ -1,8 +1,6 @@
-import os
-
 from dpytools.logging.logger import DpLogger
-from dpytools.utilities.utilities import str_to_bool
 
+from dpypelines.pipeline.config import JobConfiguration
 from dpypelines.pipeline.messages.error_handler_module import error_handler
 from dpypelines.pipeline.utils import (
     copy_s3_processing_folder_to_destination_folder,
@@ -50,7 +48,7 @@ def start(s3_object_name: str, *args, **kwargs):
         validation_results = validate_pipeline(files_dir, pipeline_config)
 
         # Upload metadata to Dataset API.
-        if not str_to_bool(os.environ.get("SKIP_DATA_UPLOAD", "False")):
+        if not JobConfiguration().skip_data_upload:
             metadata_submitted = upload_metadata(
                 validation_results["metadata"],
             )

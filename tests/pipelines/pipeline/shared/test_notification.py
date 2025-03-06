@@ -3,40 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
-from dpypelines.pipeline.messages.notification import (
-    NopNotifier,
-    PipelineNotifier,
-    notifier_from_env_var_webhook,
-)
-
-
-def test_notification_constructor():
-    """
-    Test that the PipelineNotifier can be successfully created from
-    a webhook supplied from an env var
-    """
-
-    mp = MonkeyPatch()
-    fake_web_hook = "fake-web-hook"
-    mp.setenv("DISABLE_NOTIFICATIONS", "False")
-    mp.setenv("SOME_ENV_VAR", fake_web_hook)
-
-    norifier = notifier_from_env_var_webhook("SOME_ENV_VAR")
-    assert isinstance(norifier, PipelineNotifier)
-    assert norifier.client.webhook_url == fake_web_hook
-
-
-def test_notification_constructor_with_disabled_notifications():
-    """
-    Tests that a NopNotifier is constructed where DISABLE_NOTIFICATIONS
-    is true
-    """
-
-    mp = MonkeyPatch()
-    mp.setenv("DISABLE_NOTIFICATIONS", "True")
-
-    norifier = notifier_from_env_var_webhook("DOES_NOT_MATTER")
-    assert isinstance(norifier, NopNotifier)
+from dpypelines.pipeline.messages.notification import PipelineNotifier
 
 
 def test_notification_raises_for_missing_webhook():
