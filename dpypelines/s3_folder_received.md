@@ -35,7 +35,7 @@ The `s3_folder_received.start()` function performs the following steps:
 ## `manifest.json` file
 
 The `folder-containing-data` file submitted to the pipeline **must** contain a file named `manifest.json`, which contains configuration details required for successful pipeline processing of submissions. 
-Details of required fields for a `manifest.json` file can be found in the [Requirements](../requirements.md#fields) page:
+Details of required fields for a `manifest.json` file can be found in the [Requirements](/requirements.md#fields) page:
 
 
 ## Pipeline configuration details
