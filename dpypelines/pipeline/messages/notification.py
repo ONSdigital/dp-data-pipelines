@@ -7,7 +7,6 @@ from dpypelines.pipeline.messages.utils import (
     get_commit_id,
     get_environment,
     get_local_time,
-    str_to_bool,
 )
 
 
@@ -72,27 +71,3 @@ class PipelineNotifier(BasePipelineNotifier):
     # only present while we're using the temporary "everything worked" message
     def msg_str(self, msg: str):
         self.client.msg_str(msg)
-
-
-def notifier_from_env_var_webhook(
-    env_var: str, process_start_time=None
-) -> BasePipelineNotifier:
-    """
-    Create a variant of BasePipelineMessenger by passing in the name
-    of an envionrment variable that will hold the required webhook.
-    """
-
-    notifications_disabled = os.environ.get("DISABLE_NOTIFICATIONS", None)
-    notifications_disabled = (
-        False if notifications_disabled is None else str_to_bool(notifications_disabled)
-    )
-
-    if notifications_disabled is True:
-        return NopNotifier()
-
-    web_hook = os.environ.get(env_var, None)
-    assert (
-        web_hook is not None
-    ), f"The specified env var {env_var} is not present on this system."
-
-    return PipelineNotifier(web_hook, process_start_time)
