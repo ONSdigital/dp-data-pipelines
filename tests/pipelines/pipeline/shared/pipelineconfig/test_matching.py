@@ -1,7 +1,7 @@
 import pytest
 
-from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
-from dpypelines.pipeline.shared.transforms.sdmx.v1 import (
+from dpypelines.pipeline.pipelineconfig.matching import get_matching_pattern
+from dpypelines.pipeline.transforms.sdmx.v1 import (
     sdmx_compact_2_0_prototype_1,
     sdmx_sanity_check_v1,
 )

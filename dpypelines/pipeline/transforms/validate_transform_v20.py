@@ -1,5 +1,5 @@
 """
-Transform validation functions to be used by dpypelines.pipeline.shared.transforms.sdmx.compact.v20.prototype.v1
+Transform validation functions to be used by dpypelines.pipeline.transforms.sdmx.compact.v20.prototype.v1
 ie - version 2_0 of compact sdmx data
 file may need renaming when further transforms for different sdmx's are created
 """

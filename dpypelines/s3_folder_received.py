@@ -3,7 +3,7 @@ import os
 from dpytools.logging.logger import DpLogger
 from dpytools.utilities.utilities import str_to_bool
 
-from dpypelines.pipeline.shared.error_handler_module import error_handler
+from dpypelines.pipeline.messages.error_handler_module import error_handler
 from dpypelines.pipeline.utils import (
     decompress_file,
     send_submission_confirmation,

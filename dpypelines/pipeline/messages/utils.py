@@ -1,6 +1,3 @@
-# devnote: not using strtobool from distutils as that
-# package is being depreciate from the standard
-# library in python >3.12
 import os
 from datetime import datetime
 from typing import Optional
@@ -26,6 +23,9 @@ class NopEmailClient:
 
 
 def get_email_client():
+    """
+    Creates an email client object to be used for sending notification/error report emails.
+    """
     emails_disabled = os.environ.get("DISABLE_EMAILS", "True")
     emails_disabled = str_to_bool(emails_disabled)
 
@@ -64,6 +64,9 @@ def get_submitter_email(manifest_dict: dict) -> str:
 
 
 def get_commit_id() -> str:
+    """
+    Gets the current commit ID from the repository.
+    """
     try:
         repo = Repo()
     except Exception:
@@ -80,7 +83,27 @@ def get_commit_id() -> str:
     return str(repo.head.commit)
 
 
+def get_local_time():
+    """
+    Utility function for retrieving a string of the date/time.
+    """
+    # Get the timezone object for London
+    tz_London = pytz.timezone("Europe/London")
+
+    # Get the current time in London
+    datetime_London = datetime.now(tz_London)
+
+    # Format London date time into hours, minutes, and seconds
+    formatted_datetime_London = datetime_London.strftime("%H:%M:%S")
+
+    # Format the time as a string and print it
+    return formatted_datetime_London
+
+
 def get_environment() -> str:
+    """
+    Gets the current environment.
+    """
     try:
         repo = Repo()
         heads = repo.heads
@@ -97,20 +120,6 @@ def get_environment() -> str:
         # found in env variables
         environment = os.environ["ENVIRONMENT"]
         return environment
-
-
-def get_local_time():
-    # Get the timezone object for London
-    tz_London = pytz.timezone("Europe/London")
-
-    # Get the current time in London
-    datetime_London = datetime.now(tz_London)
-
-    # Format London date time into hours, minutes, and seconds
-    formatted_datetime_London = datetime_London.strftime("%H:%M:%S")
-
-    # Format the time as a string and print it
-    return formatted_datetime_London
 
 
 def get_mimetype(file: str) -> Optional[str]:

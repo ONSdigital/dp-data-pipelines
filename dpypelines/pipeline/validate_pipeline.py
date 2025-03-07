@@ -7,8 +7,8 @@ from dpytools.logging.logger import DpLogger
 from dpytools.validation.json.validation import validate_json_schema
 
 from dpypelines.pipeline.configuration import get_pipeline_config
-from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
-from dpypelines.pipeline.shared.utils import get_submitter_email
+from dpypelines.pipeline.messages.utils import get_submitter_email
+from dpypelines.pipeline.pipelineconfig.matching import get_matching_pattern
 
 logger = DpLogger("data-ingress-pipeline")
 
