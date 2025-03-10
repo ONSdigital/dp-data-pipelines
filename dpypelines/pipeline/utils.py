@@ -11,7 +11,6 @@ from dpypelines.pipeline.errors import (
     DistributionsException,
     ValidationException,
 )
-
 from dpypelines.pipeline.messages.email_templates import (
     submission_processed_email,
     successful_file_upload_email,
