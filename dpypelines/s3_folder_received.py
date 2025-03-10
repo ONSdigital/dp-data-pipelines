@@ -60,7 +60,7 @@ def start(s3_object_name: str, *args, **kwargs):
         logger.error("ETL process failed", err)
         error_handler(
             section="ETL",
-            error=str(err),
+            error=err,
             data={"s3_object_name": s3_object_name},
             submitter_email=(
                 manifest_dict.get("fileAuthorEmail", "")

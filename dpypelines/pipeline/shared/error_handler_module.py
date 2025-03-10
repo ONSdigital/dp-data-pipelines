@@ -10,7 +10,7 @@ logger = DpLogger("data-ingress-pipelines")
 
 def error_handler(
     section: str,
-    error: str,
+    error: Exception,
     data: Optional[dict],
     submitter_email: str,
     enable_logs: bool = True,
@@ -39,7 +39,7 @@ def error_handler(
 
     # Send email notification if `surpress_email` is set to false
     if submitter_email and enable_email:
-        send_error_email(section, error, submitter_email, data)
+        send_error_email(section, str(error), submitter_email, data)
 
     # Send system notifiations if `surpress_notification` is set to false
     if enable_notification:

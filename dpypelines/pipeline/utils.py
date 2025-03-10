@@ -191,7 +191,9 @@ def validate_pipeline(files_dir: Path, pipeline_config: dict):
     """Validate the pipeline files against the configuration."""
     validation_results = validate_pipeline_files(files_dir, pipeline_config)
 
-    if not validation_results.get("manifest"):
+    try:
+        validation_results.get("manifest")
+    except Exception as err:
         err_msg = f"Manifest validation failed for files in {files_dir} using config: {pipeline_config}."
         error=ValueError(err_msg)
         logger.error(
@@ -200,7 +202,10 @@ def validate_pipeline(files_dir: Path, pipeline_config: dict):
                 "files_dir": str(files_dir),
                 "validation_results": validation_results,
             },
-            error=error
+<<<<<<< Updated upstream
+=======
+            error=err
+>>>>>>> Stashed changes
         )
         raise error
 
