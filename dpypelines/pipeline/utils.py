@@ -202,10 +202,7 @@ def validate_pipeline(files_dir: Path, pipeline_config: dict):
                 "files_dir": str(files_dir),
                 "validation_results": validation_results,
             },
-<<<<<<< Updated upstream
-=======
             error=err
->>>>>>> Stashed changes
         )
         raise error
 
