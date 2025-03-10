@@ -47,7 +47,9 @@ def error_handler(
             notifier = get_notifier()
             notifier.failure()
         except Exception as notification_err:
-            logger.error("Failed to trigger system notifications", notification_err)
+            logger.error(
+                "Failed to trigger system notifications", error=notification_err
+            )
 
     raise Exception(error)
 
@@ -63,4 +65,4 @@ def send_error_email(
             email_message += f"\n\n Additional Data: {data}"
         email_client.send(submitter_email, email_subject, email_message)
     except Exception as email_err:
-        logger.error("Failed to send error email notification", email_err)
+        logger.error("Failed to send error email notification", error=email_err)
