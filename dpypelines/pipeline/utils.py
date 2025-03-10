@@ -1,10 +1,13 @@
 import os
 from pathlib import Path
-
+from typing import Union
+import tempfile
+import zipfile
 from dpytools.http.api.dataset_api_client import DatasetAPIClient
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
+from dpytools.s3.basic import _get_s3_client
 
 from dpypelines.pipeline.shared.email_templates import (
     submission_processed_email,
@@ -149,10 +152,27 @@ def setup_clients():
     return notifier, email_client
 
 
-def decompress_file(s3_object_name):
+def decompress_file(s3_object_name, directory: Union[str, Path] = "input"):
     """Decompress the file to the local directory."""
 
-    local_store = LocalDirectoryStore(s3_object_name)
+    if isinstance(directory, str):
+        directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+
+    bucket_name = s3_object_name.split("/")[0]
+    object_key = "/".join(s3_object_name.split("/")[1:])
+
+    profile_name = "dp-sandbox"
+    tmp_file = tempfile.NamedTemporaryFile()
+    with open(tmp_file.name, "wb") as f:
+        client = _get_s3_client(profile_name)
+        client.download_fileobj(bucket_name, object_key, f)
+    
+    # Decompress all the files to the directory specified.
+    with zipfile.ZipFile(tmp_file.name, mode="r") as zip_file:
+        zip_file.extractall(directory.absolute())
+
+    local_store = LocalDirectoryStore(directory)
     files = local_store.get_file_names()
 
     if not files:
@@ -173,14 +193,16 @@ def validate_pipeline(files_dir: Path, pipeline_config: dict):
 
     if not validation_results.get("manifest"):
         err_msg = f"Manifest validation failed for files in {files_dir} using config: {pipeline_config}."
+        error=ValueError(err_msg)
         logger.error(
             err_msg,
             data={
                 "files_dir": str(files_dir),
                 "validation_results": validation_results,
             },
+            error=error
         )
-        raise ValueError(err_msg)
+        raise error
 
     logger.info(
         "Pipeline validation completed successfully", data={"files_dir": str(files_dir)}

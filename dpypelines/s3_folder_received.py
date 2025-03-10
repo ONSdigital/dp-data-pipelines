@@ -37,7 +37,7 @@ def start(s3_object_name: str, *args, **kwargs):
         notifier, email_client = setup_clients()
 
         # Step 2: Validate configuration and files.
-        local_store = decompress_file(s3_object_name)
+        local_store = decompress_file(s3_object_name, directory="input")
 
         manifest_dict, pipeline_config, files_dir = retrieve_config_and_files(
             local_store

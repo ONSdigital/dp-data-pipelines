@@ -1,23 +1,3 @@
-from dpypelines.pipeline.dataset_ingress_v1 import dataset_ingress_v1
+from dpypelines import s3_folder_received
 
-from dotenv import load_dotenv 
-
-load_dotenv()
-
-
-config = {
-        "config_version": 1,
-        "transform": None,
-        "transform_inputs": {},
-        "transform_kwargs": {},
-        "required_files": [
-            {"matches": ".*data.csv$"},
-            {"matches": ".*metadata.json$"},
-        ],
-        "supplementary_distributions": {}
-    }
-
-
-data_path = "data/"
-
-resuolt = dataset_ingress_v1(data_path, config)
+s3_folder_received.start("dp-sandbox-ingest-submission-bucket/input/e2e.zip")
