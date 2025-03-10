@@ -24,6 +24,10 @@ Business areas wishing to submit datasets to the DTV pipeline will add the relev
 }
 ```
 
+## Fields
+
+The following table shows information on the required fields of a `manifest.json` file.
+
 | Field                | Required? | Description                                                                                                                                                                                          | Default value                                                               |
 |----------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
 | `manifestVersion`    | Mandatory | A version number to support different manifest versions in the future, if required. Used to validate the submitted `manifest.json` file against a JSON schema to ensure required fields are present. | None                                                                        |

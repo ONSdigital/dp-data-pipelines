@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 from dpytools.slack.slack import SlackMessenger
 
-from dpypelines.pipeline.shared.utils import (
+from dpypelines.pipeline.messages.utils import (
     get_commit_id,
     get_environment,
     get_local_time,

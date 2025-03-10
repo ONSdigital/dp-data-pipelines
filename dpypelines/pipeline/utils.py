@@ -9,16 +9,16 @@ from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.s3.basic import _get_s3_client
 
-from dpypelines.pipeline.shared.email_templates import (
+from dpypelines.pipeline.messages.email_templates import (
     submission_processed_email,
     successful_file_upload_email,
     successful_metadata_submission,
 )
-from dpypelines.pipeline.shared.notification import (
+from dpypelines.pipeline.messages.notification import (
     PipelineNotifier,
     notifier_from_env_var_webhook,
 )
-from dpypelines.pipeline.shared.utils import (
+from dpypelines.pipeline.messages.utils import (
     get_email_client,
     get_local_time,
     get_mimetype,

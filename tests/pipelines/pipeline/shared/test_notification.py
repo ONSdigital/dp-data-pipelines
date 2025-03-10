@@ -3,12 +3,12 @@ from unittest.mock import MagicMock
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
-from dpypelines.pipeline.shared.notification import (
+from dpypelines.pipeline.messages.notification import (
     NopNotifier,
     PipelineNotifier,
     notifier_from_env_var_webhook,
 )
-from dpypelines.pipeline.shared.utils import get_commit_id
+from dpypelines.pipeline.messages.utils import get_commit_id
 
 
 def test_notification_constructor():

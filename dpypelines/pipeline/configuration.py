@@ -1,8 +1,8 @@
 import re
 
-from dpypelines.pipeline.shared.transforms.sanity_check import sdmx_sanity_check_v1
-from dpypelines.pipeline.shared.transforms.sdmx.v20 import sdmx_compact_2_0_prototype_1
-from dpypelines.pipeline.shared.transforms.sdmx.v21 import sdmx_generic_2_1_prototype_1
+from dpypelines.pipeline.transforms.sanity_check import sdmx_sanity_check_v1
+from dpypelines.pipeline.transforms.sdmx.v20 import sdmx_compact_2_0_prototype_1
+from dpypelines.pipeline.transforms.sdmx.v21 import sdmx_generic_2_1_prototype_1
 
 # Set a regex pattern matching the `source_id` as `CONFIGURATION` dictionary key
 # All fields are required in order for a pipeline transform to run successfully

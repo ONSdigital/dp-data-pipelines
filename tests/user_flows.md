@@ -1288,7 +1288,7 @@ Error raised
 
 ```
 Traceback (most recent call last):
-  File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/shared/utils.py", line 59, in get_submitter_email
+  File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/messages/utils.py", line 59, in get_submitter_email
     validate_email(submitter_email)
   File "/Users/sarahjohnson/code/dp-data-pipelines/.venv/lib/python3.9/site-packages/email_validator/validate_email.py", line 71, in validate_email
     = split_email(email)
@@ -1309,7 +1309,7 @@ Traceback (most recent call last):
     validate_manifest_vars(manifest_dict, required_keys)
   File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/validate_pipeline.py", line 95, in validate_manifest_vars
     get_submitter_email(manifest_dict)
-  File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/shared/utils.py", line 61, in get_submitter_email
+  File "/Users/sarahjohnson/code/dp-data-pipelines/dpypelines/pipeline/messages/utils.py", line 61, in get_submitter_email
     raise ValueError(f"Invalid email address: {submitter_email}. Error: {str(e)}")
 ValueError: Invalid email address: not a valid address. Error: An email address must have an @-sign
 ```
