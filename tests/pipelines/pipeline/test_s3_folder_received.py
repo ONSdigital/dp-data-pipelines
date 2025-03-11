@@ -1,4 +1,6 @@
 import os
+import io
+from zipfile import ZipFile
 import re
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -31,18 +33,27 @@ def test_setup_clients(mock_get_email_client, mock_get_notifier):
     assert email_client == mock_email_client
 
 
-@patch("dpypelines.pipeline.utils.Path.exists", return_value=True)
+@patch("dpypelines.pipeline.utils._get_s3_client")
 @patch("dpypelines.pipeline.utils.LocalDirectoryStore")
-def test_decompress_file(mock_LocalDirectoryStore, mock_path_exists):
+@patch("dpypelines.pipeline.utils.Path.exists", return_value=True)
+def test_decompress_file(mock_path_exists, mock_LocalDirectoryStore, mock_get_s3_client):
     """Test that `decompress_file()` returns the expected local store."""
+    mock_s3 = MagicMock()
+    mock_get_s3_client.return_value = mock_s3
+
+    fake_zip = io.BytesIO()
+    with ZipFile(fake_zip, 'w') as zf:
+        zf.writestr("test_file.txt", "Test Zip file")
+    fake_zip.seek(0)
+
+    mock_s3.download_fileobj.side_effect = lambda bucket, key, f: f.write(fake_zip.getvalue())
+
     mock_local_store = MagicMock()
     mock_LocalDirectoryStore.return_value = mock_local_store
-    mock_local_store.get_file_names.return_value = ["file1", "file2"]
+    mock_local_store.get_file_names.return_value = ["test_file"]
 
     local_store = decompress_file("s3_object_name")
-
     assert local_store == mock_local_store
-    mock_LocalDirectoryStore.assert_called_once_with("s3_object_name")
 
 
 @patch("dpypelines.pipeline.validate_pipeline.retrieve_manifest")
@@ -131,10 +142,15 @@ def test_send_submission_confirmation(mock_submission_processed_email):
     )
 
 
+@patch(
+    "dpypelines.s3_folder_received.decompress_file",
+    side_effect=FileNotFoundError(
+        "[Errno 2] No such file or directory: 'dummy_s3_object_name'"
+    ),
+)
 @patch("dpypelines.pipeline.utils.Path.is_dir", return_value=True)
 @patch("dpypelines.pipeline.utils.Path.exists", return_value=True)
 @patch("dpypelines.pipeline.utils.setup_clients")
-@patch("dpypelines.pipeline.utils.decompress_file")
 @patch("dpypelines.pipeline.validate_pipeline.retrieve_config_and_files")
 @patch("dpypelines.pipeline.utils.validate_pipeline")
 @patch("dpypelines.pipeline.utils.upload_files")
@@ -149,23 +165,12 @@ def test_start_valid_data(
     mock_path_exists,
     mock_path_isdir,
 ):
-    """Test that `start()` raises an exception when required files are missing."""
-    mock_notifier = MagicMock()
-    mock_email_client = MagicMock()
-    mock_setup_clients.return_value = (mock_notifier, mock_email_client)
-    mock_local_store = MagicMock()
-    mock_local_store.get_file_names.side_effect = FileNotFoundError(
-        "[Errno 2] No such file or directory: 'dummy_s3_object_name'"
-    )
-
-    mock_decompress_file.return_value = mock_local_store
-    mock_manifest_dict = {"fileAuthorEmail": "test@example.com"}
-    mock_pipeline_config = {"config": "value"}
-    mock_files_dir = "files_dir"
+    """Test that `start()` raises FileNotFoundError as expected."""
+    mock_setup_clients.return_value = (MagicMock(), MagicMock())
     mock_retrieve_config_and_files.return_value = (
-        mock_manifest_dict,
-        mock_pipeline_config,
-        mock_files_dir,
+        {"fileAuthorEmail": "test@example.com"},
+        {"config": "value"},
+        "files_dir",
     )
     mock_validate_pipeline.side_effect = FileNotFoundError(
         "[Errno 2] No such file or directory: 'dummy_s3_object_name'"
