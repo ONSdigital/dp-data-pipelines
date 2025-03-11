@@ -438,8 +438,8 @@ structlog = "^23.2.0"
 [package.source]
 type = "git"
 url = "https://github.com/ONSdigital/dp-python-tools.git"
-reference = "v0.5.5"
-resolved_reference = "50854cd8ba1a242fe00b1cbdbd0088901d0721ee"
+reference = "v0.5.6"
+resolved_reference = "48fa752c51465ccbb2a3b8f04396e609835f4d21"
 
 [[package]]
 name = "email-validator"
@@ -1299,4 +1299,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9.0,<3.10.0"
-content-hash = "0e938a272926b328b33ab2efd2c1bb3720011649f8e6d8434081ee56a97ae33b"
+content-hash = "05ea70a9667b1be8d57ed8bf1ef0b9dbca906ab0972cdcb8a0dca17ad5d8249d"
