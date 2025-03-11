@@ -1,7 +1,7 @@
 # Description:
-#   This workflow will automatically increments the version (patch/minor/major) using Poetry,
-#   tag the commit with the new version, builds the Python wheel and creates a GitHub release.
-
+#   This workflow uses python-semantic-release to fully automate semantic versioning.
+#   Based on commit messages it determines version bumps (patch/minor/major),
+#   updates the changelog and version number, tags the commit, builds the wheel and creates a GitHub release.
 
 name: Release on Merge to Sandbox
 
@@ -10,11 +10,6 @@ on:
     branches:
       - sandbox
   workflow_dispatch:
-    inputs:
-      increment_type:
-        description: 'Version increment type (patch, minor, major)'
-        required: false
-        default: 'patch'
 
 jobs:
   release:
@@ -31,29 +26,18 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install poetry
-        run: pip install poetry
-
-      - name: Install dependencies
-        run: poetry install
-
-      - name: Determine version increment type
-        id: increment_type
+      - name: Install Dependencies
         run: |
-          echo "INCREMENT_TYPE=${{ github.event.inputs.increment_type || 'patch' }}" >> $GITHUB_ENV
+          pip install poetry python-semantic-release
+          poetry install
 
-      - name: Increment version
-        id: version
+      - name: Run Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          poetry version ${{ env.INCREMENT_TYPE }}
-          echo "version=$(poetry version -s)" >> $GITHUB_ENV
-
-      - name: Tag commit with new version
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git tag v${{ env.version }}
-          git push origin --tags
+          # Publish uses your commit messages to determine version bump automatically, 
+          # updates your changelog, tags the commit & pushes the tag.
+          semantic-release publish --yes
 
       - name: Build wheel
         run: poetry build
@@ -63,8 +47,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ env.version }}
-          release_name: Release v${{ env.version }}
+          tag_name: v$(semantic-release version)
+          release_name: Release v$(semantic-release version)
           draft: false
           prerelease: false
           files: dist/*.whl
