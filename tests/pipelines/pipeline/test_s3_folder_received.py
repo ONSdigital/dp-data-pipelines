@@ -36,7 +36,9 @@ def test_setup_clients(mock_get_email_client, mock_get_notifier):
 @patch("dpypelines.pipeline.utils._get_s3_client")
 @patch("dpypelines.pipeline.utils.LocalDirectoryStore")
 @patch("dpypelines.pipeline.utils.Path.exists", return_value=True)
-def test_decompress_file(mock_path_exists, mock_LocalDirectoryStore, mock_get_s3_client):
+def test_decompress_file(
+    mock_path_exists, mock_LocalDirectoryStore, mock_get_s3_client
+):
     """Test that `decompress_file()` returns the expected local store."""
     # Set up a fake S3 client
     mock_s3 = MagicMock()
@@ -44,12 +46,14 @@ def test_decompress_file(mock_path_exists, mock_LocalDirectoryStore, mock_get_s3
 
     # Create an in-memory zip file containing "test_file.txt"
     fake_zip = io.BytesIO()
-    with ZipFile(fake_zip, 'w') as zf:
+    with ZipFile(fake_zip, "w") as zf:
         zf.writestr("test_file.txt", "Test Zip file")
     fake_zip.seek(0)
 
     # When download_fileobj is called, write the fake zip content into the provided file-like object
-    mock_s3.download_fileobj.side_effect = lambda bucket, key, f: f.write(fake_zip.getvalue())
+    mock_s3.download_fileobj.side_effect = lambda bucket, key, f: f.write(
+        fake_zip.getvalue()
+    )
 
     # Set up a mock local directory store that will be returned by decompress_file
     mock_local_store = MagicMock()

@@ -167,7 +167,7 @@ def decompress_file(s3_object_name, directory: Union[str, Path] = "input"):
     with open(tmp_file.name, "wb") as f:
         client = _get_s3_client(profile_name)
         client.download_fileobj(bucket_name, object_key, f)
-    
+
     # Decompress all the files to the directory specified.
     with zipfile.ZipFile(tmp_file.name, mode="r") as zip_file:
         zip_file.extractall(directory.absolute())
@@ -195,14 +195,14 @@ def validate_pipeline(files_dir: Path, pipeline_config: dict):
         validation_results.get("manifest")
     except Exception as err:
         err_msg = f"Manifest validation failed for files in {files_dir} using config: {pipeline_config}."
-        error=ValueError(err_msg)
+        error = ValueError(err_msg)
         logger.error(
             err_msg,
             data={
                 "files_dir": str(files_dir),
                 "validation_results": validation_results,
             },
-            error=err
+            error=err,
         )
         raise error
 
