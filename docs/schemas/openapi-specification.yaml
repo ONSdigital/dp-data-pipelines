@@ -2,8 +2,9 @@ openapi: 3.0.0
 info:
   title: Dataset metadata + manifest schema definitions
   version: "0.1.0"
-  description: > 
+  description: |
     Definition of the files required for the Pipeline.
+
     The paths in the definition are mock API routes, which exist so that an example JSON file can be easily generated for use.
 
 paths:
@@ -29,12 +30,17 @@ paths:
 components:
   schemas:
     UsageNote:
+      description: Essential usage information a user needs to be aware of when interpreting the data.
       type: object
       properties:
         title:
+          description: The title of the usage note.
           type: string
+          example: Impact of Coronavirus (COVID-19)
         note:
+          description: The usage note text.
           type: string
+          example: Since Quarter 1 (Jan to Mar) 2020, estimates of household final consumption expenditure (HHFCE), along with other components of gross domestic product (GDP), have been subject to more uncertainty than usual because of the challenges we faced in collecting the data under government-imposed public health restrictions. In the case of HHFCE, these challenges have been compounded by the suspension of data collection for the International Passenger Survey (IPS) between 16 March 2020 and mid-January 2021, and the temporary suspension of the Living Costs and Food Survey (LCF) between 16 March 2020 and 14 April 2020.
       required:
         - title
         - note
@@ -44,13 +50,16 @@ components:
       properties:
         type:
           type: string
-          description: >
-            This enum normally also has the option "correction".
-            As corrections will not be supported in the scope of the current iteration, this enum has been restricted to only "alert".
+          description: |
+            Whether the alert is a general alert or a correction notice.
+
+            This enum normally also has the option "correction". As corrections will not be supported in the scope of the current iteration, this enum has been restricted to only "alert".
             "correction" type alerts will need to be handled manually.
           enum: ["alert"]
         description:
+          description: The alert text that is displayed to the user
           type: string
+          example: Delays in data provision from our sources has resulted in data for the North East being removed from this dataset. We will issue a corrected dataset with the North East included as soon as possible.
       required:
         - type
         - description
@@ -59,33 +68,48 @@ components:
       type: object
       properties:
         title:
+          description: The title or label of the distribution.
           type: string
+          example: Regional GDP July to September 2022 (CSV)
         format:
           type: string
           description: File type of the distribution.
           enum: ["csv", "sdmx", "xls", "xlsx", "csdb"]
-        download_url:
+        file:
           type: string
-          description: >
-            Reusing the download_url field to reference the data file via a relative path is a potential option for how to link the appropriate distribution
-            to the correct file.
+          description: |
+            The file name of the associated data file. The data file is assumed to be in the zip alongside the metadata file.
 
-            Alternatively the implementation could introduce a different field.
+            The file name must meet the our URL standard meaning that it can only contain lowercase letters, numbers, dots (`.`) and hyphens (`-`).
+          pattern: "^[0-9a-z.-]+$"
+          example: gdp-annual-regional-sept-2022.csv
       required:
         - title
         - format
-        - download_url
+        - file
 
     Metadata:
       type: object
       properties:
         dataset_id:
+          description: The unique dataset identifier for the dataset series.
           type: string
+          maxLength: 100
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+          example: regional-gdp-by-quarter
         edition:
+          description: The edition identifier
           type: string
-        quality_desigination:
+          maxLength: 100
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+          example: july-september-2022
+        quality_designation:
+          description: The official statistics quality designation level of this dataset version.
           type: string
-          enum: ["accredited-official", "official", "official-in-development"]
+          enum:
+            - accredited-official
+            - official
+            - official-in-development
         usage_notes:
           type: array
           items:
@@ -101,24 +125,18 @@ components:
       required:
         - dataset_id
         - edition
-        - quality_desigination
-        - usage_notes
-        - alerts
         - distributions
 
     Submitter:
+      description: An individual responsible for submitting the dataset who should be sent processing and failure notifications from the import pipeline.
       type: object
       properties:
-        name:
-          type: string
-          description: The email of the individual who submitted the dataset.
         email:
           type: string
-          description: > 
-            The name of the individual who submitted the dataset.
-            In the case of the Tracker route, this would be the person who submitted the dataset file on tracker.
+          description: The email of the individual to notify.
+          format: email
+          example: jane.doe@ons.gov.uk
       required:
-        - name
         - email
 
     Manifest:
@@ -126,17 +144,24 @@ components:
       properties:
         metadata_file:
           type: string
-          description: >
-            The relative path of the associated metadata file.
+          description: |
+            The name of the associated metadata file. The metadata file is assumed to be in the zip alongside the manifest file. Currently only JSON format is accepted.
+
+            The file name must have a `.json` extension and can only contain letters, numbers, underscores (`_`) and hyphens (`-`).
 
             Keeping the metadata file separate allows for better decoupling between the manifest and metadata file.
 
             This could be beneficial as we iterate towards the "Common Interchange Format", where the metadata file would be a standard
             across the organisation for sharing statistical outputs between systems and may therefore not have the additional pipeline specific files
             the manifest currently provides. An alternative approach could be to combine the two files.
-        submitter:
-          type: object
-          $ref: "#/components/schemas/Submitter"
+          example: metadata.json
+          pattern: "^[0-9a-zA-Z_-]+.json$"
+        submission_contacts:
+          description: The list of individuals who submitted the dataset. This is the list of individuals to that will receive processing and failure notifications for the dataset import.
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/Submitter"
       required:
         - metadata_file
-        - submitter
+        - submission_contacts
