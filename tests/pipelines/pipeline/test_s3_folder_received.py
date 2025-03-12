@@ -1,9 +1,9 @@
-import os
 import io
-from zipfile import ZipFile
+import os
 import re
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+from zipfile import ZipFile
 
 import pytest
 
