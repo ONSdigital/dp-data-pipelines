@@ -1,0 +1,106 @@
+openapi: 3.0.0
+info:
+  title: Dataset metadata + manifest schema definitions
+  version: "0.1.0"
+  description: Definition of the files required for the Pipeline
+
+paths: {}
+
+components:
+  schemas:
+    UsageNote:
+      type: object
+      properties:
+        title:
+          type: string
+        note:
+          type: string
+      required:
+        - title
+        - note
+
+    Alert:
+      type: object
+      properties:
+        type:
+          type: string
+          description: This enum normally also has the option "correction". As corrections will not be supported in the scope of the current iteration, this enum has been restricted to only "alert". "correction" type alerts will need to be handled manually.
+          enum: ["alert"]
+        description:
+          type: string
+      required:
+        - type
+        - description
+
+    Distribution:
+      type: object
+      properties:
+        title:
+          type: string
+        format:
+          type: string
+          description: File type of the distribution.
+          enum: ["csv", "sdmx", "xls", "xlsx", "csdb"]
+        download_url:
+          type: string
+          description: Reusing the download_url field to reference the data file via a relative path is a potential option for how to link the appropriate distribution to the correct file. Alternatively the implementation could introduce a different field.
+      required:
+        - title
+        - format
+        - download_url
+
+    Metadata:
+      type: object
+      properties:
+        dataset_id:
+          type: string
+        edition:
+          type: string
+        quality_desigination:
+          type: string
+          enum: ["accredited-official", "official", "official-in-development"]
+        usage_notes:
+          type: array
+          items:
+            $ref: "#/components/schemas/UsageNote"
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Alert"
+        distributions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Distribution"
+      required:
+        - dataset_id
+        - edition
+        - quality_desigination
+        - usage_notes
+        - alerts
+        - distributions
+
+    Submitter:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The email of the individual who submitted the dataset.
+        email:
+          type: string
+          description: The name of the individual who submitted the dataset. In the case of the Tracker route, this would be the person who submitted the dataset file on tracker.
+      required:
+        - name
+        - email
+
+    Manifest:
+      type: object
+      properties:
+        metadata_file:
+          type: string
+          description: The relative path of the associated metadata file. Keeping the metadata file separate allows for better decoupling between the manifest and metadata file. This could be beneficial as we iterate towards the "Common Interchange Format" where the metadata file would be a standard across the organisation for sharing statistical outputs between systems and may therefore not have the additional pipeline specific files the manifest currently provides. An alternative approach could be to combine the two files.
+        submitter:
+          type: object
+          $ref: "#/components/schemas/Submitter"
+      required:
+        - metadata_file
+        - submitter
