@@ -152,7 +152,7 @@ def setup_clients():
     return notifier, email_client
 
 
-def decompress_file(s3_object_name, directory: Union[str, Path] = "input"):
+def decompress_file(s3_object_name: str, directory: Union[str, Path] = "input"):
     """Decompress the file to the local directory."""
 
     if isinstance(directory, str):
