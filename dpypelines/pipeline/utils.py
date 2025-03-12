@@ -159,6 +159,9 @@ def decompress_file(s3_object_name: str, directory: Union[str, Path] = "input"):
         directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
 
+    if isinstance(s3_object_name, Path):
+        s3_object_name = str(s3_object_name)
+
     bucket_name = s3_object_name.split("/")[0]
     object_key = "/".join(s3_object_name.split("/")[1:])
 
