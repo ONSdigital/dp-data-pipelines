@@ -9,17 +9,27 @@ on:
   push:
     branches:
       - sandbox
+  pull_request:
+    branches:
+      - sandbox
   workflow_dispatch:
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/sandbox'
     permissions:
       contents: write
       packages: write
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Force Branch to Latest Commit
+        run: |
+          git reset --hard ${{ github.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -31,24 +41,17 @@ jobs:
           pip install poetry python-semantic-release
           poetry install
 
-      - name: Run Semantic Release
+      - name: Bump Version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Publish uses your commit messages to determine version bump automatically, 
-          # updates your changelog, tags the commit & pushes the tag.
+          semantic-release version --no-ci --yes
+
+      - name: Publish Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
           semantic-release publish --yes
 
       - name: Build wheel
         run: poetry build
-
-      - name: Create GitHub Release
-        uses: actions/create-release@v1.1.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v$(semantic-release version)
-          release_name: Release v$(semantic-release version)
-          draft: false
-          prerelease: false
-          files: dist/*.whl

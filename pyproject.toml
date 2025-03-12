@@ -34,3 +34,9 @@ profile = "black"
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+
+[tool.semantic_release]
+branch = "sandbox"
+prerelease = true
+prerelease_suffix = "wip"
+version_variable = "src/__init__.py:__version__"
