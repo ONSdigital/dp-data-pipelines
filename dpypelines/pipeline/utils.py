@@ -1,13 +1,14 @@
 import os
-from pathlib import Path
-from typing import Union
 import tempfile
 import zipfile
+from pathlib import Path
+from typing import Union
+
 from dpytools.http.api.dataset_api_client import DatasetAPIClient
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
-from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.s3.basic import _get_s3_client
+from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.messages.email_templates import (
     submission_processed_email,
