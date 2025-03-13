@@ -123,17 +123,20 @@ def test_send_submission_confirmation(mock_submission_processed_email):
         mock_submitter_email, mock_email_content.subject, mock_email_content.message
     )
 
+
 @patch(
     "dpypelines.s3_folder_received.process_zip_file",
-    side_effect=FileNotFoundError("[Errno 2] No such file or directory: 'dummy_s3_object_name'")
+    side_effect=FileNotFoundError(
+        "[Errno 2] No such file or directory: 'dummy_s3_object_name'"
+    ),
 )
 @patch("dpypelines.pipeline.utils.Path.is_dir", return_value=True)
 @patch("dpypelines.pipeline.utils.Path.exists", return_value=True)
-@patch("dpypelines.pipeline.utils.setup_clients")
-@patch("dpypelines.pipeline.validate_pipeline.retrieve_config_and_files")
-@patch("dpypelines.pipeline.utils.validate_pipeline")
-@patch("dpypelines.pipeline.utils.upload_files")
-@patch("dpypelines.pipeline.utils.send_submission_confirmation")
+@patch("dpypelines.s3_folder_received.setup_clients")
+@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
+@patch("dpypelines.s3_folder_received.validate_pipeline")
+@patch("dpypelines.s3_folder_received.upload_files")
+@patch("dpypelines.s3_folder_received.send_submission_confirmation")
 def test_start_valid_data(
     mock_send_submission_confirmation,
     mock_upload_files,
@@ -142,7 +145,7 @@ def test_start_valid_data(
     mock_setup_clients,
     mock_path_exists,
     mock_path_isdir,
-    mock_process_zip_file
+    mock_process_zip_file,
 ):
     """
     Test that `start()` raises an Exception with the expected message when processing the zip file fails.
@@ -159,7 +162,7 @@ def test_start_valid_data(
 
     with pytest.raises(
         Exception,
-        match=re.escape("[Errno 2] No such file or directory: 'dummy_s3_object_name'")
+        match=re.escape("[Errno 2] No such file or directory: 'dummy_s3_object_name'"),
     ):
         start("dummy_s3_object_name")
 
@@ -167,12 +170,14 @@ def test_start_valid_data(
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.pipeline.utils.Path.is_dir", return_value=True)
 @patch("dpypelines.pipeline.utils.Path.exists", return_value=True)
-@patch("dpypelines.pipeline.utils.setup_clients")
-@patch("dpypelines.pipeline.validate_pipeline.retrieve_config_and_files")
-@patch("dpypelines.pipeline.utils.validate_pipeline")
-@patch("dpypelines.pipeline.utils.upload_files")
-@patch("dpypelines.pipeline.utils.send_submission_confirmation")
+@patch("dpypelines.s3_folder_received.setup_clients")
+@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
+@patch("dpypelines.s3_folder_received.validate_pipeline")
+@patch("dpypelines.s3_folder_received.upload_files")
+@patch("dpypelines.s3_folder_received.send_submission_confirmation")
+@patch("dpypelines.s3_folder_received.error_handler")
 def test_start_missing_files(
+    mock_error_handler,
     mock_send_submission_confirmation,
     mock_upload_files,
     mock_validate_pipeline,
@@ -180,7 +185,7 @@ def test_start_missing_files(
     mock_setup_clients,
     mock_path_exists,
     mock_path_isdir,
-    mock_process_zip_file
+    mock_process_zip_file,
 ):
     """
     Test that `start()` raises an exception when the manifest is invalid.
@@ -199,6 +204,7 @@ def test_start_missing_files(
         mock_pipeline_config,
         mock_files_dir,
     )
+    mock_error_handler.return_value = None
     mock_validate_pipeline.side_effect = ValueError("Invalid manifest file")
     with pytest.raises(ValueError, match="Invalid manifest file"):
         start("dummy_s3_object_name")
@@ -211,13 +217,13 @@ def test_clean_directory(tmp_path):
     subdir = tmp_path / "subdir"
     subdir.mkdir()
     (subdir / "file2.txt").write_text("more content")
-    
+
     # Assert that the directory is not empty.
     assert any(tmp_path.iterdir())
-    
+
     # Call clean_directory.
     clean_directory(tmp_path)
-    
+
     # Assert that the directory is empty.
     assert not any(tmp_path.iterdir())
 
@@ -228,19 +234,21 @@ def test_download_zip_file(mock_get_s3_client, tmp_path):
     # Create a temporary directory to simulate the 'input' folder.
     input_dir = tmp_path / "input"
     input_dir.mkdir()
-    
+
     # Create an in-memory zip file.
     zip_filename = "test.zip"
     fake_zip = io.BytesIO()
     with ZipFile(fake_zip, "w") as zf:
         zf.writestr("inside.txt", "Hello from zip")
     fake_zip.seek(0)
-    
+
     # Configure the fake S3 client.
     mock_s3 = MagicMock()
     mock_get_s3_client.return_value = mock_s3
-    mock_s3.download_fileobj.side_effect = lambda bucket, key, f: f.write(fake_zip.getvalue())
-    
+    mock_s3.download_fileobj.side_effect = lambda bucket, key, f: f.write(
+        fake_zip.getvalue()
+    )
+
     # Patch os.environ to simulate s3_object_name structure.
     s3_object_name = "bucket/" + zip_filename
     # Change the current working directory to tmp_path so that 'input' is created inside it.
@@ -265,11 +273,11 @@ def test_decompress_zip_file(tmp_path):
     file_inside = "inside.txt"
     with ZipFile(zip_path, "w") as zipf:
         zipf.writestr(file_inside, "Hello world")
-    
+
     # Define the destination directory.
     processing_dir = tmp_path / "processing"
     decompress_zip_file(zip_path, dest_folder=processing_dir)
-    
+
     # Verify that the file was extracted.
     extracted_file = processing_dir / file_inside
     assert extracted_file.exists()
@@ -285,14 +293,14 @@ def test_move_extracted_folder(tmp_path):
     extracted_folder = processing_dir / folder_name
     extracted_folder.mkdir()
     (extracted_folder / "dummy.txt").write_text("dummy content")
-    
+
     # Create a 'processed' folder.
     processed_dir = tmp_path / "processed"
     processed_dir.mkdir()
-    
+
     # Call move_extracted_folder with a zip filename 'sample.zip'
     move_extracted_folder("sample.zip", src_dir=processing_dir, dest_dir=processed_dir)
-    
+
     # Verify that the folder was moved.
     dest_folder = processed_dir / folder_name
     assert dest_folder.exists()
@@ -313,7 +321,7 @@ def test_process_zip_file(mock_move, mock_decompress, mock_download, tmp_path):
     with ZipFile(zip_path, "w") as zipf:
         # Create a folder inside the zip with one file.
         zipf.writestr(f"{folder_name}/inside.txt", "sample content")
-    
+
     # Configure mocks:
     mock_download.return_value = zip_path
 
@@ -323,6 +331,7 @@ def test_process_zip_file(mock_move, mock_decompress, mock_download, tmp_path):
         dest_folder.mkdir(parents=True, exist_ok=True)
         with ZipFile(zip_path_arg, "r") as zip_ref:
             zip_ref.extractall(dest_folder)
+
     mock_decompress.side_effect = decompress_side_effect
 
     # Simulate move: move the folder from processing to processed.
@@ -332,6 +341,7 @@ def test_process_zip_file(mock_move, mock_decompress, mock_download, tmp_path):
         if dest_folder.exists():
             shutil.rmtree(dest_folder)
         shutil.move(str(src_folder), str(dest_folder))
+
     mock_move.side_effect = move_side_effect
 
     # Change current working directory to tmp_path for isolation.

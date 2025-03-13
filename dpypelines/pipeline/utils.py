@@ -1,5 +1,4 @@
 import os
-import tempfile
 import shutil
 import zipfile
 from pathlib import Path
@@ -153,6 +152,7 @@ def setup_clients():
     )
     return notifier, email_client
 
+
 def clean_directory(directory: Union[str, Path]) -> None:
     """
     Delete all files and subdirectories in the given directory.
@@ -204,10 +204,17 @@ def decompress_zip_file(zip_path: Path, dest_folder: Union[str, Path] = "process
     dest_folder.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
         zip_ref.extractall(dest_folder)
-    logger.info("Decompressed zip file", data={"zip_path": str(zip_path), "dest_folder": str(dest_folder)})
+    logger.info(
+        "Decompressed zip file",
+        data={"zip_path": str(zip_path), "dest_folder": str(dest_folder)},
+    )
 
 
-def move_extracted_folder(zip_filename: str, src_dir: Union[str, Path] = "processing", dest_dir: Union[str, Path] = "processed"):
+def move_extracted_folder(
+    zip_filename: str,
+    src_dir: Union[str, Path] = "processing",
+    dest_dir: Union[str, Path] = "processed",
+):
     """
     Move the extracted folder (with name matching the zip file name without extension)
     from the src_dir to the dest_dir. If a folder with the same name already exists in dest_dir,
@@ -224,9 +231,15 @@ def move_extracted_folder(zip_filename: str, src_dir: Union[str, Path] = "proces
         # Remove the destination folder if it exists
         if dest_folder.exists():
             shutil.rmtree(dest_folder)
-            logger.info("Existing folder removed from processed directory", data={"folder": str(dest_folder)})
+            logger.info(
+                "Existing folder removed from processed directory",
+                data={"folder": str(dest_folder)},
+            )
         shutil.move(str(src_folder), str(dest_folder))
-        logger.info("Moved extracted folder", data={"folder": folder_name, "dest_folder": str(dest_folder)})
+        logger.info(
+            "Moved extracted folder",
+            data={"folder": folder_name, "dest_folder": str(dest_folder)},
+        )
     else:
         err_msg = f"Expected folder '{folder_name}' not found in {src_dir}."
         logger.error(err_msg)
@@ -236,26 +249,27 @@ def move_extracted_folder(zip_filename: str, src_dir: Union[str, Path] = "proces
 def process_zip_file(s3_object_name: str):
     """
     Download a zip file from S3 into the 'input' folder, decompress it into 'processing',
-    move the extracted folder (whose name matches the zip file name without extension) 
+    move the extracted folder (whose name matches the zip file name without extension)
     into 'processed', and then verify that the resulting folder contains files.
-    
+
     Returns:
         LocalDirectoryStore: A local store representing the processed folder.
     """
     # Step 1: Download the zip file.
     local_zip_path = download_zip_file(s3_object_name)
 
-    
     # Step 2: Decompress the zip file into the 'processing' folder.
     decompress_zip_file(local_zip_path, dest_folder="processing")
 
-    #Delete zip file
+    # Delete zip file
     clean_directory("input")
 
     # Step 3: Move the extracted folder from 'processing' to 'processed'.
-    move_extracted_folder(local_zip_path.name, src_dir="processing", dest_dir="processed")
+    move_extracted_folder(
+        local_zip_path.name, src_dir="processing", dest_dir="processed"
+    )
 
-    #Delete any leftover files in 'processing'
+    # Delete any leftover files in 'processing'
     clean_directory("processing")
 
     # Step 4: Validate that the decompressed (and moved) folder contains files.
@@ -273,7 +287,10 @@ def process_zip_file(s3_object_name: str):
 
     logger.info(
         "S3 zip object processed successfully",
-        data={"s3_object_name": s3_object_name, "processed_folder": str(processed_folder)},
+        data={
+            "s3_object_name": s3_object_name,
+            "processed_folder": str(processed_folder),
+        },
     )
     return local_store
 
