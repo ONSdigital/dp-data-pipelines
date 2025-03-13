@@ -1,57 +1,50 @@
-# Description:
-#   This workflow uses python-semantic-release to fully automate semantic versioning.
-#   Based on commit messages it determines version bumps (patch/minor/major),
-#   updates the changelog and version number, tags the commit, builds the wheel and creates a GitHub release.
-
-name: Release on Merge to Sandbox
+name: Build and tag release
 
 on:
   push:
     branches:
       - sandbox
-  pull_request:
-    branches:
-      - sandbox
-  workflow_dispatch:
+      - staging
+      - production
+
+env:
+  BRANCH: ${{ github.head_ref || github.ref_name }} 
 
 jobs:
   release:
+    if: github.ref_name == 'sandbox' || github.ref_name == 'staging'
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/sandbox'
+    concurrency:
+      group: ${{ github.workflow }}-release-$BRANCH
+      cancel-in-progress: false
     permissions:
       contents: write
       packages: write
-
+    outputs:
+      version: ${{ steps.release.outputs.tag }}
+      released: ${{ steps.release.outputs.released }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Force Branch to Latest Commit
-        run: |
-          git reset --hard ${{ github.sha }}
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Install Dependencies
-        run: |
-          pip install poetry python-semantic-release
-          poetry install
+      - name: Action | Semantic Version Release
+        id: release
+        uses: python-semantic-release/python-semantic-release@v9.21.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git_committer_name: "github-actions"
+          git_committer_email: "actions@users.noreply.github.com"
 
-      - name: Bump Version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          semantic-release version --no-ci --yes
-
-      - name: Publish Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          semantic-release publish --yes
-
-      - name: Build wheel
-        run: poetry build
+      - name: Publish | Upload to GitHub Release Assets
+        uses: python-semantic-release/publish-action@v9.21.0
+        if: steps.release.outputs.released == 'true'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release.outputs.tag }}
