@@ -1,5 +1,6 @@
 import os
 import tempfile
+import shutil
 import zipfile
 from pathlib import Path
 from typing import Union
@@ -152,41 +153,90 @@ def setup_clients():
     )
     return notifier, email_client
 
-
-def decompress_file(s3_object_name: str, directory: Union[str, Path] = "input"):
-    """Decompress the file to the local directory."""
-
-    if isinstance(directory, str):
-        directory = Path(directory)
-    directory.mkdir(parents=True, exist_ok=True)
-
-    if isinstance(s3_object_name, Path):
-        s3_object_name = str(s3_object_name)
+def download_zip_file(s3_object_name: str) -> Path:
+    """
+    Downloads a zip file from S3 into the 'input' folder and returns the local file path.
+    """
+    input_dir = Path("input")
+    input_dir.mkdir(parents=True, exist_ok=True)
+    zip_filename = os.path.basename(s3_object_name)  # e.g., e2e.zip
+    local_zip_path = input_dir / zip_filename
 
     bucket_name = s3_object_name.split("/")[0]
     object_key = "/".join(s3_object_name.split("/")[1:])
-
     profile_name = "dp-sandbox"
-    tmp_file = tempfile.NamedTemporaryFile()
-    with open(tmp_file.name, "wb") as f:
-        client = _get_s3_client(profile_name)
+    client = _get_s3_client(profile_name)
+    with open(local_zip_path, "wb") as f:
         client.download_fileobj(bucket_name, object_key, f)
+    logger.info("Downloaded zip file", data={"local_zip_path": str(local_zip_path)})
+    return local_zip_path
 
-    # Decompress all the files to the directory specified.
-    with zipfile.ZipFile(tmp_file.name, mode="r") as zip_file:
-        zip_file.extractall(directory.absolute())
 
-    local_store = LocalDirectoryStore(directory)
+def decompress_zip_file(zip_path: Path, dest_folder: Union[str, Path] = "processing"):
+    """
+    Decompress the given zip file into the specified destination folder.
+    """
+    dest_folder = Path(dest_folder)
+    dest_folder.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        zip_ref.extractall(dest_folder)
+    logger.info("Decompressed zip file", data={"zip_path": str(zip_path), "dest_folder": str(dest_folder)})
+
+
+def move_extracted_folder(zip_filename: str, src_dir: Union[str, Path] = "processing", dest_dir: Union[str, Path] = "processed"):
+    """
+    Move the extracted folder (with name matching the zip file name without extension) 
+    from the src_dir to the dest_dir.
+    """
+    folder_name = Path(zip_filename).stem  # e.g., 'e2e' from 'e2e.zip'
+    src_dir = Path(src_dir)
+    dest_dir = Path(dest_dir)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    src_folder = src_dir / folder_name
+    if src_folder.exists() and src_folder.is_dir():
+        dest_folder = dest_dir / folder_name
+        shutil.move(str(src_folder), str(dest_folder))
+        logger.info("Moved extracted folder", data={"folder": folder_name, "dest_folder": str(dest_folder)})
+    else:
+        err_msg = f"Expected folder '{folder_name}' not found in {src_dir}."
+        logger.error(err_msg)
+        raise FileNotFoundError(err_msg)
+
+
+def process_zip_file(s3_object_name: str):
+    """
+    Download a zip file from S3 into the 'input' folder, decompress it into 'processing',
+    move the extracted folder (whose name matches the zip file name without extension) 
+    into 'processed', and then verify that the resulting folder contains files.
+    
+    Returns:
+        LocalDirectoryStore: A local store representing the processed folder.
+    """
+    # Step 1: Download the zip file.
+    local_zip_path = download_zip_file(s3_object_name)
+
+    # Step 2: Decompress the zip file into the 'processing' folder.
+    decompress_zip_file(local_zip_path, dest_folder="processing")
+
+    # Step 3: Move the extracted folder from 'processing' to 'processed'.
+    move_extracted_folder(local_zip_path.name, src_dir="processing", dest_dir="processed")
+
+    # Step 4: Validate that the decompressed (and moved) folder contains files.
+    folder_name = Path(local_zip_path.name).stem  # e.g., 'e2e' from 'e2e.zip'
+    processed_folder = Path("processed") / folder_name
+    local_store = LocalDirectoryStore(processed_folder)
     files = local_store.get_file_names()
-
     if not files:
-        err_msg = f"Decompressed directory 'input' is empty for s3_object: {s3_object_name}. Available files: {files}"
+        err_msg = (
+            f"Decompressed directory '{processed_folder}' is empty for s3_object: {s3_object_name}. "
+            f"Available files: {files}"
+        )
         logger.error(err_msg, data={"local_store": files})
         raise FileNotFoundError(err_msg)
 
     logger.info(
-        "S3 `.tar` object received and decompressed to ./input",
-        data={"s3_object_name": s3_object_name},
+        "S3 zip object processed successfully",
+        data={"s3_object_name": s3_object_name, "processed_folder": str(processed_folder)},
     )
     return local_store
 
