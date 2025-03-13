@@ -153,6 +153,30 @@ def setup_clients():
     )
     return notifier, email_client
 
+def clean_directory(directory: Union[str, Path]) -> None:
+    """
+    Delete all files and subdirectories in the given directory.
+
+    Args:
+        directory (Union[str, Path]): The path to the directory to clean.
+    """
+    directory = Path(directory)
+    if not directory.exists():
+        # If the directory doesn't exist, nothing to clean.
+        return
+
+    for item in directory.iterdir():
+        try:
+            if item.is_file() or item.is_symlink():
+                item.unlink()
+            elif item.is_dir():
+                shutil.rmtree(item)
+            logger.info("Deleted item", data={"item": str(item)})
+        except Exception as err:
+            logger.error("Failed to delete item", err, data={"item": str(item)})
+            raise err
+
+
 def download_zip_file(s3_object_name: str) -> Path:
     """
     Downloads a zip file from S3 into the 'input' folder and returns the local file path.
@@ -215,11 +239,18 @@ def process_zip_file(s3_object_name: str):
     # Step 1: Download the zip file.
     local_zip_path = download_zip_file(s3_object_name)
 
+    
     # Step 2: Decompress the zip file into the 'processing' folder.
     decompress_zip_file(local_zip_path, dest_folder="processing")
 
+    #Delete zip file
+    clean_directory("input")
+
     # Step 3: Move the extracted folder from 'processing' to 'processed'.
     move_extracted_folder(local_zip_path.name, src_dir="processing", dest_dir="processed")
+
+    #Delete any leftover files in 'processing'
+    clean_directory("processing")
 
     # Step 4: Validate that the decompressed (and moved) folder contains files.
     folder_name = Path(local_zip_path.name).stem  # e.g., 'e2e' from 'e2e.zip'
