@@ -35,8 +35,26 @@ profile = "black"
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 
-[tool.semantic_release]
-branch = "sandbox"
+[semantic_release]
+tag_format = "v{version}"
+version_toml = [
+    # "file:variable:[format_type]"
+    "pyproject.toml:tool.poetry.version",  # Implied Default: Number format
+]
+version_variables = [
+    # "file:variable:format_type"
+    "Makefile:version:tf"
+]
+
+[tool.semantic_release.remote]
+type = "github"
+
+[tool.semantic_release.branches.sandbox]
+match = "sandbox"
 prerelease = true
-prerelease_suffix = "wip"
-version_variable = "src/__init__.py:__version__"
+prerelease_token = "sandbox"
+
+[tool.semantic_release.branches.devtesting]
+match = "2708-github-workflow-testing"
+prerelease = true
+prerelease_token = "wip"
