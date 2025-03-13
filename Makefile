@@ -8,11 +8,11 @@ install: ## Install development dependencies
 	poetry install
 
 fmt: install ## (Format) - runs black and isort against the codebase (auto triggered on pre-commit)
-	poetry run black ./dpypelines/ ./tests/*
+	poetry run black .
 	poetry run isort ./dpypelines/ ./tests/*
 
 lint: install ## Run the ruff python linter
-	poetry run ruff check ./dpypelines/ ./tests/*
+	poetry run ruff check
 
 test: install ## Run pytest and check test coverage
 	poetry run pytest --cov-report term-missing --cov=dpypelines
@@ -26,13 +26,13 @@ deploy:
 
 symlink:
 	# Switch to production version
-	sed -i '' 's|{ git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "v0.5.5" }|{path = "../dp-python-tools",  develop = true}|' pyproject.toml
+	sed -i '' 's|{ git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "v0.5.6" }|{path = "../dp-python-tools",  develop = true}|' pyproject.toml
 	poetry lock
 	poetry install
 
 
 unlink:
 	# Switch to production version
-	sed -i '' 's|{path = "../dp-python-tools",  develop = true}|{ git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "v0.5.5" }|' pyproject.toml
+	sed -i '' 's|{path = "../dp-python-tools",  develop = true}|{ git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "v0.5.6" }|' pyproject.toml
 	poetry lock
 	poetry install

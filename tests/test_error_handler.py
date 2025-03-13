@@ -132,5 +132,13 @@ class TestErrorHandler:
         assert log_call_args[0][0] == "Failed to send error email notification"
 
         # Validate the second argument (exception)
-        assert isinstance(log_call_args[0][1], Exception)
-        assert str(log_call_args[0][1]) == "Send failure"
+        assert len(log_call_args) > 1
+
+        error = log_call_args[1]
+
+        if "error" in error:
+            error = error["error"]
+
+        assert error is not None
+        assert isinstance(error, Exception)
+        assert str(error) == "Send failure"
