@@ -1,5 +1,8 @@
 .PHONY: all
 
+version = v0.5.5
+remote_tools_config = { git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "${version}" }
+local_tools_config = {path = "../dp-python-tools",  develop = true}
 # Help menu on a naked make
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -23,16 +26,14 @@ feature: install
 deploy:
 	./buildpackage.sh
 
-
 symlink:
 	# Switch to production version
-	sed -i '' 's|{ git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "v0.5.6" }|{path = "../dp-python-tools",  develop = true}|' pyproject.toml
+	sed -i '' 's|${remote_tools_config}|${local_tools_config}|' pyproject.toml
 	poetry lock
 	poetry install
 
-
 unlink:
 	# Switch to production version
-	sed -i '' 's|{path = "../dp-python-tools",  develop = true}|{ git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "v0.5.6" }|' pyproject.toml
+	sed -i '' 's|${local_tools_config}|${remote_tools_config}|' pyproject.toml
 	poetry lock
 	poetry install

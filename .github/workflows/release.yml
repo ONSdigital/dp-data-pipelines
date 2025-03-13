@@ -1,0 +1,50 @@
+name: Build and tag release
+
+on:
+  push:
+    branches:
+      - sandbox
+      - staging
+      - production
+
+env:
+  BRANCH: ${{ github.head_ref || github.ref_name }} 
+
+jobs:
+  release:
+    if: github.ref_name == 'sandbox' || github.ref_name == 'staging'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-release-$BRANCH
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      packages: write
+    outputs:
+      version: ${{ steps.release.outputs.tag }}
+      released: ${{ steps.release.outputs.released }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Action | Semantic Version Release
+        id: release
+        uses: python-semantic-release/python-semantic-release@v9.21.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git_committer_name: "github-actions"
+          git_committer_email: "actions@users.noreply.github.com"
+
+      - name: Publish | Upload to GitHub Release Assets
+        uses: python-semantic-release/publish-action@v9.21.0
+        if: steps.release.outputs.released == 'true'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release.outputs.tag }}
