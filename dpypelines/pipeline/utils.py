@@ -209,16 +209,22 @@ def decompress_zip_file(zip_path: Path, dest_folder: Union[str, Path] = "process
 
 def move_extracted_folder(zip_filename: str, src_dir: Union[str, Path] = "processing", dest_dir: Union[str, Path] = "processed"):
     """
-    Move the extracted folder (with name matching the zip file name without extension) 
-    from the src_dir to the dest_dir.
+    Move the extracted folder (with name matching the zip file name without extension)
+    from the src_dir to the dest_dir. If a folder with the same name already exists in dest_dir,
+    it will be removed first.
     """
     folder_name = Path(zip_filename).stem  # e.g., 'e2e' from 'e2e.zip'
     src_dir = Path(src_dir)
     dest_dir = Path(dest_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
     src_folder = src_dir / folder_name
+    dest_folder = dest_dir / folder_name
+
     if src_folder.exists() and src_folder.is_dir():
-        dest_folder = dest_dir / folder_name
+        # Remove the destination folder if it exists
+        if dest_folder.exists():
+            shutil.rmtree(dest_folder)
+            logger.info("Existing folder removed from processed directory", data={"folder": str(dest_folder)})
         shutil.move(str(src_folder), str(dest_folder))
         logger.info("Moved extracted folder", data={"folder": folder_name, "dest_folder": str(dest_folder)})
     else:
