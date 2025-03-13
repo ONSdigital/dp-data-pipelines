@@ -193,6 +193,7 @@ def test_start_missing_files(
     mock_manifest_dict = {"fileAuthorEmail": "test@example.com"}
     mock_pipeline_config = {"config": "value"}
     mock_files_dir = "files_dir"
+    mock_local_store.get_current_source_pathlike.return_value = Path(mock_files_dir)
     mock_retrieve_config_and_files.return_value = (
         mock_manifest_dict,
         mock_pipeline_config,
