@@ -5,7 +5,7 @@ from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.messages.error_handler_module import error_handler
 from dpypelines.pipeline.utils import (
-    decompress_file,
+    process_zip_file,
     send_submission_confirmation,
     setup_clients,
     upload_files,
@@ -37,7 +37,7 @@ def start(s3_object_name: str, *args, **kwargs):
         notifier, email_client = setup_clients()
 
         # Step 2: Validate configuration and files.
-        local_store = decompress_file(s3_object_name, directory="input")
+        local_store = process_zip_file(s3_object_name)
 
         manifest_dict, pipeline_config, files_dir = retrieve_config_and_files(
             local_store
