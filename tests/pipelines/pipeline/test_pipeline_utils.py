@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from dpypelines.pipeline.errors import DatasetAPIRequestCreationException
 from dpypelines.pipeline.utils import get_post_request_values_from_metadata
 
 
@@ -29,7 +30,7 @@ def test_get_post_request_values_from_invalid_metadata():
     with open("tests/fixtures/test-cases/test_metadata_invalid.json", "r") as f:
         metadata = json.load(f)
 
-    with pytest.raises(KeyError) as e:
+    with pytest.raises(DatasetAPIRequestCreationException) as e:
         get_post_request_values_from_metadata(metadata)
 
-    assert "KeyError" in str(e)
+    assert "DatasetAPIRequestCreationException" in str(e)

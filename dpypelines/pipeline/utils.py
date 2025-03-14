@@ -10,6 +10,11 @@ from dpytools.logging.logger import DpLogger
 from dpytools.s3.basic import _get_s3_client
 from dpytools.stores.directory.local import LocalDirectoryStore
 
+from dpypelines.pipeline.errors import (
+    DatasetAPIRequestCreationException,
+    DistributionsException,
+    ValidationException,
+)
 from dpypelines.pipeline.messages.email_templates import (
     submission_processed_email,
     successful_file_upload_email,
@@ -40,7 +45,7 @@ def get_notifier():
         logger.info("Notifier created", data={"notifier": notifier})
         return notifier
     except Exception as err:
-        logger.error("Error occurred when creating notifier", err)
+        logger.error("Error occurred when creating notifier", error=err)
         raise err
 
 
@@ -98,12 +103,9 @@ def get_post_request_values_from_metadata(metadata: dict):
         }
         return dataset_path, edition_path, request_body
     except Exception as err:
-        logger.error(
-            "Error getting POST request values from metadata",
-            err,
-            data={"metadata": metadata},
-        )
-        raise err
+        raise DatasetAPIRequestCreationException(
+            "Error getting POST request values from metadata", metadata=metadata
+        ) from err
 
 
 def get_distribution_details_for_request(dcat_distributions: list) -> list:
@@ -128,12 +130,10 @@ def get_distribution_details_for_request(dcat_distributions: list) -> list:
         )
         return distributions
     except Exception as err:
-        logger.error(
+        raise DistributionsException(
             "Error getting details of distributions for Dataset API request",
-            err,
-            data={"distributions": dcat_distributions},
-        )
-        raise err
+            distributions=dcat_distributions,
+        ) from err
 
 
 def setup_clients():
@@ -143,7 +143,6 @@ def setup_clients():
 
     if not notifier or not email_client:
         err_msg = "Failed to set up notification or email client."
-        logger.error(err_msg)
         raise RuntimeError(err_msg)
 
     logger.info(
@@ -278,11 +277,7 @@ def process_zip_file(s3_object_name: str):
     local_store = LocalDirectoryStore(processed_folder)
     files = local_store.get_file_names()
     if not files:
-        err_msg = (
-            f"Decompressed directory '{processed_folder}' is empty for s3_object: {s3_object_name}. "
-            f"Available files: {files}"
-        )
-        logger.error(err_msg, data={"local_store": files})
+        err_msg = f"Decompressed directory 'input' is empty for s3_object: {s3_object_name}. Available files: {files}"
         raise FileNotFoundError(err_msg)
 
     logger.info(
@@ -303,16 +298,9 @@ def validate_pipeline(files_dir: Path, pipeline_config: dict):
         validation_results.get("manifest")
     except Exception as err:
         err_msg = f"Manifest validation failed for files in {files_dir} using config: {pipeline_config}."
-        error = ValueError(err_msg)
-        logger.error(
-            err_msg,
-            data={
-                "files_dir": str(files_dir),
-                "validation_results": validation_results,
-            },
-            error=err,
+        raise ValidationException(
+            err_msg, files_dir=files_dir, validation_results=validation_results
         )
-        raise error
 
     logger.info(
         "Pipeline validation completed successfully", data={"files_dir": str(files_dir)}
@@ -328,13 +316,11 @@ def upload_metadata(local_store, email_client, submitter_email):
             f"Required environment variable(s) not set: "
             f"DATASET_API_URL: {dataset_api_url}."
         )
-        logger.error(err_msg)
         raise EnvironmentError(err_msg)
 
     metadata = local_store.get_lone_matching_json_as_dict("^metadata.json$")
     if not metadata:
         err_msg = "metadata.json not found in the local store."
-        logger.error(err_msg)
         raise FileNotFoundError(err_msg)
 
     dataset_path, edition_path, request_body = get_post_request_values_from_metadata(
@@ -368,7 +354,6 @@ def upload_files(validation_results, email_client, submitter_email):
             f"Required environment variable(s) not set: "
             f"UPLOAD_SERVICE_URL: {upload_url}, DATASET_API_URL: {dataset_api_url}."
         )
-        logger.error(err_msg)
         raise EnvironmentError(err_msg)
 
     upload_client = UploadServiceClient(upload_url)
@@ -376,7 +361,6 @@ def upload_files(validation_results, email_client, submitter_email):
         mimetype = get_mimetype(Path(required_file_path).suffix)
         if not mimetype:
             err_msg = f"Uploading file type {Path(required_file_path).suffix} not supported for file: {required_file_path}."
-            logger.error(err_msg)
             raise NotImplementedError(err_msg)
 
         upload_client.upload_new(required_file_path, mimetype)
@@ -397,7 +381,7 @@ def send_submission_confirmation(email_client, submitter_email):
     email_content = submission_processed_email()
     if not email_content:
         err_msg = "Submission email content is empty."
-        logger.error(err_msg)
         raise ValueError(err_msg)
+
     email_client.send(submitter_email, email_content.subject, email_content.message)
     logger.info("Confirmation email sent", data={"submitter_email": submitter_email})

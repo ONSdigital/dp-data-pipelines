@@ -32,5 +32,42 @@ build-backend = "poetry.core.masonry.api"
 [tool.isort]
 profile = "black"
 
+[tool.black]
+include = '\.pyi?$'
+extend-exclude = '''
+(
+    .*\.zip
+    | .*\.md
+    | features/
+    | docs/
+)
+'''
+
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+
+[tool.ruff]
+exclude = [
+    "features/",
+    ".md",
+    ".zip"
+]
+
+[semantic_release]
+tag_format = "v{version}"
+version_toml = [
+    # "file:variable:[format_type]"
+    "pyproject.toml:tool.poetry.version",  # Implied Default: Number format
+]
+version_variables = [
+    # "file:variable:format_type"
+    "Makefile:version:tf"
+]
+
+[tool.semantic_release.remote]
+type = "github"
+
+[tool.semantic_release.branches.sandbox]
+match = "sandbox"
+prerelease = true
+prerelease_token = "sandbox"

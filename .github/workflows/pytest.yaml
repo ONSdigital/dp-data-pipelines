@@ -1,6 +1,11 @@
 name: Python Unit Tests
 
-on: [push]
+on:
+  pull_request:
+    branches:
+      - sandbox
+      - staging
+      - production
 
 jobs:
   build:
