@@ -9,11 +9,11 @@ from zipfile import ZipFile
 import pytest
 
 from dpypelines.pipeline.utils import (
-    decompress_zip_file,
-    process_zip_file,
-    download_zip_file,
     clean_directory,
+    decompress_zip_file,
+    download_zip_file,
     move_extracted_folder,
+    process_zip_file,
     send_submission_confirmation,
     setup_clients,
     upload_files,
