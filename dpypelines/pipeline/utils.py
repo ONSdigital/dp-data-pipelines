@@ -296,7 +296,7 @@ def validate_pipeline(files_dir: Path, pipeline_config: dict):
 
     try:
         validation_results.get("manifest")
-    except Exception as err:
+    except Exception:
         err_msg = f"Manifest validation failed for files in {files_dir} using config: {pipeline_config}."
         raise ValidationException(
             err_msg, files_dir=files_dir, validation_results=validation_results
