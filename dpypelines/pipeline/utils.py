@@ -7,7 +7,7 @@ from typing import Union
 from dpytools.http.api.dataset_api_client import DatasetAPIClient
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
-from dpytools.s3.basic import _get_s3_client
+from dpytools.s3.basic import (_get_s3_client, upload_local_file_to_s3)
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.errors import (
@@ -175,6 +175,25 @@ def clean_directory(directory: Union[str, Path]) -> None:
             logger.error("Failed to delete item", err, data={"item": str(item)})
             raise err
 
+def delete_subfolders(folder_path: Union[str, Path]) -> None:
+    """
+    Delete all subfolders within the given folder.
+    
+    Args:
+        folder_path (Union[str, Path]): The path to the folder whose subfolders should be deleted.
+    """
+    folder = Path(folder_path)
+    if not folder.exists():
+        raise FileNotFoundError(f"The folder {folder} does not exist.")
+    
+    for item in folder.iterdir():
+        if item.is_dir():
+            try:
+                shutil.rmtree(item)
+                print(f"Deleted folder: {item}")
+            except Exception as e:
+                print(f"Error deleting folder {item}: {e}")
+
 
 def download_zip_file(s3_object_name: str) -> Path:
     """
@@ -267,6 +286,7 @@ def process_zip_file(s3_object_name: str):
     Returns:
         LocalDirectoryStore: A local store representing the processed folder.
     """
+
     # Step 1: Download the zip file.
     local_zip_path = download_zip_file(s3_object_name)
 
@@ -276,17 +296,20 @@ def process_zip_file(s3_object_name: str):
     # Delete zip file
     clean_directory("input")
 
-    # Step 3: Move the extracted folder from 'processing' to 'processed'.
-    move_extracted_folder(
-        local_zip_path.name, src_dir="processing", dest_dir="processed"
-    )
+    extracted_folder = Path("processing") / local_zip_path.stem
+    bucket_name = s3_object_name.split('/')
 
-    # Delete any leftover files in 'processing'
-    clean_directory("processing")
+    for file_path in extracted_folder.rglob('*'):
+        if file_path.is_file() and str(file_path).endswith(".json") or str(file_path).endswith(".csv"):
+            relative_path = file_path.relative_to("processing")
+            object_name = f"{bucket_name[0]}/processing/{relative_path.as_posix()}"
+            upload_local_file_to_s3(file_path, object_name, profile_name="dp-sandbox")
+
+    delete_subfolders("processing/" + local_zip_path.stem)
 
     # Step 4: Validate that the decompressed (and moved) folder contains files.
     folder_name = Path(local_zip_path.name).stem  # e.g., 'e2e' from 'e2e.zip'
-    processed_folder = Path("processed") / folder_name
+    processed_folder = Path("processing") / folder_name
     local_store = LocalDirectoryStore(processed_folder)
     files = local_store.get_file_names()
     if not files:
