@@ -198,11 +198,24 @@ def download_zip_file(s3_object_name: str) -> Path:
 def decompress_zip_file(zip_path: Path, dest_folder: Union[str, Path] = "processing"):
     """
     Decompress the given zip file into the specified destination folder.
+    After extraction, if the files are not contained within a subfolder,
+    move them into a folder named as the zip file (without its extension).
     """
     dest_folder = Path(dest_folder)
     dest_folder.mkdir(parents=True, exist_ok=True)
+
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
         zip_ref.extractall(dest_folder)
+
+    # List items in the destination folder
+    extracted_items = list(dest_folder.iterdir())
+    # If there is not exactly one directory, assume the files weren't extracted into a subfolder
+    if not (len(extracted_items) == 1 and extracted_items[0].is_dir()):
+        new_folder = dest_folder / zip_path.stem
+        new_folder.mkdir(exist_ok=True)
+        for item in extracted_items:
+            shutil.move(str(item), new_folder)
+
     logger.info(
         "Decompressed zip file",
         data={"zip_path": str(zip_path), "dest_folder": str(dest_folder)},
