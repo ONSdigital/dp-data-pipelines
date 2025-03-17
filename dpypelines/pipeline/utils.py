@@ -7,7 +7,7 @@ from typing import Union
 from dpytools.http.api.dataset_api_client import DatasetAPIClient
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
-from dpytools.s3.basic import (_get_s3_client, upload_local_file_to_s3)
+from dpytools.s3.basic import _get_s3_client, upload_local_file_to_s3
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.errors import (
@@ -175,17 +175,18 @@ def clean_directory(directory: Union[str, Path]) -> None:
             logger.error("Failed to delete item", err, data={"item": str(item)})
             raise err
 
+
 def delete_subfolders(folder_path: Union[str, Path]) -> None:
     """
     Delete all subfolders within the given folder.
-    
+
     Args:
         folder_path (Union[str, Path]): The path to the folder whose subfolders should be deleted.
     """
     folder = Path(folder_path)
     if not folder.exists():
         raise FileNotFoundError(f"The folder {folder} does not exist.")
-    
+
     for item in folder.iterdir():
         if item.is_dir():
             try:
@@ -297,10 +298,14 @@ def process_zip_file(s3_object_name: str):
     clean_directory("input")
 
     extracted_folder = Path("processing") / local_zip_path.stem
-    bucket_name = s3_object_name.split('/')
+    bucket_name = s3_object_name.split("/")
 
-    for file_path in extracted_folder.rglob('*'):
-        if file_path.is_file() and str(file_path).endswith(".json") or str(file_path).endswith(".csv"):
+    for file_path in extracted_folder.rglob("*"):
+        if (
+            file_path.is_file()
+            and str(file_path).endswith(".json")
+            or str(file_path).endswith(".csv")
+        ):
             relative_path = file_path.relative_to("processing")
             object_name = f"{bucket_name[0]}/processing/{relative_path.as_posix()}"
             upload_local_file_to_s3(file_path, object_name, profile_name="dp-sandbox")
