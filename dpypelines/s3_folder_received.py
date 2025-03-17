@@ -6,6 +6,7 @@ from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.messages.error_handler_module import error_handler
 from dpypelines.pipeline.utils import (
+    clean_directory,
     move_extracted_folder,
     process_zip_file,
     send_submission_confirmation,
@@ -14,7 +15,6 @@ from dpypelines.pipeline.utils import (
     upload_local_file_to_s3,
     upload_metadata,
     validate_pipeline,
-    clean_directory,
 )
 from dpypelines.pipeline.validate_pipeline import retrieve_config_and_files
 
