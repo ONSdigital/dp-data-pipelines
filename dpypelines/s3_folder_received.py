@@ -14,6 +14,7 @@ from dpypelines.pipeline.utils import (
     upload_local_file_to_s3,
     upload_metadata,
     validate_pipeline,
+    clean_directory,
 )
 from dpypelines.pipeline.validate_pipeline import retrieve_config_and_files
 
@@ -74,6 +75,9 @@ def start(s3_object_name: str, *args, **kwargs):
                 upload_local_file_to_s3(
                     file_path, object_name, profile_name="dp-sandbox"
                 )
+
+        # Delete zip file
+        clean_directory("input")
 
         notifier.success()
         logger.info("ETL process completed successfully")
