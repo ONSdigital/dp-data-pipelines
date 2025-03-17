@@ -266,21 +266,31 @@ def test_download_zip_file(mock_get_s3_client, tmp_path):
         os.chdir(orig_cwd)
 
 
-def test_decompress_zip_file(tmp_path):
-    """Test that `decompress_zip_file()` extracts a zip file into the 'processing' folder."""
-    # Create a temporary zip file.
+def test_decompress_zip_file_with_subfolder(tmp_path):
+    """
+    Test that when the zip file contains a subfolder,
+    the function does not move the subfolder, keeping the original structure.
+    """
+    # Create a temporary zip file with a file inside a subfolder.
     zip_path = tmp_path / "test.zip"
+    subfolder_name = "subfolder"
     file_inside = "inside.txt"
+    zip_entry = f"{subfolder_name}/{file_inside}"
     with ZipFile(zip_path, "w") as zipf:
-        zipf.writestr(file_inside, "Hello world")
+        zipf.writestr(zip_entry, "Hello world")
 
     # Define the destination directory.
     processing_dir = tmp_path / "processing"
+    
+    # Call the decompression function.
     decompress_zip_file(zip_path, dest_folder=processing_dir)
 
-    # Verify that the file was extracted.
-    extracted_file = processing_dir / file_inside
-    assert extracted_file.exists()
+    # Since the zip already had a subfolder, the function should leave the structure intact.
+    expected_subfolder = processing_dir / subfolder_name
+    extracted_file = expected_subfolder / file_inside
+
+    assert expected_subfolder.exists() and expected_subfolder.is_dir(), "Subfolder missing after extraction."
+    assert extracted_file.exists(), "Extracted file not found in the subfolder."
     assert extracted_file.read_text() == "Hello world"
 
 
