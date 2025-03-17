@@ -281,7 +281,7 @@ def test_decompress_zip_file_with_subfolder(tmp_path):
 
     # Define the destination directory.
     processing_dir = tmp_path / "processing"
-    
+
     # Call the decompression function.
     decompress_zip_file(zip_path, dest_folder=processing_dir)
 
@@ -289,7 +289,9 @@ def test_decompress_zip_file_with_subfolder(tmp_path):
     expected_subfolder = processing_dir / subfolder_name
     extracted_file = expected_subfolder / file_inside
 
-    assert expected_subfolder.exists() and expected_subfolder.is_dir(), "Subfolder missing after extraction."
+    assert (
+        expected_subfolder.exists() and expected_subfolder.is_dir()
+    ), "Subfolder missing after extraction."
     assert extracted_file.exists(), "Extracted file not found in the subfolder."
     assert extracted_file.read_text() == "Hello world"
 
