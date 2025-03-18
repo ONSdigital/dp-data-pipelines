@@ -35,7 +35,7 @@ def start(s3_object_name: str, *args, **kwargs):
     """
     try:
 
-        start_time = datetime.datetime.now().isoformat()
+        start_time = datetime.now().isoformat()
 
         # Step 1: Set up clients.
         notifier, email_client = setup_clients()
@@ -59,7 +59,7 @@ def start(s3_object_name: str, *args, **kwargs):
         notifier.success()
         logger.info("ETL process completed successfully")
 
-        end_time = datetime.datetime.now().isoformat()
+        end_time = datetime.now().isoformat()
 
         logger.info("Performance Metrics", data = {
             "Pipeline Start" : start_time,
