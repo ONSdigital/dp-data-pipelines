@@ -320,11 +320,13 @@ def test_move_extracted_folder(tmp_path):
     # The original folder should no longer exist.
     assert not extracted_folder.exists()
 
-
-@patch("dpypelines.pipeline.utils.download_zip_file")
-@patch("dpypelines.pipeline.utils.decompress_zip_file")
+@patch("dpypelines.pipeline.utils.upload_local_file_to_s3")
 @patch("dpypelines.pipeline.utils.move_extracted_folder")
-def test_process_zip_file(mock_move, mock_decompress, mock_download, tmp_path):
+@patch("dpypelines.pipeline.utils.decompress_zip_file")
+@patch("dpypelines.pipeline.utils.download_zip_file")
+def test_process_zip_file(
+    mock_download, mock_decompress, mock_move, mock_upload, tmp_path
+):
     """Test that `process_zip_file()` processes the zip file and verifies its content."""
     # Create a temporary zip file in tmp_path.
     zip_filename = "sample.zip"
@@ -336,6 +338,7 @@ def test_process_zip_file(mock_move, mock_decompress, mock_download, tmp_path):
 
     # Configure mocks:
     mock_download.return_value = zip_path
+    mock_upload.return_value = None  # Avoid real S3 upload
 
     # Simulate decompression: extract the zip into a "processing" folder under tmp_path.
     def decompress_side_effect(zip_path_arg, dest_folder):
@@ -360,9 +363,10 @@ def test_process_zip_file(mock_move, mock_decompress, mock_download, tmp_path):
     orig_cwd = os.getcwd()
     os.chdir(tmp_path)
     try:
+        from dpypelines.pipeline.utils import process_zip_file, LocalDirectoryStore  # Import here to pick up patches
         local_store = process_zip_file("dummy_s3_object")
         # Verify that the processed folder contains the expected file.
         files = local_store.get_file_names()
-        assert any("inside.txt" in file for file in files)
+        assert any("inside.txt" in file for file in files), "inside.txt not found in processed folder"
     finally:
         os.chdir(orig_cwd)
