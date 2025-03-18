@@ -320,6 +320,7 @@ def test_move_extracted_folder(tmp_path):
     # The original folder should no longer exist.
     assert not extracted_folder.exists()
 
+
 @patch("dpypelines.pipeline.utils.upload_local_file_to_s3")
 @patch("dpypelines.pipeline.utils.move_extracted_folder")
 @patch("dpypelines.pipeline.utils.decompress_zip_file")
@@ -363,10 +364,16 @@ def test_process_zip_file(
     orig_cwd = os.getcwd()
     os.chdir(tmp_path)
     try:
-        from dpypelines.pipeline.utils import process_zip_file, LocalDirectoryStore  # Import here to pick up patches
+        from dpypelines.pipeline.utils import (  # Import here to pick up patches
+            LocalDirectoryStore,
+            process_zip_file,
+        )
+
         local_store = process_zip_file("dummy_s3_object")
         # Verify that the processed folder contains the expected file.
         files = local_store.get_file_names()
-        assert any("inside.txt" in file for file in files), "inside.txt not found in processed folder"
+        assert any(
+            "inside.txt" in file for file in files
+        ), "inside.txt not found in processed folder"
     finally:
         os.chdir(orig_cwd)
