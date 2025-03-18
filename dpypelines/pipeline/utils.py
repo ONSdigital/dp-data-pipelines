@@ -274,7 +274,7 @@ def move_extracted_folder(
         )
     else:
         err_msg = f"Expected folder '{folder_name}' not found in {src_dir}."
-        logger.error(err_msg)
+        logger.error(err_msg, error=FileNotFoundError())
         raise FileNotFoundError(err_msg)
 
 
@@ -301,16 +301,11 @@ def process_zip_file(s3_object_name: str):
     bucket_name = s3_object_name.split("/")
 
     for file_path in extracted_folder.rglob("*"):
-        if (
-            file_path.is_file()
-            and str(file_path).endswith(".json")
-            or str(file_path).endswith(".csv")
-        ):
-            relative_path = file_path.relative_to("processing")
-            object_name = f"{bucket_name[0]}/processing/{relative_path.as_posix()}"
-            upload_local_file_to_s3(
-                file_path, object_name, profile_name=os.environ.get("AWS_PROFILE")
-            )
+        relative_path = file_path.relative_to("processing")
+        object_name = f"{bucket_name[0]}/processing/{relative_path.as_posix()}"
+        upload_local_file_to_s3(
+            file_path, object_name, profile_name=os.environ.get("AWS_PROFILE")
+        )
 
     delete_subfolders("processing/" + local_zip_path.stem)
 
