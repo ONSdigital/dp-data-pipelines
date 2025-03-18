@@ -2,6 +2,7 @@ import os
 
 from dpytools.logging.logger import DpLogger
 from dpytools.utilities.utilities import str_to_bool
+from datetime import datetime
 
 from dpypelines.pipeline.messages.error_handler_module import error_handler
 from dpypelines.pipeline.utils import (
@@ -33,6 +34,9 @@ def start(s3_object_name: str, *args, **kwargs):
         **kwargs: Optional extra keyword arguments.
     """
     try:
+
+        start_time = datetime.datetime.now().isoformat()
+
         # Step 1: Set up clients.
         notifier, email_client = setup_clients()
 
@@ -54,6 +58,14 @@ def start(s3_object_name: str, *args, **kwargs):
 
         notifier.success()
         logger.info("ETL process completed successfully")
+
+        end_time = datetime.datetime.now().isoformat()
+
+        logger.info("Performance Metrics", data = {
+            "Pipeline Start" : start_time,
+            "Pipeline End" : end_time,
+            "Pipeline ID" : manifest_dict['source_id']
+        })
         return True
 
     except Exception as err:
