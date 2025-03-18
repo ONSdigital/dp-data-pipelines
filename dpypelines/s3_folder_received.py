@@ -73,7 +73,7 @@ def start(s3_object_name: str, *args, **kwargs):
                 relative_path = file_path.relative_to("processed")
                 object_name = f"{bucket_name[0]}/processed/{relative_path.as_posix()}"
                 upload_local_file_to_s3(
-                    file_path, object_name, profile_name="dp-sandbox"
+                    file_path, object_name, profile_name=os.environ.get("AWS_PROFILE")
                 )
 
         # Delete zip file
