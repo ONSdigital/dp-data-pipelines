@@ -81,24 +81,24 @@ def test_notification_custom_postfix_success():
     assert "environment:" in notifier.client.msg_str._calls_repr()
 
 
-# def test_notification_custom_postfix_failure():
-#     """
-#     Test that we can add a custom postfix to the notification message
-#     for a failure.
-#     """
-#     postfix_str = "i-might-be-a-url"
+def test_notification_custom_postfix_failure():
+    """
+    Test that we can add a custom postfix to the notification message
+    for a failure.
+    """
+    postfix_str = "i-might-be-a-url"
 
-#     mp = MonkeyPatch()
-#     mp.setenv("DISABLE_NOTIFICATIONS", "False")
-#     mp.setenv("NOTIFICATION_POSTFIX", postfix_str)
+    mp = MonkeyPatch()
+    mp.setenv("DISABLE_NOTIFICATIONS", "False")
+    mp.setenv("NOTIFICATION_POSTFIX", postfix_str)
 
-#     notifier = PipelineNotifier("_")
-#     notifier.client = MagicMock()
-#     notifier.failure()
+    notifier = PipelineNotifier("_")
+    notifier.client = MagicMock()
+    notifier.failure()
 
-#     notifier.client.msg_str.assert_called_once()
-#     assert (
-#         f":x: {postfix_str}, commit ID: {get_commit_id()}, source ID: {None}, processing start time: {None}, processing end time:"
-#         in notifier.client.msg_str._calls_repr()
-#     )
-#     assert "environment:" in notifier.client.msg_str._calls_repr()
+    notifier.client.msg_str.assert_called_once()
+    assert (
+        f":x: {postfix_str}, commit ID: {get_commit_id()}, source ID: {None}, processing start time: {None}, processing end time:"
+        in notifier.client.msg_str._calls_repr()
+    )
+    assert "environment:" in notifier.client.msg_str._calls_repr()
