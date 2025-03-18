@@ -6,16 +6,20 @@ on:
       - sandbox
       - staging
       - production
+  pull_request:
+    branches:
+      - sandbox
+  workflow_dispatch: 
 
 env:
-  BRANCH: ${{ github.head_ref || github.ref_name }} 
+  BRANCH: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   release:
-    if: github.ref_name == 'sandbox' || github.ref_name == 'staging'
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     concurrency:
-      group: ${{ github.workflow }}-release-$BRANCH
+      group: ${{ github.workflow }}-release-${{ github.ref_name }}
       cancel-in-progress: false
     permissions:
       contents: write
