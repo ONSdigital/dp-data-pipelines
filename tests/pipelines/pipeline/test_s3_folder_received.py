@@ -363,11 +363,8 @@ def test_process_zip_file(
     # Change current working directory to tmp_path for isolation.
     orig_cwd = os.getcwd()
     os.chdir(tmp_path)
+
     try:
-        from dpypelines.pipeline.utils import (  # Import here to pick up patches
-            LocalDirectoryStore,
-            process_zip_file,
-        )
 
         local_store = process_zip_file("dummy_s3_object")
         # Verify that the processed folder contains the expected file.
