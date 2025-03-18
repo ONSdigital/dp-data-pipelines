@@ -308,7 +308,9 @@ def process_zip_file(s3_object_name: str):
         ):
             relative_path = file_path.relative_to("processing")
             object_name = f"{bucket_name[0]}/processing/{relative_path.as_posix()}"
-            upload_local_file_to_s3(file_path, object_name, profile_name=os.environ.get("AWS_PROFILE"))
+            upload_local_file_to_s3(
+                file_path, object_name, profile_name=os.environ.get("AWS_PROFILE")
+            )
 
     delete_subfolders("processing/" + local_zip_path.stem)
 
