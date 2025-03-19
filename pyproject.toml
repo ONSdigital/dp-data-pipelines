@@ -59,4 +59,4 @@ type = "github"
 
 [tool.semantic_release.branches]
 sandbox = { match = "sandbox", prerelease = true, prerelease_token = "sandbox" }
-2708-release-fix = { match = "2708-release-fix", prerelease = true, prerelease_token = "fix" }
+2708-release-fix = { match = "2708-release-fix", prerelease = true, prerelease_token = "wip", commit = false }
