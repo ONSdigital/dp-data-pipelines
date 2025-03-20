@@ -36,10 +36,12 @@ components:
         title:
           description: The title of the usage note.
           type: string
+          minLength: 1
           example: Impact of Coronavirus (COVID-19)
         note:
           description: The usage note text.
           type: string
+          minLength: 1
           example: Since Quarter 1 (Jan to Mar) 2020, estimates of household final consumption expenditure (HHFCE), along with other components of gross domestic product (GDP), have been subject to more uncertainty than usual because of the challenges we faced in collecting the data under government-imposed public health restrictions. In the case of HHFCE, these challenges have been compounded by the suspension of data collection for the International Passenger Survey (IPS) between 16 March 2020 and mid-January 2021, and the temporary suspension of the Living Costs and Food Survey (LCF) between 16 March 2020 and 14 April 2020.
       required:
         - title
@@ -59,6 +61,7 @@ components:
         description:
           description: The alert text that is displayed to the user
           type: string
+          minLength: 1
           example: Delays in data provision from our sources has resulted in data for the North East being removed from this dataset. We will issue a corrected dataset with the North East included as soon as possible.
       required:
         - type
@@ -70,6 +73,7 @@ components:
         title:
           description: The title or label of the distribution.
           type: string
+          minLength: 1
           example: Regional GDP July to September 2022 (CSV)
         format:
           type: string
@@ -80,7 +84,7 @@ components:
           description: |
             The file name of the associated data file. The data file is assumed to be in the zip alongside the metadata file.
 
-            The file name must meet the our URL standard meaning that it can only contain lowercase letters, numbers, dots (`.`) and hyphens (`-`).
+            The file name must meet our URL standard meaning that it can only contain lowercase letters, numbers, dots (`.`) and hyphens (`-`).
           pattern: "^[0-9a-z.-]+$"
           example: gdp-annual-regional-sept-2022.csv
       required:
@@ -94,15 +98,22 @@ components:
         dataset_id:
           description: The unique dataset identifier for the dataset series.
           type: string
+          minLength: 1
           maxLength: 100
           pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
           example: regional-gdp-by-quarter
         edition:
-          description: The edition identifier
+          description: The unique edition identifier.
           type: string
+          minLength: 1
           maxLength: 100
           pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
           example: july-september-2022
+        edition_title:
+          description: The human readable title of the edition.
+          type: string
+          minLength: 1
+          example: July to September 2022
         quality_designation:
           description: The official statistics quality designation level of this dataset version.
           type: string
@@ -120,6 +131,7 @@ components:
             $ref: "#/components/schemas/Alert"
         distributions:
           type: array
+          minLength: 1
           items:
             $ref: "#/components/schemas/Distribution"
       required:
@@ -136,6 +148,7 @@ components:
           description: The email of the individual to notify.
           format: email
           example: jane.doe@ons.gov.uk
+          pattern: "@(ext\\.)?ons\\.gov\\.uk$"
       required:
         - email
 
