@@ -1,9 +1,10 @@
 import os
-import shutil
 import zipfile
+from datetime import datetime
 from pathlib import Path
-from typing import Union
+from typing import Tuple
 
+import boto3
 from dpytools.http.api.dataset_api_client import DatasetAPIClient
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
@@ -152,183 +153,191 @@ def setup_clients():
     return notifier, email_client
 
 
-def clean_directory(directory: Union[str, Path]) -> None:
+def download_zip_file(s3_object_name: str) -> str:
     """
-    Delete all files and subdirectories in the given directory.
-
-    Args:
-        directory (Union[str, Path]): The path to the directory to clean.
+    Downloads a zip file from S3 into a local directory and returns the local file path.
     """
-    directory = Path(directory)
-    if not directory.exists():
-        # If the directory doesn't exist, nothing to clean.
-        return
+    bucket_name, object_key = s3_object_name.split("/", maxsplit=1)
 
-    for item in directory.iterdir():
-        try:
-            if item.is_file() or item.is_symlink():
-                item.unlink()
-            elif item.is_dir():
-                shutil.rmtree(item)
-            logger.info("Deleted item", data={"item": str(item)})
-        except Exception as err:
-            logger.error("Failed to delete item", err, data={"item": str(item)})
-            raise err
+    # Split s3_object_name on final "/" in case of nested directory structure (e.g. <dir1>/dir2>/input.zip)
+    input_dir, input_zip_name = object_key.rsplit("/", maxsplit=1)
+    # Create a local directory to store downloaded zip file
+    Path(input_dir).mkdir(parents=True, exist_ok=True)
 
-
-def delete_subfolders(folder_path: Union[str, Path]) -> None:
-    """
-    Delete all subfolders within the given folder.
-
-    Args:
-        folder_path (Union[str, Path]): The path to the folder whose subfolders should be deleted.
-    """
-    folder = Path(folder_path)
-    if not folder.exists():
-        raise FileNotFoundError(f"The folder {folder} does not exist.")
-
-    for item in folder.iterdir():
-        if item.is_dir():
-            try:
-                shutil.rmtree(item)
-                print(f"Deleted folder: {item}")
-            except Exception as e:
-                print(f"Error deleting folder {item}: {e}")
-
-
-def download_zip_file(s3_object_name: str) -> Path:
-    """
-    Downloads a zip file from S3 into the 'input' folder and returns the local file path.
-    """
-    input_dir = Path("input")
-    input_dir.mkdir(parents=True, exist_ok=True)
-    zip_filename = os.path.basename(s3_object_name)  # e.g., e2e.zip
-    local_zip_path = input_dir / zip_filename
-
-    bucket_name = s3_object_name.split("/")[0]
-    object_key = "/".join(s3_object_name.split("/")[1:])
-    profile_name = os.environ.get("AWS_PROFILE")
-    client = _get_s3_client(profile_name)
-    with open(local_zip_path, "wb") as f:
+    # Download S3 object to local directory
+    client = _get_s3_client(profile_name=os.environ.get("AWS_PROFILE"))
+    with open(object_key, "wb") as f:
         client.download_fileobj(bucket_name, object_key, f)
-    logger.info("Downloaded zip file", data={"local_zip_path": str(local_zip_path)})
-    return local_zip_path
+    logger.info(
+        "Downloaded zip file to local folder",
+        data={"local_input_folder": input_dir, "local_file_name": input_zip_name},
+    )
+    return object_key
 
 
-def decompress_zip_file(zip_path: Path, dest_folder: Union[str, Path] = "processing"):
+def decompress_zip_file(local_zip_path: str) -> Path:
     """
-    Decompress the given zip file into the specified destination folder.
-    After extraction, if the files are not contained within a subfolder,
-    move them into a folder named as the zip file (without its extension).
+    Decompress the given zip file into a local folder named after the input zip file (without extension).
     """
-    dest_folder = Path(dest_folder)
-    dest_folder.mkdir(parents=True, exist_ok=True)
+    # Create destination directory to store decompressed files
+    _, file_name = local_zip_path.rsplit("/", maxsplit=1)
+    destination_dir = Path(file_name.split(".")[0])
+    destination_dir.mkdir(parents=True, exist_ok=True)
 
-    with zipfile.ZipFile(zip_path, "r") as zip_ref:
-        zip_ref.extractall(dest_folder)
+    # Extract zip file to destination directory
+    with zipfile.ZipFile(local_zip_path, "r") as f:
+        f.extractall(destination_dir)
 
-    # List items in the destination folder
-    extracted_items = list(dest_folder.iterdir())
-    # If there is not exactly one directory, assume the files weren't extracted into a subfolder
-    if not (len(extracted_items) == 1 and extracted_items[0].is_dir()):
-        new_folder = dest_folder / zip_path.stem
-        new_folder.mkdir(exist_ok=True)
-        for item in extracted_items:
-            shutil.move(str(item), new_folder)
+    # Handle different zip methods (zip files behave differently depending on operating system etc)
+    if any([f.is_dir() for f in destination_dir.rglob("*")]):
+        decompressed_file_dir = destination_dir / destination_dir
+    else:
+        decompressed_file_dir = destination_dir
 
     logger.info(
         "Decompressed zip file",
-        data={"zip_path": str(zip_path), "dest_folder": str(dest_folder)},
+        data={
+            "local_zip_path": str(local_zip_path),
+            "decompressed_file_dir": str(decompressed_file_dir),
+        },
+    )
+    return decompressed_file_dir
+
+
+def upload_to_s3_processing_folder(
+    s3_object_name: str,
+    local_object_key: str,
+    decompressed_file_dir: Path,
+) -> str:
+    """
+    Generate "processing" S3 folder name with timestamp, upload decompressed files and copy input zip file
+    """
+    bucket_name, s3_object_key = s3_object_name.split("/", maxsplit=1)
+    s3_processing_folder = f"processing/{datetime.now().strftime('%y-%m-%dT%H-%M')}-{decompressed_file_dir.parts[-1]}"
+    for file_path in decompressed_file_dir.rglob("*"):
+        # Delete hidden artefacts e.g. .DS_Store
+        if file_path.stem.startswith("."):
+            os.remove(file_path)
+        else:
+            s3_processing_object_name = (
+                f"{bucket_name}/{s3_processing_folder}/{file_path.name}"
+            )
+            upload_local_file_to_s3(
+                decompressed_file_dir / file_path.name,
+                s3_processing_object_name,
+                os.environ.get("AWS_PROFILE"),
+            )
+    logger.info("Decompressed files uploaded to S3 'processing' folder")
+
+    # Copy original zip file from S3 input location to S3 "processing" folder
+    s3_client = boto3.client("s3")
+    s3_destination_object_key = f"{s3_processing_folder}/{local_object_key}"
+    s3_client.copy_object(
+        Bucket=bucket_name,
+        Key=s3_destination_object_key,
+        CopySource={"Bucket": bucket_name, "Key": s3_object_key},
+    )
+
+    # Delete original zip file from S3 input location
+    s3_client.delete_object(Bucket=bucket_name, Key=s3_object_key)
+    logger.info(
+        "Input zip file copied to S3 'processing' folder and deleted from input folder"
+    )
+    return s3_processing_folder
+
+
+def copy_s3_processing_folder_to_processed_folder(
+    s3_object_name: str,
+    decompressed_file_dir: Path,
+    s3_processing_folder: str,
+) -> None:
+    """
+    Copy all files in S3 "processing" folder to S3 "processed" folder.
+    """
+    bucket_name, object_key = s3_object_name.split("/", maxsplit=1)
+    s3_client = _get_s3_client(profile_name=os.environ.get("AWS_PROFILE"))
+    s3_processed_folder = f"processed/{datetime.now().strftime('%y-%m-%dT%H-%M')}-{decompressed_file_dir.parts[-1]}"
+
+    for file_path in decompressed_file_dir.rglob("*"):
+        s3_client.copy_object(
+            Bucket=bucket_name,
+            Key=f"{s3_processed_folder}/{file_path.name}",
+            CopySource={
+                "Bucket": bucket_name,
+                "Key": f"{s3_processing_folder}/{file_path.name}",
+            },
+        )
+
+    # Copy original zip file from S3 "processing" folder to S3 "processed" folder
+    s3_client.copy_object(
+        Bucket=bucket_name,
+        Key=f"{s3_processed_folder}/{object_key}",
+        CopySource={
+            "Bucket": bucket_name,
+            "Key": f"{s3_processing_folder}/{object_key}",
+        },
+    )
+    logger.info(
+        "Decompressed files and original zip submission copied to S3 'processed' folder"
     )
 
 
-def move_extracted_folder(
-    zip_filename: str,
-    src_dir: Union[str, Path] = "processing",
-    dest_dir: Union[str, Path] = "processed",
-):
+def delete_s3_processing_folder(
+    s3_object_name: str, decompressed_file_dir: Path, s3_processing_folder: str
+) -> None:
     """
-    Move the extracted folder (with name matching the zip file name without extension)
-    from the src_dir to the dest_dir. If a folder with the same name already exists in dest_dir,
-    it will be removed first.
+    Delete all files from S3 "processing" folder to indicate successful submission.
     """
-    folder_name = Path(zip_filename).stem  # e.g., 'e2e' from 'e2e.zip'
-    src_dir = Path(src_dir)
-    dest_dir = Path(dest_dir)
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    src_folder = src_dir / folder_name
-    dest_folder = dest_dir / folder_name
-
-    if src_folder.exists() and src_folder.is_dir():
-        # Remove the destination folder if it exists
-        if dest_folder.exists():
-            shutil.rmtree(dest_folder)
-            logger.info(
-                "Existing folder removed from processed directory",
-                data={"folder": str(dest_folder)},
-            )
-        shutil.move(str(src_folder), str(dest_folder))
-        logger.info(
-            "Moved extracted folder",
-            data={"folder": folder_name, "dest_folder": str(dest_folder)},
+    bucket_name, object_key = s3_object_name.split("/", maxsplit=1)
+    s3_client = boto3.client("s3")
+    for file_path in decompressed_file_dir.rglob("*"):
+        s3_client.delete_object(
+            Bucket=bucket_name, Key=f"{s3_processing_folder}/{file_path.name}"
         )
-    else:
-        err_msg = f"Expected folder '{folder_name}' not found in {src_dir}."
-        logger.error(err_msg, error=FileNotFoundError())
-        raise FileNotFoundError(err_msg)
+    s3_client.delete_object(
+        Bucket=bucket_name, Key=f"{s3_processing_folder}/{object_key}"
+    )
+    logger.info(
+        "Decompressed files and original zip submission deleted from S3 'processing' folder"
+    )
 
 
-def process_zip_file(s3_object_name: str):
+def process_zip_file(s3_object_name: str) -> Tuple[LocalDirectoryStore, Path, str]:
     """
-    Download a zip file from S3 into the 'input' folder, decompress it into 'processing',
-    move the extracted folder (whose name matches the zip file name without extension)
-    into 'processed', and then verify that the resulting folder contains files.
+    Download a zip file from S3, decompress it, upload decompressed files to S3 'processing' folder and create a LocalDirectoryStore from the decompressed files.
 
     Returns:
         LocalDirectoryStore: A local store representing the processed folder.
     """
+    # Download the zip file.
+    local_object_key = download_zip_file(s3_object_name)
 
-    # Step 1: Download the zip file.
-    local_zip_path = download_zip_file(s3_object_name)
+    # Decompress the zip file locally.
+    decompressed_file_dir = decompress_zip_file(local_object_key)
 
-    # Step 2: Decompress the zip file into the 'processing' folder.
-    decompress_zip_file(local_zip_path, dest_folder="processing")
+    # Generate "processing" S3 folder name with timestamp and upload decompressed files
+    s3_processing_folder = upload_to_s3_processing_folder(
+        s3_object_name, local_object_key, decompressed_file_dir
+    )
 
-    # Delete zip file
-    clean_directory("input")
-
-    extracted_folder = Path("processing") / local_zip_path.stem
-    bucket_name = s3_object_name.split("/")
-
-    for file_path in extracted_folder.rglob("*"):
-        relative_path = file_path.relative_to("processing")
-        object_name = f"{bucket_name[0]}/processing/{relative_path.as_posix()}"
-        upload_local_file_to_s3(
-            file_path, object_name, profile_name=os.environ.get("AWS_PROFILE")
-        )
-
-    delete_subfolders("processing/" + local_zip_path.stem)
-
-    # Step 4: Validate that the decompressed (and moved) folder contains files.
-    folder_name = Path(local_zip_path.name).stem  # e.g., 'e2e' from 'e2e.zip'
-    processed_folder = Path("processing") / folder_name
-    local_store = LocalDirectoryStore(processed_folder)
+    # Validate that the decompressed folder contains files and create LocalDirectoryStore.
+    local_store = LocalDirectoryStore(decompressed_file_dir)
     files = local_store.get_file_names()
     if not files:
-        err_msg = f"Decompressed directory 'input' is empty for s3_object: {s3_object_name}. Available files: {files}"
+        err_msg = f"Decompressed directory {decompressed_file_dir} is empty for s3_object_name {s3_object_name}. Available files: {files}"
         raise FileNotFoundError(err_msg)
 
     logger.info(
         "S3 zip object processed successfully",
         data={
             "s3_object_name": s3_object_name,
-            "processed_folder": str(processed_folder),
+            "decompressed_file_dir": str(decompressed_file_dir),
         },
     )
-    return local_store
+    return local_store, decompressed_file_dir, s3_processing_folder
 
 
-def validate_pipeline(files_dir: Path, pipeline_config: dict):
+def validate_pipeline(files_dir: Path, pipeline_config: dict) -> dict:
     """Validate the pipeline files against the configuration."""
     validation_results = validate_pipeline_files(files_dir, pipeline_config)
 

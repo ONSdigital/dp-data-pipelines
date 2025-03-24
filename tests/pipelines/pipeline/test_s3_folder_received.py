@@ -1,7 +1,6 @@
 import io
 import os
 import re
-import shutil
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 from zipfile import ZipFile
@@ -9,10 +8,8 @@ from zipfile import ZipFile
 import pytest
 
 from dpypelines.pipeline.utils import (
-    clean_directory,
     decompress_zip_file,
     download_zip_file,
-    move_extracted_folder,
     process_zip_file,
     send_submission_confirmation,
     setup_clients,
@@ -194,7 +191,13 @@ def test_start_missing_files(
     mock_email_client = MagicMock()
     mock_setup_clients.return_value = (mock_notifier, mock_email_client)
     mock_local_store = MagicMock()
-    mock_process_zip_file.return_value = mock_local_store
+    mock_decompressed_file_dir = Path("decompressed_files_dir")
+    mock_s3_processing_folder = "processing"
+    mock_process_zip_file.return_value = (
+        mock_local_store,
+        mock_decompressed_file_dir,
+        mock_s3_processing_folder,
+    )
     mock_manifest_dict = {"fileAuthorEmail": "test@example.com"}
     mock_pipeline_config = {"config": "value"}
     mock_files_dir = "files_dir"
@@ -208,24 +211,6 @@ def test_start_missing_files(
     mock_validate_pipeline.side_effect = ValueError("Invalid manifest file")
     with pytest.raises(ValueError, match="Invalid manifest file"):
         start("dummy_s3_object_name")
-
-
-def test_clean_directory(tmp_path):
-    """Test that `clean_directory()` deletes all files and subdirectories."""
-    # Create sample files and subdirectories in tmp_path.
-    (tmp_path / "file1.txt").write_text("content")
-    subdir = tmp_path / "subdir"
-    subdir.mkdir()
-    (subdir / "file2.txt").write_text("more content")
-
-    # Assert that the directory is not empty.
-    assert any(tmp_path.iterdir())
-
-    # Call clean_directory.
-    clean_directory(tmp_path)
-
-    # Assert that the directory is empty.
-    assert not any(tmp_path.iterdir())
 
 
 @patch("dpypelines.pipeline.utils._get_s3_client")
@@ -250,15 +235,15 @@ def test_download_zip_file(mock_get_s3_client, tmp_path):
     )
 
     # Patch os.environ to simulate s3_object_name structure.
-    s3_object_name = "bucket/" + zip_filename
+    s3_object_name = "bucket/input/" + zip_filename
     # Change the current working directory to tmp_path so that 'input' is created inside it.
     orig_cwd = os.getcwd()
     os.chdir(tmp_path)
     try:
         local_zip_path = download_zip_file(s3_object_name)
         # Verify that the zip file was downloaded to the 'input' folder.
-        assert local_zip_path.parent.name == "input"
-        assert local_zip_path.name == zip_filename
+        assert Path(local_zip_path).parent.name == "input"
+        assert Path(local_zip_path).name == zip_filename
         # Verify the content by opening the zip file.
         with ZipFile(local_zip_path, "r") as zf:
             assert "inside.txt" in zf.namelist()
@@ -283,7 +268,7 @@ def test_decompress_zip_file_with_subfolder(tmp_path):
     processing_dir = tmp_path / "processing"
 
     # Call the decompression function.
-    decompress_zip_file(zip_path, dest_folder=processing_dir)
+    decompress_zip_file(str(zip_path))
 
     # Since the zip already had a subfolder, the function should leave the structure intact.
     expected_subfolder = processing_dir / subfolder_name
@@ -296,38 +281,10 @@ def test_decompress_zip_file_with_subfolder(tmp_path):
     assert extracted_file.read_text() == "Hello world"
 
 
-def test_move_extracted_folder(tmp_path):
-    """Test that `move_extracted_folder()` moves the folder from 'processing' to 'processed'."""
-    # Create a 'processing' folder with a folder named 'sample' (extracted folder).
-    processing_dir = tmp_path / "processing"
-    processing_dir.mkdir()
-    folder_name = "sample"
-    extracted_folder = processing_dir / folder_name
-    extracted_folder.mkdir()
-    (extracted_folder / "dummy.txt").write_text("dummy content")
-
-    # Create a 'processed' folder.
-    processed_dir = tmp_path / "processed"
-    processed_dir.mkdir()
-
-    # Call move_extracted_folder with a zip filename 'sample.zip'
-    move_extracted_folder("sample.zip", src_dir=processing_dir, dest_dir=processed_dir)
-
-    # Verify that the folder was moved.
-    dest_folder = processed_dir / folder_name
-    assert dest_folder.exists()
-    assert (dest_folder / "dummy.txt").exists()
-    # The original folder should no longer exist.
-    assert not extracted_folder.exists()
-
-
-@patch("dpypelines.pipeline.utils.upload_local_file_to_s3")
-@patch("dpypelines.pipeline.utils.move_extracted_folder")
+@patch("dpypelines.pipeline.utils.upload_to_s3_processing_folder")
 @patch("dpypelines.pipeline.utils.decompress_zip_file")
 @patch("dpypelines.pipeline.utils.download_zip_file")
-def test_process_zip_file(
-    mock_download, mock_decompress, mock_move, mock_upload, tmp_path
-):
+def test_process_zip_file(mock_download, mock_decompress, mock_upload, tmp_path):
     """Test that `process_zip_file()` processes the zip file and verifies its content."""
     # Create a temporary zip file in tmp_path.
     zip_filename = "sample.zip"
@@ -338,35 +295,28 @@ def test_process_zip_file(
         zipf.writestr(f"{folder_name}/inside.txt", "sample content")
 
     # Configure mocks:
-    mock_download.return_value = zip_path
-    mock_upload.return_value = None  # Avoid real S3 upload
+    mock_download.return_value = str(zip_path)
+    mock_upload.return_value = "processing/timestamp-sample"  # Avoid real S3 upload
 
     # Simulate decompression: extract the zip into a "processing" folder under tmp_path.
-    def decompress_side_effect(zip_path_arg, dest_folder):
-        dest_folder = Path(dest_folder)
+    def decompress_side_effect(zip_path_arg):
+        _, file_name = str(zip_path_arg).rsplit("/", maxsplit=1)
+        dest_folder = Path(file_name.split(".")[0])
         dest_folder.mkdir(parents=True, exist_ok=True)
         with ZipFile(zip_path_arg, "r") as zip_ref:
             zip_ref.extractall(dest_folder)
 
     mock_decompress.side_effect = decompress_side_effect
-
-    # Simulate move: move the folder from processing to processed.
-    def move_side_effect(zip_filename_arg, src_dir, dest_dir):
-        src_folder = Path(src_dir) / Path(zip_filename_arg).stem
-        dest_folder = Path(dest_dir) / Path(zip_filename_arg).stem
-        if dest_folder.exists():
-            shutil.rmtree(dest_folder)
-        shutil.move(str(src_folder), str(dest_folder))
-
-    mock_move.side_effect = move_side_effect
-
+    mock_decompress.return_value = "decompressed_file_dir"
     # Change current working directory to tmp_path for isolation.
     orig_cwd = os.getcwd()
     os.chdir(tmp_path)
 
     try:
 
-        local_store = process_zip_file("dummy_s3_object")
+        local_store, decompressed_file_dir, s3_processing_folder = process_zip_file(
+            "bucket/input/dummy_s3_object"
+        )
         # Verify that the processed folder contains the expected file.
         files = local_store.get_file_names()
         assert any(
