@@ -68,7 +68,5 @@ version_variables = [
 [tool.semantic_release.remote]
 type = "github"
 
-[tool.semantic_release.branches.sandbox]
-match = "sandbox"
-prerelease = true
-prerelease_token = "sandbox"
+[tool.semantic_release.branches]
+sandbox = { match = "sandbox", prerelease = true, prerelease_token = "wip",  changelog_file = "CHANGELOG.md",  commit = false }
