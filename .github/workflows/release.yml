@@ -6,9 +6,6 @@ on:
       - sandbox
       - staging
       - production
-  pull_request:
-    branches:
-      - sandbox
   workflow_dispatch: 
 
 env:
@@ -17,7 +14,7 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'push'
     concurrency:
       group: ${{ github.workflow }}-release-${{ github.ref_name }}
       cancel-in-progress: false
