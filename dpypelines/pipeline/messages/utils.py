@@ -6,7 +6,6 @@ import pytz
 from dpytools.email.ses.client import SesClient
 from dpytools.utilities.utilities import str_to_bool
 from email_validator import EmailNotValidError, validate_email
-from git import Repo
 
 MIMETYPES = {
     ".csv": "text/csv",
@@ -65,22 +64,14 @@ def get_submitter_email(manifest_dict: dict) -> str:
 
 def get_commit_id() -> str:
     """
-    Gets the current commit ID from the repository.
+    Gets the current commit ID from the environment variable COMMIT_SHA.
     """
     try:
-        repo = Repo()
-    except Exception:
-        environment = os.environ["ENVIRONMENT"]
-        if not os.path.exists("/tmp/dp-data-pipelines"):
-            repo = Repo.clone_from(
-                "https://github.com/ONSdigital/dp-data-pipelines.git",
-                "/tmp/dp-data-pipelines",
-                branch=environment,
-            )
-        else:
-            repo = Repo("/tmp/dp-data-pipelines")
+        commit_sha = os.environ["COMMIT_SHA"]
+    except KeyError:
+        raise EnvironmentError("COMMIT_SHA environment variable is not set.")
 
-    return str(repo.head.commit)
+    return commit_sha
 
 
 def get_local_time():
@@ -104,22 +95,7 @@ def get_environment() -> str:
     """
     Gets the current environment.
     """
-    try:
-        repo = Repo()
-        heads = repo.heads
-        if "sandbox" in str(heads):
-            return "sandbox"
-        elif "staging" in str(heads):
-            return "staging"
-        elif "production" in str(heads):
-            return "production"
-        else:
-            return "Environment is unknown"
-
-    except Exception:
-        # found in env variables
-        environment = os.environ["ENVIRONMENT"]
-        return environment
+    return os.environ.get("ENVIRONMENT", "Environment not found")
 
 
 def get_mimetype(file: str) -> Optional[str]:
