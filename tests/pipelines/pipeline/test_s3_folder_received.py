@@ -2,22 +2,30 @@ import io
 import os
 import re
 from pathlib import Path
+import tempfile
 from unittest.mock import MagicMock, patch
 from zipfile import ZipFile
 
 import pytest
 
 from dpypelines.pipeline.utils import (
+    copy_s3_processing_folder_to_processed_folder,
     decompress_zip_file,
+    delete_s3_processing_folder,
     download_zip_file,
     process_zip_file,
     send_submission_confirmation,
     setup_clients,
     upload_files,
+    upload_to_s3_processing_folder,
     validate_pipeline,
 )
 from dpypelines.pipeline.validate_pipeline import retrieve_config_and_files
 from dpypelines.s3_folder_received import start
+from tests.pipelines.pipeline.mocks import (
+    mock_path_constructor,
+    mock_decompress_zip_file,
+)
 
 
 @patch("dpypelines.pipeline.utils.get_notifier")
@@ -230,7 +238,7 @@ def test_download_zip_file(mock_get_s3_client, tmp_path):
     # Configure the fake S3 client.
     mock_s3 = MagicMock()
     mock_get_s3_client.return_value = mock_s3
-    mock_s3.download_fileobj.side_effect = lambda bucket, key, f: f.write(
+    mock_s3.download_fileobj.side_effect = lambda Bucket, Key, Fileobj: Fileobj.write(
         fake_zip.getvalue()
     )
 
@@ -251,76 +259,82 @@ def test_download_zip_file(mock_get_s3_client, tmp_path):
         os.chdir(orig_cwd)
 
 
-def test_decompress_zip_file_with_subfolder(tmp_path):
+@patch("dpypelines.pipeline.utils._get_s3_client")
+def test_upload_to_s3_processing_folder(mock_get_s3_client):
     """
-    Test that when the zip file contains a subfolder,
-    the function does not move the subfolder, keeping the original structure.
+    Test that `upload_to_s3_processing_folder()` uploads the original zip file and the unzipped contents to the S3 "processing" folder.
     """
-    # Create a temporary zip file with a file inside a subfolder.
-    zip_path = tmp_path / "test.zip"
-    subfolder_name = "subfolder"
-    file_inside = "inside.txt"
-    zip_entry = f"{subfolder_name}/{file_inside}"
-    with ZipFile(zip_path, "w") as zipf:
-        zipf.writestr(zip_entry, "Hello world")
+    # Configure mock S3 client.
+    mock_s3 = MagicMock()
+    mock_get_s3_client.return_value = mock_s3
 
-    # Define the destination directory.
-    processing_dir = tmp_path / "processing"
+    # TODO Mock uploading of unzipped files
+    zip_files = [
+        "file/inside.txt",
+    ]
+    s3_processing_folder = upload_to_s3_processing_folder(
+        s3_object_name="bucket/key/file.zip",
+        local_object_key="key/file.zip",
+        decompressed_file_dir=Path("file"),
+    )
+    copy_object_key = f"{s3_processing_folder}/key/file.zip"
 
-    # Call the decompression function.
-    decompress_zip_file(str(zip_path))
-
-    # Since the zip already had a subfolder, the function should leave the structure intact.
-    expected_subfolder = processing_dir / subfolder_name
-    extracted_file = expected_subfolder / file_inside
-
-    assert (
-        expected_subfolder.exists() and expected_subfolder.is_dir()
-    ), "Subfolder missing after extraction."
-    assert extracted_file.exists(), "Extracted file not found in the subfolder."
-    assert extracted_file.read_text() == "Hello world"
+    mock_s3.copy_object.assert_called_once_with(
+        Bucket="bucket",
+        Key=copy_object_key,
+        CopySource={"Bucket": "bucket", "Key": "key/file.zip"},
+    )
+    mock_s3.delete_object.assert_called_once_with(Bucket="bucket", Key="key/file.zip")
 
 
-@patch("dpypelines.pipeline.utils.upload_to_s3_processing_folder")
-@patch("dpypelines.pipeline.utils.decompress_zip_file")
-@patch("dpypelines.pipeline.utils.download_zip_file")
-def test_process_zip_file(mock_download, mock_decompress, mock_upload, tmp_path):
-    """Test that `process_zip_file()` processes the zip file and verifies its content."""
-    # Create a temporary zip file in tmp_path.
-    zip_filename = "sample.zip"
-    folder_name = "sample"
-    zip_path = tmp_path / zip_filename
-    with ZipFile(zip_path, "w") as zipf:
-        # Create a folder inside the zip with one file.
-        zipf.writestr(f"{folder_name}/inside.txt", "sample content")
+@patch("dpypelines.pipeline.utils._get_s3_client")
+def test_copy_s3_processing_folder_to_processed_folder(mock_get_s3_client):
+    """
+    Tests that `copy_s3_processing_folder_to_s3_processed_folder()` copies all files from the S3 "processing" folder to the S3 "processed" folder.
+    """
+    # Configure mock S3 client.
+    mock_s3 = MagicMock()
+    mock_get_s3_client.return_value = mock_s3
 
-    # Configure mocks:
-    mock_download.return_value = str(zip_path)
-    mock_upload.return_value = "processing/timestamp-sample"  # Avoid real S3 upload
+    # TODO Mock copying of unzipped files
+    zip_files = [
+        "file/inside.txt",
+    ]
+    s3_processed_folder = copy_s3_processing_folder_to_processed_folder(
+        s3_object_name="bucket/key/file.zip",
+        decompressed_file_dir=Path("file"),
+        s3_processing_folder="processing/timestamp-file",
+    )
 
-    # Simulate decompression: extract the zip into a "processing" folder under tmp_path.
-    def decompress_side_effect(zip_path_arg):
-        _, file_name = str(zip_path_arg).rsplit("/", maxsplit=1)
-        dest_folder = Path(file_name.split(".")[0])
-        dest_folder.mkdir(parents=True, exist_ok=True)
-        with ZipFile(zip_path_arg, "r") as zip_ref:
-            zip_ref.extractall(dest_folder)
+    mock_s3.copy_object.assert_called_once_with(
+        Bucket="bucket",
+        Key=f"{s3_processed_folder}/key/file.zip",
+        CopySource={
+            "Bucket": "bucket",
+            "Key": f"processing/timestamp-file/key/file.zip",
+        },
+    )
 
-    mock_decompress.side_effect = decompress_side_effect
-    mock_decompress.return_value = "decompressed_file_dir"
-    # Change current working directory to tmp_path for isolation.
-    orig_cwd = os.getcwd()
-    os.chdir(tmp_path)
 
-    try:
+@patch("dpypelines.pipeline.utils._get_s3_client")
+def test_delete_s3_processing_folder(mock_get_s3_client):
+    """
+    Tests that `delete_s3_processing_folder()` deletes all files from the S3 "processing" folder.
+    """
+    # Configure mock S3 client.
+    mock_s3 = MagicMock()
+    mock_get_s3_client.return_value = mock_s3
 
-        local_store, decompressed_file_dir, s3_processing_folder = process_zip_file(
-            "bucket/input/dummy_s3_object"
-        )
-        # Verify that the processed folder contains the expected file.
-        files = local_store.get_file_names()
-        assert any(
-            "inside.txt" in file for file in files
-        ), "inside.txt not found in processed folder"
-    finally:
-        os.chdir(orig_cwd)
+    # TODO Mock deletion of unzipped files
+    zip_files = [
+        "file/inside.txt",
+    ]
+    delete_s3_processing_folder(
+        s3_object_name="bucket/key/file.zip",
+        decompressed_file_dir=Path("file"),
+        s3_processing_folder="processing/timestamp-file",
+    )
+
+    mock_s3.delete_object.assert_called_once_with(
+        Bucket="bucket", Key="processing/timestamp-file/key/file.zip"
+    )

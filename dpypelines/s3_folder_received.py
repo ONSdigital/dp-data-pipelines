@@ -26,11 +26,11 @@ ENABLE_EMAIL = True
 
 def start(s3_object_name: str, *args, **kwargs):
     """
-    Handles the required behaviour when receiving a `.tar` file indicated by an s3 object name.
+    Handles the required behaviour when receiving a zip file indicated by an S3 object name.
     Allows extra arguments to be passed (if used as a secondary function in the pipeline config).
 
     Args:
-        s3_object_name (str): The S3 object name of the tar file to be processed.
+        s3_object_name (str): The S3 object name of the zip file to be processed.
         *args: Optional extra positional arguments.
         **kwargs: Optional extra keyword arguments.
     """

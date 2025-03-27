@@ -4,7 +4,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Tuple
 
-import boto3
 from dpytools.http.api.dataset_api_client import DatasetAPIClient
 from dpytools.http.upload.upload_service_client import UploadServiceClient
 from dpytools.logging.logger import DpLogger
@@ -167,7 +166,7 @@ def download_zip_file(s3_object_name: str) -> str:
     # Download S3 object to local directory
     client = _get_s3_client(profile_name=os.environ.get("AWS_PROFILE"))
     with open(object_key, "wb") as f:
-        client.download_fileobj(bucket_name, object_key, f)
+        client.download_fileobj(Bucket=bucket_name, Key=object_key, Fileobj=f)
     logger.info(
         "Downloaded zip file to local folder",
         data={"local_input_folder": input_dir, "local_file_name": input_zip_name},
@@ -210,7 +209,7 @@ def upload_to_s3_processing_folder(
     decompressed_file_dir: Path,
 ) -> str:
     """
-    Generate "processing" S3 folder name with timestamp, upload decompressed files and copy input zip file
+    Generate "processing" S3 folder name with timestamp and upload decompressed files/copy input zip file to the generated S3 folder.
     """
     bucket_name, s3_object_key = s3_object_name.split("/", maxsplit=1)
     s3_processing_folder = f"processing/{datetime.now().strftime('%y-%m-%dT%H-%M')}-{decompressed_file_dir.parts[-1]}"
@@ -223,23 +222,23 @@ def upload_to_s3_processing_folder(
                 f"{bucket_name}/{s3_processing_folder}/{file_path.name}"
             )
             upload_local_file_to_s3(
-                decompressed_file_dir / file_path.name,
+                f"{decompressed_file_dir}/{file_path.name}",
                 s3_processing_object_name,
                 os.environ.get("AWS_PROFILE"),
             )
     logger.info("Decompressed files uploaded to S3 'processing' folder")
 
     # Copy original zip file from S3 input location to S3 "processing" folder
-    s3_client = boto3.client("s3")
+    client = _get_s3_client(profile_name=os.environ.get("AWS_PROFILE"))
     s3_destination_object_key = f"{s3_processing_folder}/{local_object_key}"
-    s3_client.copy_object(
+    client.copy_object(
         Bucket=bucket_name,
         Key=s3_destination_object_key,
         CopySource={"Bucket": bucket_name, "Key": s3_object_key},
     )
 
     # Delete original zip file from S3 input location
-    s3_client.delete_object(Bucket=bucket_name, Key=s3_object_key)
+    client.delete_object(Bucket=bucket_name, Key=s3_object_key)
     logger.info(
         "Input zip file copied to S3 'processing' folder and deleted from input folder"
     )
@@ -250,7 +249,7 @@ def copy_s3_processing_folder_to_processed_folder(
     s3_object_name: str,
     decompressed_file_dir: Path,
     s3_processing_folder: str,
-) -> None:
+) -> str:
     """
     Copy all files in S3 "processing" folder to S3 "processed" folder.
     """
@@ -278,8 +277,11 @@ def copy_s3_processing_folder_to_processed_folder(
         },
     )
     logger.info(
-        "Decompressed files and original zip submission copied to S3 'processed' folder"
+        "Decompressed files and original zip submission copied to S3 'processed' folder",
+        data={"s3_processed_folder": s3_processed_folder},
     )
+
+    return s3_processed_folder
 
 
 def delete_s3_processing_folder(
@@ -289,14 +291,13 @@ def delete_s3_processing_folder(
     Delete all files from S3 "processing" folder to indicate successful submission.
     """
     bucket_name, object_key = s3_object_name.split("/", maxsplit=1)
-    s3_client = boto3.client("s3")
+    client = _get_s3_client(profile_name=os.environ.get("AWS_PROFILE"))
+
     for file_path in decompressed_file_dir.rglob("*"):
-        s3_client.delete_object(
+        client.delete_object(
             Bucket=bucket_name, Key=f"{s3_processing_folder}/{file_path.name}"
         )
-    s3_client.delete_object(
-        Bucket=bucket_name, Key=f"{s3_processing_folder}/{object_key}"
-    )
+    client.delete_object(Bucket=bucket_name, Key=f"{s3_processing_folder}/{object_key}")
     logger.info(
         "Decompressed files and original zip submission deleted from S3 'processing' folder"
     )
