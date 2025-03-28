@@ -23,14 +23,12 @@ def test_decompress_zip_file_no_files(mock_zipfile, mock_path):
     # Setup path mock with side effect to track instantiation arguments
     path_instances = {}
 
-    # SJ At what point does this get called? How are arguments populated?
     def path_constructor(path_arg):
         return mock_path_constructor(path_arg, [], path_instances)
 
     mock_path.side_effect = path_constructor
 
     mock_zip_instance = MagicMock()
-    # SJ `__enter__` simulates context manager behaviour?
     mock_zipfile.return_value.__enter__.return_value = mock_zip_instance
 
     file_name = "test_basic"
@@ -161,7 +159,6 @@ def test_process_zip_file_success(
     assert local_store.get_file_names() == zip_files
 
     # TOOD: check log messages
-    """tests/pipelines/pipeline/test_utils.py {"severity": 3, "created_at": "2025-03-25T10:04:59.104824+00:00", "namespace": "data-ingress-pipelines", "trace_id": "not-implemented", "span_id": "not-implemented", "data": {"s3_object_name": "bucket/input/dummy_s3_object", "decompressed_file_dir": "sample", "level": "INFO"}, "response_dict": null, "raw": null, "errors": null, "event": "S3 zip object processed successfully", "timestamp": "2025-03-25T10:04:59.105692Z"}"""
 
 
 @patch("dpypelines.pipeline.utils.LocalDirectoryStore")

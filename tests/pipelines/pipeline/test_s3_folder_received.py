@@ -1,9 +1,10 @@
+from datetime import datetime
 import io
 import os
 import re
 from pathlib import Path
 import tempfile
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 from zipfile import ZipFile
 
 import pytest
@@ -259,8 +260,13 @@ def test_download_zip_file(mock_get_s3_client, tmp_path):
         os.chdir(orig_cwd)
 
 
+@patch("dpypelines.pipeline.utils.datetime")
+@patch("dpypelines.pipeline.utils.upload_local_file_to_s3")
+@patch("dpypelines.pipeline.utils.Path")
 @patch("dpypelines.pipeline.utils._get_s3_client")
-def test_upload_to_s3_processing_folder(mock_get_s3_client):
+def test_upload_to_s3_processing_folder(
+    mock_get_s3_client, mock_path, mock_upload, mock_timestamp
+):
     """
     Test that `upload_to_s3_processing_folder()` uploads the original zip file and the unzipped contents to the S3 "processing" folder.
     """
@@ -268,14 +274,20 @@ def test_upload_to_s3_processing_folder(mock_get_s3_client):
     mock_s3 = MagicMock()
     mock_get_s3_client.return_value = mock_s3
 
-    # TODO Mock uploading of unzipped files
-    zip_files = [
-        "file/inside.txt",
-    ]
+    unzipped_file_paths = [Path("file/inside.txt")]
+    mock_path = MagicMock(name="Path('file')")
+    mock_path.parts = ["file"]
+    mock_path.rglob.return_value = unzipped_file_paths
+
+    # mock_timestamp.return_value.now.return_value.strftime.return_value = "testing"
+    # mock_timestamp.return_value.now.return_value.strftime.side_effect = lambda x: ("")
+    now = datetime.now()
+    mock_timestamp.return_value.now.side_effect = lambda x: (now)
+
     s3_processing_folder = upload_to_s3_processing_folder(
         s3_object_name="bucket/key/file.zip",
         local_object_key="key/file.zip",
-        decompressed_file_dir=Path("file"),
+        decompressed_file_dir=mock_path,
     )
     copy_object_key = f"{s3_processing_folder}/key/file.zip"
 
@@ -285,10 +297,20 @@ def test_upload_to_s3_processing_folder(mock_get_s3_client):
         CopySource={"Bucket": "bucket", "Key": "key/file.zip"},
     )
     mock_s3.delete_object.assert_called_once_with(Bucket="bucket", Key="key/file.zip")
+    mock_path.rglob.assert_called_with("*")
+    mock_upload.assert_called_once_with(
+        f"{mock_path}/inside.txt",
+        f"bucket/processing/{now.strftime('%y-%m-%dT%H-%M')}-file/inside.txt",
+        None,
+    )
 
 
+@patch("dpypelines.pipeline.utils.datetime")
+@patch("dpypelines.pipeline.utils.Path")
 @patch("dpypelines.pipeline.utils._get_s3_client")
-def test_copy_s3_processing_folder_to_processed_folder(mock_get_s3_client):
+def test_copy_s3_processing_folder_to_processed_folder(
+    mock_get_s3_client, mock_path, mock_timestamp
+):
     """
     Tests that `copy_s3_processing_folder_to_s3_processed_folder()` copies all files from the S3 "processing" folder to the S3 "processed" folder.
     """
@@ -297,27 +319,46 @@ def test_copy_s3_processing_folder_to_processed_folder(mock_get_s3_client):
     mock_get_s3_client.return_value = mock_s3
 
     # TODO Mock copying of unzipped files
-    zip_files = [
-        "file/inside.txt",
+    unzipped_file_paths = [
+        Path("file/inside.txt"),
     ]
+    mock_path = MagicMock(name="Path('file')")
+    mock_path.rglob.return_value = unzipped_file_paths
+
+    mock_timestamp = MagicMock(name="datetime.now().strftime()")
+    mock_timestamp.return_value = "timestamp-file"
+
     s3_processed_folder = copy_s3_processing_folder_to_processed_folder(
         s3_object_name="bucket/key/file.zip",
-        decompressed_file_dir=Path("file"),
+        decompressed_file_dir=mock_path,
         s3_processing_folder="processing/timestamp-file",
     )
+    copy_calls = [
+        call.copy_object(
+            Bucket="bucket",
+            Key=f"{s3_processed_folder}/inside.txt",
+            CopySource={
+                "Bucket": "bucket",
+                "Key": "processing/timestamp-file/inside.txt",
+            },
+        ),
+        call.copy_object(
+            Bucket="bucket",
+            Key=f"{s3_processed_folder}/key/file.zip",
+            CopySource={
+                "Bucket": "bucket",
+                "Key": "processing/timestamp-file/key/file.zip",
+            },
+        ),
+    ]
 
-    mock_s3.copy_object.assert_called_once_with(
-        Bucket="bucket",
-        Key=f"{s3_processed_folder}/key/file.zip",
-        CopySource={
-            "Bucket": "bucket",
-            "Key": f"processing/timestamp-file/key/file.zip",
-        },
-    )
+    mock_s3.assert_has_calls(copy_calls, any_order=True)
+    mock_path.rglob.assert_called_with("*")
 
 
+@patch("dpypelines.pipeline.utils.Path")
 @patch("dpypelines.pipeline.utils._get_s3_client")
-def test_delete_s3_processing_folder(mock_get_s3_client):
+def test_delete_s3_processing_folder(mock_get_s3_client, mock_path):
     """
     Tests that `delete_s3_processing_folder()` deletes all files from the S3 "processing" folder.
     """
@@ -326,15 +367,23 @@ def test_delete_s3_processing_folder(mock_get_s3_client):
     mock_get_s3_client.return_value = mock_s3
 
     # TODO Mock deletion of unzipped files
-    zip_files = [
-        "file/inside.txt",
+    unzipped_file_paths = [
+        Path("file/inside.txt"),
     ]
+    mock_path = MagicMock(name="Path('file')")
+    mock_path.rglob.return_value = unzipped_file_paths
+
+    mock_timestamp = MagicMock(name="datetime.now().strftime()")
+    mock_timestamp.return_value = "timestamp-file"
     delete_s3_processing_folder(
         s3_object_name="bucket/key/file.zip",
-        decompressed_file_dir=Path("file"),
+        decompressed_file_dir=mock_path,
         s3_processing_folder="processing/timestamp-file",
     )
-
-    mock_s3.delete_object.assert_called_once_with(
-        Bucket="bucket", Key="processing/timestamp-file/key/file.zip"
-    )
+    delete_calls = [
+        call.delete_object(Bucket="bucket", Key="processing/timestamp-file/inside.txt"),
+        call.delete_object(
+            Bucket="bucket", Key="processing/timestamp-file/key/file.zip"
+        ),
+    ]
+    mock_s3.assert_has_calls(delete_calls, any_order=True)
