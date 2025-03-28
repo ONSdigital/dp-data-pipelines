@@ -282,7 +282,8 @@ def test_upload_to_s3_processing_folder(
     # mock_timestamp.return_value.now.return_value.strftime.return_value = "testing"
     # mock_timestamp.return_value.now.return_value.strftime.side_effect = lambda x: ("")
     now = datetime.now()
-    mock_timestamp.return_value.now.side_effect = lambda x: (now)
+    
+    mock_timestamp.now.return_value = now
 
     s3_processing_folder = upload_to_s3_processing_folder(
         s3_object_name="bucket/key/file.zip",
