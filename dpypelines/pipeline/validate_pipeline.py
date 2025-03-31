@@ -7,8 +7,8 @@ from dpytools.logging.logger import DpLogger
 from dpytools.validation.json.validation import validate_json_schema
 
 from dpypelines.pipeline.configuration import get_pipeline_config
-from dpypelines.pipeline.shared.pipelineconfig.matching import get_matching_pattern
-from dpypelines.pipeline.shared.utils import get_submitter_email
+from dpypelines.pipeline.messages.utils import get_submitter_email
+from dpypelines.pipeline.pipelineconfig.matching import get_matching_pattern
 
 logger = DpLogger("data-ingress-pipeline")
 
@@ -134,7 +134,6 @@ def retrieve_config_and_files(local_store):
 
     if not manifest_dict or not source_id or not pipeline_config or not files_dir:
         err_msg = "Failed to retrieve configuration and files from the local directory."
-        logger.error(err_msg)
         raise FileNotFoundError(err_msg)
 
     logger.info(
@@ -156,7 +155,6 @@ def retrieve_manifest(local_store):
 
     if not manifest_dict:
         err_msg = "manifest.json not found in the local store."
-        logger.error(err_msg)
         raise FileNotFoundError(err_msg)
     return manifest_dict
 
@@ -173,7 +171,6 @@ def get_source_id_from_manifest(manifest_dict):
     source_id = get_source_id(manifest_dict)
     if not source_id:
         err_msg = f"source_id not found within manifest: {manifest_dict}."
-        logger.error(err_msg)
         raise KeyError(err_msg)
     return source_id
 
@@ -183,6 +180,5 @@ def get_pipeline_config_for_source(source_id):
     pipeline_config = get_pipeline_config(source_id)
     if not pipeline_config:
         err_msg = f"Pipeline configuration not found for source_id: {source_id}."
-        logger.error(err_msg)
         raise ValueError(err_msg)
     return pipeline_config

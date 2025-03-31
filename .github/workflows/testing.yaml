@@ -1,0 +1,131 @@
+name: Python tests
+
+on:
+  pull_request:
+    branches:
+      - sandbox
+      - staging
+      - production
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  unit-tests:
+    name: Pytest with code coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install poetry
+        run: pip install poetry diff-cover
+
+      - name: Install test dependencies
+        run: poetry install
+
+      - name: Pytest (make test)
+        run: poetry run pytest --cov=dpypelines --cov-report=xml
+
+      - name: Get base branch commit
+        id: get-base-ref
+        run: |
+          echo "ref=$(git merge-base origin/${{ github.base_ref }} HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Check coverage on changed files
+        id: diff-coverage
+        run: |
+          # Run diff-cover against the base branch
+          DIFF_COVER_OUTPUT=$(python -m diff_cover.diff_cover_tool coverage.xml --compare-branch=${{ steps.get-base-ref.outputs.ref }} || true)
+          echo "DIFF_COVER_OUTPUT<<EOF" >> $GITHUB_ENV
+          echo "$DIFF_COVER_OUTPUT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          export COVERAGE_PERCENT=$(echo $DIFF_COVER_OUTPUT | grep -o "Coverage: [0-9]\+%" | sed 's/Coverage: //' | sed 's/%//')
+
+          if [ -z "${COVERAGE_PERCENT}" ] || [ $COVERAGE_PERCENT -gt 80 ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: "## Test Coverage Report"
+
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## Test Coverage Report
+
+            ```
+            ${{ env.DIFF_COVER_OUTPUT }}
+            ```
+
+            **Status**: ${{ steps.diff-coverage.outputs.status == 'success' && '✅ Passed' || '❌ Failed. Coverage must be at least 80%.' }}
+          edit-mode: replace
+
+      - name: Check coverage threshold
+        if: always() && steps.diff-coverage.outputs.status == 'failure'
+        run: |
+          echo "Coverage of changed code is below 80%. Please add tests to cover your changes."
+          exit 1
+
+  behaviour-tests:
+    name: behave tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install poetry
+      run: pip install poetry
+
+    - name: Install test dependencies
+      run: poetry install
+
+    - name: Run acceptance tests (make feature)
+      run: poetry run behave
+
+  code-quality:
+    name: Linting + formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install poetry
+        run: pip install poetry
+
+      - name: Install test dependencies
+        run: poetry install
+
+      - name: Check black has been ran (make fmt)
+        run: poetry run black dpypelines tests --check
+
+      - name: Check isort has been ran (make fmt)
+        run: poetry run isort dpypelines tests --diff --check-only
+
+      - name: Check ruff has been ran (make lint)
+        run: poetry run ruff check dpypelines tests

@@ -2,15 +2,15 @@ from unittest.mock import patch
 
 import pytest
 
-from dpypelines.pipeline.shared.error_handler_module import (
+from dpypelines.pipeline.messages.error_handler_module import (
     error_handler,
     send_error_email,
 )
 
 
-@patch("dpypelines.pipeline.shared.error_handler_module.logger")
-@patch("dpypelines.pipeline.shared.error_handler_module.get_email_client")
-@patch("dpypelines.pipeline.shared.error_handler_module.get_notifier")
+@patch("dpypelines.pipeline.messages.error_handler_module.logger")
+@patch("dpypelines.pipeline.messages.error_handler_module.get_email_client")
+@patch("dpypelines.pipeline.messages.error_handler_module.get_notifier")
 class TestErrorHandler:
 
     def test_error_handler_fail(self, mock_notifier, mock_email_client, mock_logger):
@@ -132,5 +132,13 @@ class TestErrorHandler:
         assert log_call_args[0][0] == "Failed to send error email notification"
 
         # Validate the second argument (exception)
-        assert isinstance(log_call_args[0][1], Exception)
-        assert str(log_call_args[0][1]) == "Send failure"
+        assert len(log_call_args) > 1
+
+        error = log_call_args[1]
+
+        if "error" in error:
+            error = error["error"]
+
+        assert error is not None
+        assert isinstance(error, Exception)
+        assert str(error) == "Send failure"

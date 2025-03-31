@@ -1,14 +1,18 @@
 import os
+from pathlib import Path
 
 from dpytools.logging.logger import DpLogger
 from dpytools.utilities.utilities import str_to_bool
 
-from dpypelines.pipeline.shared.error_handler_module import error_handler
+from dpypelines.pipeline.messages.error_handler_module import error_handler
 from dpypelines.pipeline.utils import (
-    decompress_file,
+    clean_directory,
+    move_extracted_folder,
+    process_zip_file,
     send_submission_confirmation,
     setup_clients,
     upload_files,
+    upload_local_file_to_s3,
     upload_metadata,
     validate_pipeline,
 )
@@ -37,7 +41,7 @@ def start(s3_object_name: str, *args, **kwargs):
         notifier, email_client = setup_clients()
 
         # Step 2: Validate configuration and files.
-        local_store = decompress_file(s3_object_name)
+        local_store = process_zip_file(s3_object_name)
 
         manifest_dict, pipeline_config, files_dir = retrieve_config_and_files(
             local_store
@@ -52,6 +56,29 @@ def start(s3_object_name: str, *args, **kwargs):
             upload_metadata(local_store, email_client, manifest_dict["fileAuthorEmail"])
         send_submission_confirmation(email_client, manifest_dict["fileAuthorEmail"])
 
+        # Step 4: move filsed from processing to processed
+        folder_name = Path(s3_object_name).stem
+        move_extracted_folder(folder_name, src_dir="processing", dest_dir="processed")
+
+        extracted_folder = Path("processed") / folder_name
+        bucket_name = s3_object_name.split("/")
+
+        # Step 5: upload files to bucket
+        for file_path in extracted_folder.rglob("*"):
+            if (
+                file_path.is_file()
+                and str(file_path).endswith(".json")
+                or str(file_path).endswith(".csv")
+            ):
+                relative_path = file_path.relative_to("processed")
+                object_name = f"{bucket_name[0]}/processed/{relative_path.as_posix()}"
+                upload_local_file_to_s3(
+                    file_path, object_name, profile_name=os.environ.get("AWS_PROFILE")
+                )
+
+        # Delete zip file
+        clean_directory("input")
+
         notifier.success()
         logger.info("ETL process completed successfully")
         return True
@@ -60,7 +87,7 @@ def start(s3_object_name: str, *args, **kwargs):
         logger.error("ETL process failed", err)
         error_handler(
             section="ETL",
-            error=str(err),
+            error=err,
             data={"s3_object_name": s3_object_name},
             submitter_email=(
                 manifest_dict.get("fileAuthorEmail", "")

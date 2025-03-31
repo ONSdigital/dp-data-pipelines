@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from dpypelines.pipeline.shared.transforms.sanity_check import sdmx_sanity_check_v1
+from dpypelines.pipeline.transforms.sanity_check import sdmx_sanity_check_v1
 
 
 def test_sdmx_sanity_check_v1_file_extension():
