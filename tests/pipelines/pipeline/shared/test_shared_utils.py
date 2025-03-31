@@ -1,4 +1,5 @@
-import subprocess
+import os
+from unittest.mock import patch
 
 import pytest
 
@@ -10,13 +11,22 @@ from dpypelines.pipeline.messages.utils import (
 
 
 def test_get_commit_id():
-    git_cli_commit_hash = (
-        subprocess.check_output(["git", "log", "-1", "--format=%H"])
-        .strip()
-        .decode("utf-8")
-    )
-    utils_commit_hash = get_commit_id()
-    assert git_cli_commit_hash == utils_commit_hash
+    """
+    Test that get_commit_id correctly retrieves the COMMIT_SHA from the environment.
+    """
+    with patch.dict(os.environ, {"COMMIT_SHA": "123456789abcdef"}):
+        utils_commit_hash = get_commit_id()
+        assert utils_commit_hash == "123456789abcdef"
+
+
+def test_get_commit_id_missing_env_var():
+    """
+    Test that get_commit_id raises an error if COMMIT_SHA is not set.
+    """
+    with patch.dict(os.environ, {}, clear=True):
+        with pytest.raises(EnvironmentError) as e:
+            get_commit_id()
+        assert "COMMIT_SHA environment variable is not set." in str(e.value)
 
 
 def test_get_submitter_email():
