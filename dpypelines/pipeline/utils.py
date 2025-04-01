@@ -74,17 +74,21 @@ def download_zip_file(s3_object_name: str) -> str:
     # Split s3_object_name on final "/" in case of nested directory structure (e.g. <dir1>/dir2>/input.zip)
     input_dir, input_zip_name = object_key.rsplit("/", maxsplit=1)
     # Create a local directory to store downloaded zip file
-    Path(input_dir).mkdir(parents=True, exist_ok=True)
+    Path(f"/tmp/{input_dir}").mkdir(parents=True, exist_ok=True)
+
+    target_path = f"/tmp/{object_key}"
+    logger.info(f'Changed object key from "{object_key}" to "{target_path}"')
 
     # Download S3 object to local directory
     client = _get_s3_client(profile_name=os.environ.get("AWS_PROFILE"))
-    with open(object_key, "wb") as f:
+    with open(target_path, "wb") as f:
         client.download_fileobj(Bucket=bucket_name, Key=object_key, Fileobj=f)
     logger.info(
         "Downloaded zip file to local folder",
         data={"local_input_folder": input_dir, "local_file_name": input_zip_name},
     )
-    return object_key
+
+    return target_path
 
 
 def decompress_zip_file(local_zip_path: str) -> Path:
@@ -93,7 +97,9 @@ def decompress_zip_file(local_zip_path: str) -> Path:
     """
     # Create destination directory to store decompressed files
     _, file_name = local_zip_path.rsplit("/", maxsplit=1)
-    destination_dir = Path(file_name.split(".")[0])
+
+    output_file_path = f"/tmp/{file_name.split('.')[0]}"
+    destination_dir = Path(output_file_path)
     destination_dir.mkdir(parents=True, exist_ok=True)
 
     # Extract zip file to destination directory
@@ -147,7 +153,7 @@ def upload_to_s3_processing_folder(
     # Copy original zip file from S3 input location to S3 "processing" folder
     s3_client.copy_object(
         Bucket=bucket_name,
-        Key=f"{s3_processing_folder}/{local_object_key}",
+        Key=f"{s3_processing_folder}/{local_object_key}".replace("/tmp/", ""),
         CopySource={"Bucket": bucket_name, "Key": s3_object_key},
     )
 
