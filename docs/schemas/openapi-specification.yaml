@@ -137,6 +137,7 @@ components:
       required:
         - dataset_id
         - edition
+        - edition_title
         - distributions
 
     Submitter:
