@@ -1,4 +1,7 @@
+import json
 import os
+import random
+import string
 import zipfile
 from datetime import datetime
 from pathlib import Path
@@ -16,6 +19,7 @@ from dpypelines.pipeline.errors import (
     ValidationException,
 )
 from dpypelines.pipeline.messages.email_templates import (
+    failed_metadata_submission,
     submission_processed_email,
     successful_file_upload_email,
     successful_metadata_submission,
@@ -159,33 +163,34 @@ def upload_to_s3_processing_folder(
     return s3_processing_folder
 
 
-def copy_s3_processing_folder_to_processed_folder(
+def copy_s3_processing_folder_to_destination_folder(
     s3_object_name: str,
     decompressed_file_dir: Path,
     s3_processing_folder: str,
+    destination: str,
 ) -> str:
     """
-    Copy all files in S3 "processing" folder to S3 "processed" folder.
+    Copy all files in S3 "processing" folder to S3 destination folder.
     """
     bucket_name, object_key = s3_object_name.split("/", maxsplit=1)
-    s3_processed_folder = f"processed/{datetime.now().strftime('%y-%m-%dT%H-%M')}-{decompressed_file_dir.parts[-1]}"
+    s3_destination_folder = f"{destination}/{datetime.now().strftime('%y-%m-%dT%H-%M')}-{decompressed_file_dir.parts[-1]}"
     s3_client = _get_s3_client(profile_name=os.environ.get("AWS_PROFILE"))
 
-    # Copy unzipped files from S3 "processing" folder to "processed" folder
+    # Copy unzipped files from S3 "processing" folder to destination folder
     for file_path in decompressed_file_dir.rglob("*"):
         s3_client.copy_object(
             Bucket=bucket_name,
-            Key=f"{s3_processed_folder}/{file_path.name}",
+            Key=f"{s3_destination_folder}/{file_path.name}",
             CopySource={
                 "Bucket": bucket_name,
                 "Key": f"{s3_processing_folder}/{file_path.name}",
             },
         )
 
-    # Copy original zip file from S3 "processing" folder to "processed" folder
+    # Copy original zip file from S3 "processing" folder to destination folder
     s3_client.copy_object(
         Bucket=bucket_name,
-        Key=f"{s3_processed_folder}/{object_key}",
+        Key=f"{s3_destination_folder}/{object_key}",
         CopySource={
             "Bucket": bucket_name,
             "Key": f"{s3_processing_folder}/{object_key}",
@@ -193,10 +198,10 @@ def copy_s3_processing_folder_to_processed_folder(
     )
     logger.info(
         "Decompressed files and original zip submission copied to S3 'processed' folder",
-        data={"s3_processed_folder": s3_processed_folder},
+        data={"s3_processed_folder": s3_destination_folder},
     )
 
-    return s3_processed_folder
+    return s3_destination_folder
 
 
 def delete_s3_processing_folder(
@@ -297,24 +302,18 @@ def get_post_request_values_from_metadata(metadata: dict):
         request_body = {
             # Required properties (from swagger.yaml)
             "distributions": distributions,
-            "release_date": "The release date of this version of the dataset",
+            "release_date": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "edition_title": edition.get("dcterms:title", None),
             # Tier 0 metadata standards - required with output
             "title": metadata.get("dcterms:title", None),
             "description": metadata.get("dcterms:description", None),
             "next_release": metadata.get("TBC:nextRelease", None),
-            # Tier 0 metadata standards - added during publishing
-            "type": "static",
-            "state": "associated",
             "themes": metadata.get("dcat:theme", None),
-            # Additional properties (from swagger.yaml)
+            # # Additional properties (from swagger.yaml)
             "alerts": edition.get("TBC:alerts", None),
-            "quality_designation": edition.get("TBC:quality_designation", None),
             "usage_notes": edition.get("TBC:usage_notes", None),
-            # TODO `links:spatial` and `links:job` fields to be removed from data model - hardcode for now to allow request to succeed
-            "links": {
-                "spatial": {"href": "string"},
-                "job": {"href": "string", "id": "string"},
-            },
+            # TODO
+            # "quality_designation": edition.get("TBC:quality_designation", None),
             # Not included here ($ref: '#/definitions/Version')
             # collection_id (auto generated?)
             # dimensions $ref: '#/definitions/Dimension'
@@ -343,9 +342,9 @@ def get_distribution_details_for_request(dcat_distributions: list) -> list:
         distributions = [
             {
                 "title": distribution["dcterms:title"],
-                "download_url": "The URL to the generated file",
+                "download_url": distribution["download_url"],
                 # TODO Calculate byte_size during processing
-                "byte_size": "The size of the file in bytes",
+                "byte_size": 0,
                 "format": distribution["TBC:distributionFormat"],
                 "media_type": distribution["dcat:mediaType"],
             }
@@ -363,56 +362,138 @@ def get_distribution_details_for_request(dcat_distributions: list) -> list:
         ) from err
 
 
-def upload_metadata(local_store, email_client, submitter_email):
-    """Upload metadata and send notifications."""
+def check_dataset_type_is_static(dataset_api_client: DatasetAPIClient) -> bool:
+    get_dataset_result = dataset_api_client.get(
+        f"{dataset_api_client.dataset_api_url}/{dataset_api_client.dataset_path}",
+        headers=dataset_api_client.token_auth.get_auth_header(),
+    )
+    if get_dataset_result.status_code == 200:
+        dataset_result = json.loads(get_dataset_result.text)
+        current_dataset = dataset_result.get("current", None)
+        if current_dataset:
+            dataset_type = current_dataset.get("type", None)
+            if dataset_type and dataset_type == "static":
+                logger.info("Dataset type is static")
+                return True
+            elif dataset_type and dataset_type != "static":
+                logger.info("Dataset type is not static")
+                return False
+            else:
+                logger.info("Dataset type not specified")
+                return False
+        else:
+            raise KeyError("'current' not found in dataset_result keys")
+    else:
+        get_dataset_result.raise_for_status()
+
+
+def upload_metadata(metadata, email_client, submitter_email) -> bool:
+    """Upload metadata to the Dataset API and send notifications."""
     dataset_api_url = os.environ.get("DATASET_API_URL")
     if not dataset_api_url:
-        err_msg = (
-            f"Required environment variable(s) not set: "
-            f"DATASET_API_URL: {dataset_api_url}."
-        )
-        raise EnvironmentError(err_msg)
+        msg = "Required environment variable(s) not set: DATASET_API_URL"
+        raise EnvironmentError(msg)
 
-    metadata = local_store.get_lone_matching_json_as_dict("^metadata.json$")
-    if not metadata:
-        err_msg = "metadata.json not found in the local store."
-        raise FileNotFoundError(err_msg)
-
+    # Generate POST request body from metadata
     dataset_path, edition_path, request_body = get_post_request_values_from_metadata(
         metadata
     )
     dataset_api_client = DatasetAPIClient(dataset_api_url, dataset_path, edition_path)
-    dataset_api_get_path_response = dataset_api_client.get_path()
-    logger.info(
-        "Dataset API endpoint exists",
-        data={"dataset_api_endpoint": dataset_api_client.full_url},
-    )
 
-    if dataset_api_get_path_response.status_code == 200:
-        dataset_api_client.post_json(request_body)
-        logger.info(
-            "Metadata submitted to Dataset API endpoint",
-            data={"dataset_api_endpoint": dataset_api_client.full_url},
-        )
-        email_content = successful_metadata_submission(dataset_path)
-        email_client.send(submitter_email, email_content.subject, email_content.message)
+    # Upload metadata only if the dataset type is "static"
+    if check_dataset_type_is_static(dataset_api_client):
+        # Verify that the relevant Dataset API endpoint exists
+        dataset_api_get_path_response = dataset_api_client.get_path()
+
+        # If the endpoint exists, send POST request
+        if dataset_api_get_path_response.status_code == 200:
+            logger.info(
+                "Dataset API endpoint exists",
+                data={"dataset_api_endpoint": dataset_api_client.full_url},
+            )
+            # 2809 Currently, if the `state` of a dataset version is anything other than `published` (e.g. `associated`), an error occurs when trying to submit a new version: 400 Bad Request: '{"error":"cannot create new version when an unpublished version already exists","unpublished_version":1}'
+
+            # 2809 L417 shows the previous method - this submits a POST request to dataset_api_client.full_url (i.e. dataset_api_url/dataset_path/editions/edition_path/versions):
+            # dataset_api_client.post_json(request_body)
+
+            # 2809 Fran recommended generating a new edition_id for every request, and this allows the POST request to succeed, but may not be a viable solution (see below)
+            chars = string.ascii_lowercase + string.digits
+            random_edition_id = "".join(random.choices(chars, k=8))
+            dataset_api_client.post(
+                f"{dataset_api_url}/{dataset_path}/editions/{random_edition_id}/versions",
+                headers=dataset_api_client.token_auth.get_auth_header(),
+                json=request_body,
+                verify=True,
+            )
+            # # 2809 The issue with this approach is that a subsequent GET request to dataset_api_url/dataset_path/editions/random_edition_id/versions returns a 404 ('edition not found'):
+            # get_versions_res = dataset_api_client.get(
+            #     f"{dataset_api_url}/{dataset_path}/editions/{random_edition_id}/versions",
+            #     headers=dataset_api_client.token_auth.get_auth_header(),
+            # )
+            # # 2809 get_editions_res.status code = 200 but random_edition_id doesn't appear in the list of editions returned
+            # get_editions_res = dataset_api_client.get(
+            #     f"{dataset_api_url}/{dataset_path}/editions",
+            #     headers=dataset_api_client.token_auth.get_auth_header(),
+            # )
+            # # 2809 get_edition_res.status_code = 404 ('edition not found')
+            # get_edition_res = dataset_api_client.get(
+            #     f"{dataset_api_url}/{dataset_path}/editions/{random_edition_id}",
+            #     headers=dataset_api_client.token_auth.get_auth_header(),
+            # )
+
+            # # 2809 However, the submitted edition can be accessed by port forwarding to a Dataset API publishing instance and submitting the request to {publishing_instance_url}/{dataset_path}/editions/{random_edition_id}:
+            # # Port forward to:
+            # # dp ssh sandbox publishing 5 -p 17892:10.30.138.213:10400
+
+            # publishing_instance_url = "http://localhost:17892/datasets"
+            # get_dataset_res = dataset_api_client.get(
+            #     f"{publishing_instance_url}/{dataset_path}",
+            #     headers=dataset_api_client.token_auth.get_auth_header(),
+            # )
+            # get_editions_res = dataset_api_client.get(
+            #     f"{publishing_instance_url}/{dataset_path}/editions",
+            #     headers=dataset_api_client.token_auth.get_auth_header(),
+            # )
+            # get_edition_res = dataset_api_client.get(
+            #     f"{publishing_instance_url}/{dataset_path}/editions/{random_edition_id}",
+            #     headers=dataset_api_client.token_auth.get_auth_header(),
+            # )
+            # get_versions_res = dataset_api_client.get(
+            #     f"{publishing_instance_url}/{dataset_path}/editions/{random_edition_id}/versions",
+            #     headers=dataset_api_client.token_auth.get_auth_header(),
+            # )
+            # get_version_res = dataset_api_client.get(
+            #     f"{publishing_instance_url}/{dataset_path}/editions/{random_edition_id}/versions/1",
+            #     headers=dataset_api_client.token_auth.get_auth_header(),
+            # )
+            logger.info(
+                "Metadata submitted to Dataset API endpoint",
+                data={"dataset_api_endpoint": dataset_api_client.full_url},
+            )
+            email_content = successful_metadata_submission(dataset_path)
+            email_client.send(
+                submitter_email, email_content.subject, email_content.message
+            )
+            return True
+        else:
+            dataset_api_get_path_response.raise_for_status()
     else:
-        dataset_api_get_path_response.raise_for_status()
+        msg = "Dataset type is not static: metadata not submitted to Dataset API"
+        email_content = failed_metadata_submission(dataset_path, error_info=msg)
+        email_client.send(submitter_email, email_content.subject, email_content.message)
+        logger.info(msg)
+        return False
 
 
-def upload_files(validation_results, email_client, submitter_email):
+def upload_files(files_to_upload, email_client, submitter_email):
     """Upload files and send notifications."""
     upload_url = os.environ.get("UPLOAD_SERVICE_URL")
-    dataset_api_url = os.environ.get("DATASET_API_URL")
-    if not upload_url or not dataset_api_url:
-        err_msg = (
-            f"Required environment variable(s) not set: "
-            f"UPLOAD_SERVICE_URL: {upload_url}, DATASET_API_URL: {dataset_api_url}."
-        )
+    if not upload_url:
+        err_msg = "Required environment variable(s) not set: UPLOAD_SERVICE_URL."
         raise EnvironmentError(err_msg)
 
     upload_client = UploadServiceClient(upload_url)
-    for required_file_path in validation_results["config_files"]:
+    for required_file_path in files_to_upload:
         mimetype = get_mimetype(Path(required_file_path).suffix)
         if not mimetype:
             err_msg = f"Uploading file type {Path(required_file_path).suffix} not supported for file: {required_file_path}."
@@ -426,7 +507,7 @@ def upload_files(validation_results, email_client, submitter_email):
         email_content = successful_file_upload_email(Path(required_file_path).name)
         email_client.send(submitter_email, email_content.subject, email_content.message)
         logger.info(
-            "Upload notification email sent",
+            "File upload notification email sent",
             data={"submitter_email": submitter_email, "file": required_file_path},
         )
 
