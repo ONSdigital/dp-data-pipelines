@@ -442,8 +442,6 @@ def upload_metadata(metadata, email_client, submitter_email) -> bool:
             # )
 
             # # 2809 However, the submitted edition can be accessed by port forwarding to a Dataset API publishing instance and submitting the request to {publishing_instance_url}/{dataset_path}/editions/{random_edition_id}:
-            # # Port forward to:
-            # # dp ssh sandbox publishing 5 -p 17892:10.30.138.213:10400
 
             # publishing_instance_url = "http://localhost:17892/datasets"
             # get_dataset_res = dataset_api_client.get(
