@@ -90,7 +90,6 @@ def notifier_from_env_var_webhook(
     if notifications_disabled is True:
         return NopNotifier()
 
-    # TODO Ask about this
     web_hook = os.environ.get(env_var, None)
     assert (
         web_hook is not None

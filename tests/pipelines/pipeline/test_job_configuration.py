@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from dpytools.secrets.secret import Secret
@@ -16,12 +16,20 @@ for secret_name, config_attr in test_secret_config:
     secrets[secret_name] = f"{secret_name} - {config_attr}"
 
 
-def get_secret(secret_id: str) -> Secret:
-    if secret_id in secrets:
-        return Secret(id=secrets[secret_id])
+def get_secret(secret_id: str):
+    mock_secret = MagicMock()
+    
+    secret_exists = secret_id in secrets
+    if not secret_exists:
+        mock_secret.error = f"Could not find secret {secret_id}"
+        mock_secret.value = None
+        mock_secret.success = False
+    else:
+        mock_secret.error = None
+        mock_secret.value = secrets[secret_id]
+        mock_secret.success = True
 
-    return Secret(error=f"Could not find secret {secret_id}")
-
+    return mock_secret
 
 @patch("dpytools.secrets.secrets_client.SecretsClient")
 def test_should_load_config(secrets_client):
