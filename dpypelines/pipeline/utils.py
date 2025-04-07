@@ -30,6 +30,7 @@ from dpypelines.pipeline.messages.utils import (
     get_mimetype,
 )
 from dpypelines.pipeline.validate_pipeline import validate_pipeline_files
+from dpypelines.pipeline.job_configuration import secrets_job_config
 
 logger = DpLogger("data-ingress-pipelines")
 
@@ -348,7 +349,7 @@ def validate_pipeline(files_dir: Path, pipeline_config: dict):
 
 def upload_metadata(local_store, email_client, submitter_email):
     """Upload metadata and send notifications."""
-    dataset_api_url = os.environ.get("DATASET_API_URL")
+    dataset_api_url = secrets_job_config.dataset_api_url
     if not dataset_api_url:
         err_msg = (
             f"Required environment variable(s) not set: "
@@ -385,8 +386,8 @@ def upload_metadata(local_store, email_client, submitter_email):
 
 def upload_files(validation_results, email_client, submitter_email):
     """Upload files and send notifications."""
-    upload_url = os.environ.get("UPLOAD_SERVICE_URL")
-    dataset_api_url = os.environ.get("DATASET_API_URL")
+    upload_url = secrets_job_config.upload_service_url
+    dataset_api_url = secrets_job_config.dataset_api_url
     if not upload_url or not dataset_api_url:
         err_msg = (
             f"Required environment variable(s) not set: "

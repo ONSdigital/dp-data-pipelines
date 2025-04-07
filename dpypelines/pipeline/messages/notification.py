@@ -79,7 +79,7 @@ def notifier_from_env_var_webhook(
 ) -> BasePipelineNotifier:
     """
     Create a variant of BasePipelineMessenger by passing in the name
-    of an envionrment variable that will hold the required webhook.
+    of an environment variable that will hold the required webhook.
     """
 
     notifications_disabled = os.environ.get("DISABLE_NOTIFICATIONS", None)
@@ -90,6 +90,7 @@ def notifier_from_env_var_webhook(
     if notifications_disabled is True:
         return NopNotifier()
 
+    # TODO Ask about this
     web_hook = os.environ.get(env_var, None)
     assert (
         web_hook is not None

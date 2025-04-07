@@ -18,20 +18,31 @@ for secret_name, config_attr in test_secret_config:
 
 def get_secret(secret_id: str) -> Secret:
     if secret_id in secrets:
-        return Secret(value=secrets[secret_id])
+        return Secret(id=secrets[secret_id])
 
     return Secret(error=f"Could not find secret {secret_id}")
 
 
 @patch("dpytools.secrets.secrets_client.SecretsClient")
 def test_should_load_config(secrets_client):
+    """
+    Tests that a secrets client can successfully be loaded and a job configuration instance
+    can be created with no errors, with the contents matching the expected results.
+    """
     secrets_client.return_value.get_secret.side_effect = get_secret
 
     os.environ["SKIP_DATA_UPLOAD"] = "True"
     os.environ["DISABLE_NOTIFICATIONS"] = "True"
     os.environ["DISABLE_EMAILS"] = "True"
 
-    config = JobConfiguration(secrets_client=secrets_client())
+    test_environment_vars_config = [
+    # Environment var name, JobConfiguration attribute, default value
+    ("SKIP_DATA_UPLOAD", "skip_data_upload", True),
+    ("DISABLE_NOTIFICATIONS", "disable_notifications", True),
+    ("DISABLE_EMAILS", "disable_emails", True),
+]
+
+    config = JobConfiguration(secrets_config=test_secret_config, environment_config=test_environment_vars_config, secrets_client=secrets_client())
     error = config.load_config()
 
     assert error is None
@@ -42,7 +53,7 @@ def test_should_load_config(secrets_client):
         assert config.__getattribute__(config_attr) == secrets[secret_name]
 
     assert config.dataset_api_url == secrets["DATASET_API_URL"]
-    assert config.notification_postfix == secrets["NOTIFICATION_POSTFIX"]
+    assert config.de_slack_webhook == secrets["DE_SLACK_WEBHOOK"]
     assert config.service_token_for_upload == secrets["SERVICE_TOKEN_FOR_UPLOAD"]
     assert config.ses_email_identity == secrets["SES_EMAIL_IDENTITY"]
     assert config.upload_service_url == secrets["UPLOAD_SERVICE_URL"]

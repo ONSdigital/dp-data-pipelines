@@ -11,9 +11,10 @@ secrets_config = [
     # Secret ID, JobConfiguration attribute
     ("DATASET_API_URL", "dataset_api_url"),
     ("UPLOAD_SERVICE_URL", "upload_service_url"),
-    ("NOTIFICATION_POSTFIX", "notification_postfix"),
+    ("DE_SLACK_WEBHOOK", "de_slack_webhook"),
     ("SERVICE_TOKEN_FOR_UPLOAD", "service_token_for_upload"),
     ("SES_EMAIL_IDENTITY", "ses_email_identity"),
+    ("LAMBDA_FAILURE_SLACK_WEBHOOK", "lambda_failure_slack_webhook")
 ]
 
 """
@@ -37,13 +38,22 @@ class JobConfiguration:
 
     dataset_api_url: Optional[str] = None
     upload_service_url: Optional[str] = None
-    notification_postfix: Optional[str] = None
+    de_slack_webhook: Optional[str] = None
     service_token_for_upload: Optional[str] = None
     ses_email_identity: Optional[str] = None
+    lambda_failure_slack_webhook: Optional[str] = None
 
     skip_data_upload: Optional[bool] = None
     disable_notifications: Optional[bool] = None
     disable_emails: Optional[bool] = None
+
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(JobConfiguration, cls).__new__(cls)
+
+        return cls._instance
 
     def __init__(
         self,
@@ -131,3 +141,6 @@ class JobConfiguration:
                 value = str_to_bool(value)
 
         self.__setattr__(class_attribute, value)
+
+# Instantiate JobConfiguration class
+secrets_job_config = JobConfiguration()
