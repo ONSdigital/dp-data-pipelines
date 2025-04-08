@@ -2,18 +2,18 @@
 flowchart TD
     subgraph "Development"
         dev[Developer Creates Feature]
-        pr[Create PR to merge\nfeature into sandbox]
-        rel[Create release/* branch\ntargeting sandbox]
+        pr[Create PR to merge feature into sandbox]
+        rel[Create release/* branch targeting sandbox]
     end
     
     dev --> pr
     pr --> rel
     
     subgraph "Sandbox Pipeline"
-        increment["1. Increment Python version\nwith -rcX suffix"]
-        tag["2. Create and tag commit\n(v1.2.3-rc1)"]
-        build["3. Build code"]
-        publish["4. Publish Git release\nwith artifacts"]
+        increment["1 Increment Python version with -rcX suffix"]
+        tag["2 Create and tag commit (v1.2.3-rc1)"]
+        build["3 Build code"]
+        publish["4 Publish Git release with artifacts"]
     end
     
     rel --> increment
@@ -23,9 +23,9 @@ flowchart TD
     
     subgraph "Staging Pipeline"
         promote_staging["Promote to staging"]
-        remove_suffix["Remove -rcX suffix\n(v1.2.3)"]
-        tag_staging["Create new tag\nwithout rebuilding"]
-        publish_staging["Publish Git release\nusing same artifacts"]
+        remove_suffix["Remove -rcX suffix (v1.2.3)"]
+        tag_staging["Create new tag without rebuilding"]
+        publish_staging["Publish Git release using same artifacts"]
     end
     
     publish --> promote_staging
@@ -37,8 +37,8 @@ flowchart TD
         promote_prod["Promote to production"]
         validation["Validation checks"]
         approval["Manual approval"]
-        deploy_prod["Deploy to production\nusing same artifacts"]
-        verify["Post-deployment\nverification"]
+        deploy_prod["Deploy to production using same artifacts"]
+        verify["Post-deployment verification"]
     end
     
     publish_staging --> promote_prod
