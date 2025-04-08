@@ -13,13 +13,12 @@ from dpytools.logging.logger import DpLogger
 from dpytools.s3.basic import _get_s3_client, upload_local_file_to_s3
 from dpytools.stores.directory.local import LocalDirectoryStore
 
-from dpypelines.pipeline.errors import (
-    DatasetAPIRequestCreationException,
-    DistributionsException,
-    ValidationException,
+from dpypelines.pipeline.dataset_api import (
+    check_dataset_type_is_static,
+    get_post_request_values_from_metadata,
 )
+from dpypelines.pipeline.errors import ValidationException
 from dpypelines.pipeline.messages.email_templates import (
-    failed_metadata_submission,
     submission_processed_email,
     successful_file_upload_email,
     successful_metadata_submission,
@@ -83,7 +82,8 @@ def download_zip_file(s3_object_name: str) -> str:
     # Download S3 object to local directory
     client = _get_s3_client(profile_name=os.environ.get("AWS_PROFILE"))
     with open(object_key, "wb") as f:
-        client.download_fileobj(Bucket=bucket_name, Key=object_key, Fileobj=f)
+        res = client.download_fileobj(Bucket=bucket_name, Key=object_key, Fileobj=f)
+        print(res)
     logger.info(
         "Downloaded zip file to local folder",
         data={"local_input_folder": input_dir, "local_file_name": input_zip_name},
@@ -281,112 +281,6 @@ def validate_pipeline(files_dir: Path, pipeline_config: dict) -> dict:
     return validation_results
 
 
-def get_post_request_values_from_metadata(metadata: dict):
-    """
-    Generate the required path values and request body to submit to the Dataset API. This will be submitted as a POST request to the endpoint `/datasets/{dataset_path}/editions/{edition_path}/versions`
-    """
-    try:
-        dataset_path = metadata.get("dcterms:identifier", None)
-        editions = metadata.get("TBC:edition", None)
-        if editions is not None:
-            edition: dict = editions[0]
-        else:
-            edition = {"dcterms:identifier": None}
-        edition_path = edition.get("dcterms:identifier", None)
-        dcat_distributions = edition.get("dcat:distribution", None)
-        if dcat_distributions is not None:
-            distributions = get_distribution_details_for_request(dcat_distributions)
-        else:
-            distributions = None
-
-        request_body = {
-            # Required properties (from swagger.yaml)
-            "distributions": distributions,
-            "release_date": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-            "edition_title": edition.get("dcterms:title", None),
-            # Tier 0 metadata standards - required with output
-            "title": metadata.get("dcterms:title", None),
-            "description": metadata.get("dcterms:description", None),
-            "next_release": metadata.get("TBC:nextRelease", None),
-            "themes": metadata.get("dcat:theme", None),
-            # # Additional properties (from swagger.yaml)
-            "alerts": edition.get("TBC:alerts", None),
-            "usage_notes": edition.get("TBC:usage_notes", None),
-            # TODO
-            # "quality_designation": edition.get("TBC:quality_designation", None),
-            # Not included here ($ref: '#/definitions/Version')
-            # collection_id (auto generated?)
-            # dimensions $ref: '#/definitions/Dimension'
-            # edition (readOnly - auto generated?)
-            # dataset_id (auto generated?)
-            # is_based_on (census only)
-            # last_updated (readOnly - auto generated?)
-            # latest_changes $ref: '#/definitions/LatestChange'
-            # links (auto generated?)
-            # lowest_geography (census only)
-            # temporal $ref: '#/definitions/Temporal'
-            # version (readOnly - auto generated?)
-        }
-        return dataset_path, edition_path, request_body
-    except Exception as err:
-        raise DatasetAPIRequestCreationException(
-            "Error getting POST request values from metadata", metadata=metadata
-        ) from err
-
-
-def get_distribution_details_for_request(dcat_distributions: list) -> list:
-    """
-    Get the information to populate the `distributions` property in the POST request to the Dataset API.
-    """
-    try:
-        distributions = [
-            {
-                "title": distribution["dcterms:title"],
-                "download_url": distribution["download_url"],
-                # TODO Calculate byte_size during processing
-                "byte_size": 0,
-                "format": distribution["TBC:distributionFormat"],
-                "media_type": distribution["dcat:mediaType"],
-            }
-            for distribution in dcat_distributions
-        ]
-        logger.info(
-            "Distributions information retrieved",
-            data={"distributions": distributions},
-        )
-        return distributions
-    except Exception as err:
-        raise DistributionsException(
-            "Error getting details of distributions for Dataset API request",
-            distributions=dcat_distributions,
-        ) from err
-
-
-def check_dataset_type_is_static(dataset_api_client: DatasetAPIClient) -> bool:
-    get_dataset_result = dataset_api_client.get(
-        f"{dataset_api_client.dataset_api_url}/{dataset_api_client.dataset_path}",
-        headers=dataset_api_client.token_auth.get_auth_header(),
-    )
-    if get_dataset_result.status_code == 200:
-        dataset_result = json.loads(get_dataset_result.text)
-        current_dataset = dataset_result.get("current", None)
-        if current_dataset:
-            dataset_type = current_dataset.get("type", None)
-            if dataset_type and dataset_type == "static":
-                logger.info("Dataset type is static")
-                return True
-            elif dataset_type and dataset_type != "static":
-                logger.info("Dataset type is not static")
-                return False
-            else:
-                logger.info("Dataset type not specified")
-                return False
-        else:
-            raise KeyError("'current' not found in dataset_result keys")
-    else:
-        get_dataset_result.raise_for_status()
-
-
 def upload_metadata(metadata, email_client, submitter_email) -> bool:
     """Upload metadata to the Dataset API and send notifications."""
     dataset_api_url = os.environ.get("DATASET_API_URL")
@@ -406,81 +300,26 @@ def upload_metadata(metadata, email_client, submitter_email) -> bool:
         dataset_api_get_path_response = dataset_api_client.get_path()
 
         # If the endpoint exists, send POST request
-        if dataset_api_get_path_response.status_code == 200:
+        if dataset_api_get_path_response.status_code != 200:
+            dataset_api_get_path_response.raise_for_status()
+        else:
             logger.info(
                 "Dataset API endpoint exists",
                 data={"dataset_api_endpoint": dataset_api_client.full_url},
             )
-            # 2809 Currently, if the `state` of a dataset version is anything other than `published` (e.g. `associated`), an error occurs when trying to submit a new version: 400 Bad Request: '{"error":"cannot create new version when an unpublished version already exists","unpublished_version":1}'
 
-            # 2809 L417 shows the previous method - this submits a POST request to dataset_api_client.full_url (i.e. dataset_api_url/dataset_path/editions/edition_path/versions):
-            # dataset_api_client.post_json(request_body)
-
-            # 2809 Fran recommended generating a new edition_id for every request, and this allows the POST request to succeed, but may not be a viable solution (see below)
-            chars = string.ascii_lowercase + string.digits
-            random_edition_id = "".join(random.choices(chars, k=8))
-            dataset_api_client.post(
-                f"{dataset_api_url}/{dataset_path}/editions/{random_edition_id}/versions",
-                headers=dataset_api_client.token_auth.get_auth_header(),
-                json=request_body,
-                verify=True,
-            )
-            # # 2809 The issue with this approach is that a subsequent GET request to dataset_api_url/dataset_path/editions/random_edition_id/versions returns a 404 ('edition not found'):
-            # get_versions_res = dataset_api_client.get(
-            #     f"{dataset_api_url}/{dataset_path}/editions/{random_edition_id}/versions",
-            #     headers=dataset_api_client.token_auth.get_auth_header(),
-            # )
-            # # 2809 get_editions_res.status code = 200 but random_edition_id doesn't appear in the list of editions returned
-            # get_editions_res = dataset_api_client.get(
-            #     f"{dataset_api_url}/{dataset_path}/editions",
-            #     headers=dataset_api_client.token_auth.get_auth_header(),
-            # )
-            # # 2809 get_edition_res.status_code = 404 ('edition not found')
-            # get_edition_res = dataset_api_client.get(
-            #     f"{dataset_api_url}/{dataset_path}/editions/{random_edition_id}",
-            #     headers=dataset_api_client.token_auth.get_auth_header(),
-            # )
-
-            # # 2809 However, the submitted edition can be accessed by port forwarding to a Dataset API publishing instance and submitting the request to {publishing_instance_url}/{dataset_path}/editions/{random_edition_id}:
-
-            # publishing_instance_url = "http://localhost:17892/datasets"
-            # get_dataset_res = dataset_api_client.get(
-            #     f"{publishing_instance_url}/{dataset_path}",
-            #     headers=dataset_api_client.token_auth.get_auth_header(),
-            # )
-            # get_editions_res = dataset_api_client.get(
-            #     f"{publishing_instance_url}/{dataset_path}/editions",
-            #     headers=dataset_api_client.token_auth.get_auth_header(),
-            # )
-            # get_edition_res = dataset_api_client.get(
-            #     f"{publishing_instance_url}/{dataset_path}/editions/{random_edition_id}",
-            #     headers=dataset_api_client.token_auth.get_auth_header(),
-            # )
-            # get_versions_res = dataset_api_client.get(
-            #     f"{publishing_instance_url}/{dataset_path}/editions/{random_edition_id}/versions",
-            #     headers=dataset_api_client.token_auth.get_auth_header(),
-            # )
-            # get_version_res = dataset_api_client.get(
-            #     f"{publishing_instance_url}/{dataset_path}/editions/{random_edition_id}/versions/1",
-            #     headers=dataset_api_client.token_auth.get_auth_header(),
-            # )
-            logger.info(
-                "Metadata submitted to Dataset API endpoint",
-                data={"dataset_api_endpoint": dataset_api_client.full_url},
-            )
-            email_content = successful_metadata_submission(dataset_path)
-            email_client.send(
-                submitter_email, email_content.subject, email_content.message
-            )
-            return True
-        else:
-            dataset_api_get_path_response.raise_for_status()
-    else:
-        msg = "Dataset type is not static: metadata not submitted to Dataset API"
-        email_content = failed_metadata_submission(dataset_path, error_info=msg)
-        email_client.send(submitter_email, email_content.subject, email_content.message)
-        logger.info(msg)
-        return False
+            post_json_response = dataset_api_client.post_json(request_body)
+            if post_json_response.status_code == 201:
+                logger.info(
+                    "Metadata submitted to Dataset API endpoint",
+                    data={"dataset_api_endpoint": dataset_api_client.full_url},
+                )
+                email_content = successful_metadata_submission(dataset_path)
+                email_client.send(
+                    submitter_email, email_content.subject, email_content.message
+                )
+                return True
+    return False
 
 
 def upload_files(files_to_upload, email_client, submitter_email):

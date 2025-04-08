@@ -83,11 +83,7 @@ def start(s3_object_name: str, *args, **kwargs):
                 s3_processing_folder,
                 "dataset-type-not-static",
             )
-
-        # Delete files from S3 "processing" folder
-        delete_s3_processing_folder(
-            s3_object_name, decompressed_file_dir, s3_processing_folder
-        )
+            return False
 
     except Exception as err:
         logger.error("ETL process failed", err)
@@ -106,3 +102,8 @@ def start(s3_object_name: str, *args, **kwargs):
         )
         notifier.failure()
         raise
+    finally:
+        # Delete files from S3 "processing" folder
+        delete_s3_processing_folder(
+            s3_object_name, decompressed_file_dir, s3_processing_folder
+        )

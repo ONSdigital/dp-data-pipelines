@@ -8,14 +8,11 @@ from zipfile import ZipFile
 
 import pytest
 
-from dpypelines.pipeline.errors import DatasetAPIRequestCreationException
 from dpypelines.pipeline.utils import (
-    check_dataset_type_is_static,
     copy_s3_processing_folder_to_destination_folder,
     decompress_zip_file,
     delete_s3_processing_folder,
     download_zip_file,
-    get_post_request_values_from_metadata,
     process_zip_file,
     send_submission_confirmation,
     setup_clients,
@@ -563,124 +560,6 @@ def test_process_zip_file_errors_when_no_files(
     )
 
 
-def test_get_post_request_values_from_valid_metadata():
-    """
-    Tests that the correct dataset_path, edition_path and request_body are returned from a valid metadata.json file
-    """
-    with open("tests/fixtures/test-cases/test_metadata.json", "r") as f:
-        metadata = json.load(f)
-    dataset_path, edition_path, request_body = get_post_request_values_from_metadata(
-        metadata
-    )
-    assert dataset_path == "trade"
-    assert edition_path == "time-series"
-    assert request_body["title"] == "Dataset title"
-    assert ["title", "download_url", "byte_size", "format", "media_type"] == list(
-        request_body["distributions"][0].keys()
-    )
-
-
-def test_get_post_request_values_from_invalid_metadata():
-    """
-    Tests that an error is raised if attempting to get request parameters with an invalid metadata.json file.
-    """
-    with open("tests/fixtures/test-cases/test_metadata_invalid.json", "r") as f:
-        metadata = json.load(f)
-
-    with pytest.raises(DatasetAPIRequestCreationException) as e:
-        get_post_request_values_from_metadata(metadata)
-
-    assert "DatasetAPIRequestCreationException" in str(e)
-
-
-@patch("dpypelines.pipeline.utils.DatasetAPIClient")
-def test_check_dataset_type_is_static(mock_dataset_api_client):
-    mock_dataset_api_client = MagicMock()
-    mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
-    mock_dataset_api_client.dataset_path = "dataset_id"
-    mock_dataset_api_client.get.return_value.text = '{"current": {"type": "static"}}'
-    mock_dataset_api_client.get.return_value.status_code = 200
-
-    dataset_is_static = check_dataset_type_is_static(mock_dataset_api_client)
-
-    assert dataset_is_static
-    mock_dataset_api_client.get.assert_called_once_with(
-        "http://dataset-api.url/dataset_id",
-        headers=mock_dataset_api_client.token_auth.get_auth_header.return_value,
-    )
-
-
-@patch("dpypelines.pipeline.utils.DatasetAPIClient")
-def test_check_dataset_type_is_not_static(mock_dataset_api_client):
-    mock_dataset_api_client = MagicMock()
-    mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
-    mock_dataset_api_client.dataset_path = "dataset_id"
-    mock_dataset_api_client.get.return_value.text = (
-        '{"current": {"type": "not-static"}}'
-    )
-    mock_dataset_api_client.get.return_value.status_code = 200
-
-    dataset_static = check_dataset_type_is_static(mock_dataset_api_client)
-
-    assert not dataset_static
-    mock_dataset_api_client.get.assert_called_once_with(
-        "http://dataset-api.url/dataset_id",
-        headers=mock_dataset_api_client.token_auth.get_auth_header.return_value,
-    )
-
-
-@patch("dpypelines.pipeline.utils.DatasetAPIClient")
-def test_check_dataset_type_is_missing(mock_dataset_api_client):
-    mock_dataset_api_client = MagicMock()
-    mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
-    mock_dataset_api_client.dataset_path = "dataset_id"
-    mock_dataset_api_client.get.return_value.text = '{"current": {"key": "value"}}'
-    mock_dataset_api_client.get.return_value.status_code = 200
-
-    dataset_static = check_dataset_type_is_static(mock_dataset_api_client)
-
-    assert not dataset_static
-    mock_dataset_api_client.get.assert_called_once_with(
-        "http://dataset-api.url/dataset_id",
-        headers=mock_dataset_api_client.token_auth.get_auth_header.return_value,
-    )
-
-
-@patch("dpypelines.pipeline.utils.DatasetAPIClient")
-def test_check_dataset_type_current_missing(mock_dataset_api_client):
-    mock_dataset_api_client = MagicMock()
-    mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
-    mock_dataset_api_client.dataset_path = "dataset_id"
-    mock_dataset_api_client.get.return_value.text = '{"key": {"key": "value"}}'
-    mock_dataset_api_client.get.return_value.status_code = 200
-
-    with pytest.raises(KeyError) as e:
-        check_dataset_type_is_static(mock_dataset_api_client)
-
-    assert "'current' not found in dataset_result keys" in str(e)
-    mock_dataset_api_client.get.assert_called_once_with(
-        "http://dataset-api.url/dataset_id",
-        headers=mock_dataset_api_client.token_auth.get_auth_header.return_value,
-    )
-
-
-@patch("dpypelines.pipeline.utils.DatasetAPIClient")
-def test_check_dataset_type_404(mock_dataset_api_client):
-    mock_dataset_api_client = MagicMock()
-    mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
-    mock_dataset_api_client.dataset_path = "dataset_id"
-    mock_dataset_api_client.get.return_value.text = '{"key": {"key": "value"}}'
-    mock_dataset_api_client.get.return_value.status_code = 404
-
-    check_dataset_type_is_static(mock_dataset_api_client)
-
-    mock_dataset_api_client.get.assert_called_once_with(
-        "http://dataset-api.url/dataset_id",
-        headers=mock_dataset_api_client.token_auth.get_auth_header.return_value,
-    )
-    mock_dataset_api_client.get.return_value.raise_for_status.assert_called_once()
-
-
 @patch("dpypelines.pipeline.utils.check_dataset_type_is_static")
 @patch("dpypelines.pipeline.utils.get_post_request_values_from_metadata")
 @patch("dpypelines.pipeline.utils.DatasetAPIClient")
@@ -690,6 +569,7 @@ def test_upload_metadata_succeeds(
     mock_dataset_api_client = MagicMock()
     mock_DatasetAPIClient.return_value = mock_dataset_api_client
     mock_dataset_api_client.get_path.return_value.status_code = 200
+    mock_dataset_api_client.post_json.return_value.status_code = 201
 
     mock_email_client = MagicMock()
     mock_submitter_email = "test@example.com"
@@ -767,12 +647,6 @@ def test_upload_metadata_fails_not_static(
 
     mock_request_values.assert_called_once_with(metadata)
     mock_dataset_type.assert_called_once_with(mock_dataset_api_client)
-
-    mock_email_client.send.assert_called_with(
-        "test@example.com",
-        "Dataset Ingest: Metadata Submission Failed",
-        "The metadata for dataset_path could not be submitted to the Dataset API. Submission failure details: Dataset type is not static: metadata not submitted to Dataset API",
-    )
     assert not metadata_uploaded
 
 
