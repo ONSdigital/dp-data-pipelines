@@ -73,6 +73,11 @@ def start(s3_object_name: str, *args, **kwargs):
 
             notifier.success()
             logger.info("ETL process completed successfully")
+
+            # Delete files from S3 "processing" folder
+            delete_s3_processing_folder(
+                s3_object_name, decompressed_file_dir, s3_processing_folder
+            )
             # 2809 Can return value be removed now? Have a feeling this was a temporary fix for something...
             return True
         else:
@@ -82,6 +87,10 @@ def start(s3_object_name: str, *args, **kwargs):
                 decompressed_file_dir,
                 s3_processing_folder,
                 "dataset-type-not-static",
+            )
+            # Delete files from S3 "processing" folder
+            delete_s3_processing_folder(
+                s3_object_name, decompressed_file_dir, s3_processing_folder
             )
             return False
 
@@ -102,8 +111,3 @@ def start(s3_object_name: str, *args, **kwargs):
         )
         notifier.failure()
         raise
-    finally:
-        # Delete files from S3 "processing" folder
-        delete_s3_processing_folder(
-            s3_object_name, decompressed_file_dir, s3_processing_folder
-        )

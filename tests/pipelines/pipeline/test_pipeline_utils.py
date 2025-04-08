@@ -599,7 +599,9 @@ def test_upload_metadata_succeeds(
     mock_dataset_api_client.get_path.assert_called_once()
 
     mock_request_values.assert_called_once_with(metadata)
-    mock_dataset_type.assert_called_once_with(mock_dataset_api_client)
+    mock_dataset_type.assert_called_once_with(
+        mock_dataset_api_client, mock_email_client, mock_submitter_email
+    )
 
     mock_email_client.send.assert_called_with(
         "test@example.com",
@@ -646,7 +648,9 @@ def test_upload_metadata_fails_not_static(
     )
 
     mock_request_values.assert_called_once_with(metadata)
-    mock_dataset_type.assert_called_once_with(mock_dataset_api_client)
+    mock_dataset_type.assert_called_once_with(
+        mock_dataset_api_client, mock_email_client, mock_submitter_email
+    )
     assert not metadata_uploaded
 
 
@@ -685,4 +689,6 @@ def test_upload_metadata_fails_get_path_404(
     )
     mock_dataset_api_client.get_path.return_value.raise_for_status.assert_called_once()
     mock_request_values.assert_called_once_with(metadata)
-    mock_dataset_type.assert_called_once_with(mock_dataset_api_client)
+    mock_dataset_type.assert_called_once_with(
+        mock_dataset_api_client, mock_email_client, mock_submitter_email
+    )

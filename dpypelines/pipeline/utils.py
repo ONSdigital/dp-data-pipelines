@@ -291,7 +291,7 @@ def upload_metadata(metadata, email_client, submitter_email) -> bool:
     dataset_api_client = DatasetAPIClient(dataset_api_url, dataset_path, edition_path)
 
     # Upload metadata only if the dataset type is "static"
-    if check_dataset_type_is_static(dataset_api_client):
+    if check_dataset_type_is_static(dataset_api_client, email_client, submitter_email):
         # Verify that the relevant Dataset API endpoint exists
         dataset_api_get_path_response = dataset_api_client.get_path()
 
