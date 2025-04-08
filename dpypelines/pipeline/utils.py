@@ -422,7 +422,7 @@ def upload_files(validation_results, email_client, submitter_email):
     dataset_api_url = JobConfiguration().dataset_api_url
     if not upload_url or not dataset_api_url:
         err_msg = (
-            f"Required environment variable(s) not set: "
+            f"Required variables not set: "
             f"UPLOAD_SERVICE_URL: {upload_url}, DATASET_API_URL: {dataset_api_url}."
         )
         raise EnvironmentError(err_msg)

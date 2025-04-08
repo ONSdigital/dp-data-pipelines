@@ -41,9 +41,11 @@ def test_should_load_config(secrets_client):
     """
     secrets_client.return_value.get_secret.side_effect = get_secret
 
-    os.environ["SKIP_DATA_UPLOAD"] = "True"
-    os.environ["DISABLE_NOTIFICATIONS"] = "True"
-    os.environ["DISABLE_EMAILS"] = "True"
+    mp = pytest.MonkeyPatch()
+
+    mp.setenv("SKIP_DATA_UPLOAD", "True")
+    mp.setenv("DISABLE_NOTIFICATIONS", "True")
+    mp.setenv("DISABLE_EMAILS", "True")
 
     test_environment_vars_config = [
         # Environment var name, JobConfiguration attribute, default value
@@ -139,12 +141,13 @@ def test_should_load_env_vars_from_constructor(secrets_client):
         value_not_set_with_no_default,
     ]
 
-    # The above without the value we're setting in os.env - to pass to JobConfiguration
     test_env_config = [item[0] for item in test_env_vars]
+
+    mp = pytest.MonkeyPatch()
 
     for env_config, env_value, expected_value in test_env_vars:
         if env_value is not None:
-            os.environ[env_config[0]] = env_value
+            mp.setenv(env_config[0], env_value)
 
     config = JobConfiguration(
         secrets_client=secrets_client(), environment_config=test_env_config
@@ -167,8 +170,6 @@ def test_should_load_env_vars_from_constructor(secrets_client):
 @patch("dpytools.secrets.secrets_client.SecretsClient")
 def test_should_exits_on_secret_error(secrets_client):
     """
-    Asserts that a config that fails to load completely contains the expected
-    secret, but does not contain the ones that should not have been retrieved.
     """
     secrets_client.return_value.get_secret.side_effect = get_secret
 
@@ -176,9 +177,15 @@ def test_should_exits_on_secret_error(secrets_client):
     missing_secret_attr = "attr_should_not_be_set"
     secrets_with_missing = [*secrets_config, (missing_secret_key, missing_secret_attr)]
 
-    os.environ["SKIP_DATA_UPLOAD"] = "True"
-    os.environ["DISABLE_NOTIFICATIONS"] = "True"
-    os.environ["DISABLE_EMAILS"] = "True"
+    mp = pytest.MonkeyPatch()
+
+    mp.delenv("SKIP_DATA_UPLOAD", raising=False)
+    mp.delenv("DISABLE_NOTIFICATIONS", raising=False)
+    mp.delenv("DISABLE_EMAILS", raising=False)
+
+    mp.setenv("SKIP_DATA_UPLOAD", "True")
+    mp.setenv("DISABLE_NOTIFICATIONS", "True")
+    mp.setenv("DISABLE_EMAILS", "True")
 
     config = JobConfiguration(
         secrets_client=secrets_client(), secrets_config=secrets_with_missing
@@ -204,8 +211,6 @@ def test_should_exits_on_secret_error(secrets_client):
 @patch("dpytools.secrets.secrets_client.SecretsClient")
 def test_should_exits_early_on_secret_error(secrets_client):
     """
-    Tests that a config that failed to load and exited early
-    does not contain a secret that should not have been loaded.
     """
     secrets_client.return_value.get_secret.side_effect = get_secret
 
