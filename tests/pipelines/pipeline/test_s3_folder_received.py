@@ -157,33 +157,6 @@ def test_start_fails_dataset_not_static(
     )
 
 
-# @patch("dpypelines.pipeline.utils.download_zip_file")
-# @patch("dpypelines.s3_folder_received.process_zip_file")
-# @patch("dpypelines.s3_folder_received.setup_clients")
-# def test_start_fails_s3_object_not_found(
-#     mock_setup_clients, mock_process_zip_file, mock_download_zip_file
-# ):
-#     """
-#     Test that `start()` raises an Exception with the expected message when processing the zip file fails.
-#     """
-#     mock_notifier, mock_email_client = (
-#         MagicMock(name="notifier"),
-#         MagicMock(name="email_client"),
-#     )
-#     mock_setup_clients.return_value = (mock_notifier, mock_email_client)
-#     mock_download_zip_file = MagicMock(name="download_zip_file")
-#     mock_download_zip_file.side_effect = Exception(
-#         "An error occurred (404) when calling the HeadObject operation: Not Found"
-#     )
-#     mock_process_zip_file.side_effect = mock_download_zip_file
-#     with pytest.raises(Exception) as e:
-#         start("bucket/folder/file.zip")
-#     assert (
-#         "An error occurred (404) when calling the HeadObject operation: Not Found"
-#         in str(e)
-#     )
-
-
 @patch("dpypelines.s3_folder_received.error_handler")
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
 @patch("dpypelines.s3_folder_received.validate_pipeline")
