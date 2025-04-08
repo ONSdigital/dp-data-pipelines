@@ -7,7 +7,7 @@ from dpytools.email.ses.client import SesClient
 from dpytools.utilities.utilities import str_to_bool
 from email_validator import EmailNotValidError, validate_email
 
-from dpypelines.pipeline.job_configuration import secrets_job_config
+from dpypelines.pipeline.job_configuration import JobConfiguration
 
 MIMETYPES = {
     ".csv": "text/csv",
@@ -33,7 +33,7 @@ def get_email_client():
     if emails_disabled:
         return NopEmailClient()
 
-    ses_email_identity = secrets_job_config.ses_email_identity
+    ses_email_identity = JobConfiguration().ses_email_identity
     if ses_email_identity:
         email_client = SesClient(ses_email_identity, "eu-west-2")
 

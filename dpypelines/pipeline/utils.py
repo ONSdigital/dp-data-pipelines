@@ -15,7 +15,7 @@ from dpypelines.pipeline.errors import (
     DistributionsException,
     ValidationException,
 )
-from dpypelines.pipeline.job_configuration import secrets_job_config
+from dpypelines.pipeline.job_configuration import JobConfiguration
 from dpypelines.pipeline.messages.email_templates import (
     submission_processed_email,
     successful_file_upload_email,
@@ -55,7 +55,7 @@ def get_notifier():
     try:
         process_start_time = get_local_time()
         notifier: PipelineNotifier = create_notifier(
-            str(secrets_job_config.de_slack_webhook),
+            JobConfiguration().de_slack_webhook,
             process_start_time=process_start_time,
         )
         logger.info("Notifier created", data={"notifier": notifier})
@@ -381,7 +381,7 @@ def get_distribution_details_for_request(dcat_distributions: list) -> list:
 
 def upload_metadata(local_store, email_client, submitter_email):
     """Upload metadata and send notifications."""
-    dataset_api_url = secrets_job_config.dataset_api_url
+    dataset_api_url = JobConfiguration().dataset_api_url
     if not dataset_api_url:
         err_msg = (
             f"Required environment variable(s) not set: "
@@ -418,8 +418,8 @@ def upload_metadata(local_store, email_client, submitter_email):
 
 def upload_files(validation_results, email_client, submitter_email):
     """Upload files and send notifications."""
-    upload_url = secrets_job_config.upload_service_url
-    dataset_api_url = secrets_job_config.dataset_api_url
+    upload_url = JobConfiguration().upload_service_url
+    dataset_api_url = JobConfiguration().dataset_api_url
     if not upload_url or not dataset_api_url:
         err_msg = (
             f"Required environment variable(s) not set: "

@@ -9,7 +9,7 @@ import docker
 import requests
 from docker import DockerClient
 
-from dpypelines.pipeline.job_configuration import secrets_job_config
+from dpypelines.pipeline.job_configuration import JobConfiguration
 
 
 def before_all(context):
@@ -31,14 +31,14 @@ def before_all(context):
     context.skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", None)
     os.environ["SKIP_DATA_UPLOAD"] = "False"
 
-    context.upload_service_url = secrets_job_config.upload_service_url
-    secrets_job_config.upload_service_url = "http://127.0.0.1:5001/upload-new"
+    context.upload_service_url = JobConfiguration().upload_service_url
+    JobConfiguration().upload_service_url = "http://127.0.0.1:5001/upload-new"
 
-    context.dataset_api_url = secrets_job_config.dataset_api_url
-    secrets_job_config.dataset_api_url = "http://127.0.0.1:5001/datasets"
+    context.dataset_api_url = JobConfiguration().dataset_api_url
+    JobConfiguration().dataset_api_url = "http://127.0.0.1:5001/datasets"
 
-    context.service_token_for_upload = secrets_job_config.service_token_for_upload
-    secrets_job_config.service_token_for_upload = "not-a-real-token"
+    context.service_token_for_upload = JobConfiguration().service_token_for_upload
+    JobConfiguration().service_token_for_upload = "not-a-real-token"
 
     context.features_directory = Path(__file__).parent
 
