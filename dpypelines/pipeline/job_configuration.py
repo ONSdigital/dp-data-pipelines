@@ -141,7 +141,3 @@ class JobConfiguration:
                 value = str_to_bool(value)
 
         self.__setattr__(class_attribute, value)
-
-
-# Instantiate JobConfiguration class
-secrets_job_config = JobConfiguration()
