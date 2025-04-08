@@ -35,7 +35,8 @@ def get_secret(secret_id: str):
 def test_should_load_config(secrets_client):
     """
     Tests that a secrets client can successfully be loaded and a job configuration instance
-    can be created with no errors, with the contents matching the expected results.
+    can be created taking a secrets client, environment variables config, and secrets config.
+    The result should raisei no errors, with the contents matching the expected results.
     """
     secrets_client.return_value.get_secret.side_effect = get_secret
 
@@ -73,6 +74,10 @@ def test_should_load_config(secrets_client):
 
 @patch("dpytools.secrets.secrets_client.SecretsClient")
 def test_should_load_secrets_from_constructor(secrets_client):
+    """
+    Tests that a secrets job configuration can load secrets when given a secrets client 
+    and config as input, and the results are as expected.
+    """
     secrets_client.return_value.get_secret.side_effect = get_secret
 
     config = JobConfiguration(
@@ -90,6 +95,11 @@ def test_should_load_secrets_from_constructor(secrets_client):
 
 @patch("dpytools.secrets.secrets_client.SecretsClient")
 def test_should_load_env_vars_from_constructor(secrets_client):
+    """
+    Tests that a job configuration can be created taking an environment
+    variables config as input, with the results raising no errors and 
+    matching expected results.
+    """
     secrets_client.return_value.get_secret.side_effect = get_secret
 
     # First tuple element == the environment variable config
@@ -151,6 +161,10 @@ def test_should_load_env_vars_from_constructor(secrets_client):
 
 @patch("dpytools.secrets.secrets_client.SecretsClient")
 def test_should_exits_on_secret_error(secrets_client):
+    """
+    Asserts that a config that fails to load completely contains the expected
+    secret, but does not contain the ones that should not have been retrieved.
+    """
     secrets_client.return_value.get_secret.side_effect = get_secret
 
     missing_secret_key = "THIS_SECRET_DOESNT_EXIST"
@@ -184,6 +198,10 @@ def test_should_exits_on_secret_error(secrets_client):
 
 @patch("dpytools.secrets.secrets_client.SecretsClient")
 def test_should_exits_early_on_secret_error(secrets_client):
+    """
+    Tests that a config that failed to load and exited early
+    does not contain a secret that should not have been loaded.
+    """
     secrets_client.return_value.get_secret.side_effect = get_secret
 
     missing_secret_key = "THIS_SECRET_DOESNT_EXIST"
