@@ -87,6 +87,7 @@ def failed_metadata_submission(dataset_id: str, error_info: str) -> EmailContent
     message = f"The metadata for {dataset_id} could not be submitted to the Dataset API. Submission failure details: {error_info}"
     return EmailContent(subject, message)
 
+
 def test():
     """
     Test release
