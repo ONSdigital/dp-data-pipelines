@@ -79,8 +79,7 @@ def download_zip_file(s3_object_name: str) -> str:
     # Download S3 object to local directory
     client = _get_s3_client(profile_name=os.environ.get("AWS_PROFILE"))
     with open(object_key, "wb") as f:
-        res = client.download_fileobj(Bucket=bucket_name, Key=object_key, Fileobj=f)
-        print(res)
+        client.download_fileobj(Bucket=bucket_name, Key=object_key, Fileobj=f)
     logger.info(
         "Downloaded zip file to local folder",
         data={"local_input_folder": input_dir, "local_file_name": input_zip_name},
