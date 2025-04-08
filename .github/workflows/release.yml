@@ -13,7 +13,7 @@ env:
 
 jobs:
   release:
-    if: startsWith(github.head_ref || github.ref_name, 'release')
+   # if: startsWith(github.head_ref || github.ref_name, 'release')
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-release-${{ github.ref_name }}
@@ -21,6 +21,10 @@ jobs:
     permissions:
       contents: write
       packages: write
+      id-token: write
+      checks: write
+      statuses: write
+      pull-requests: write
     outputs:
       version: ${{ steps.release.outputs.tag }}
       released: ${{ steps.release.outputs.released }}
@@ -34,18 +38,22 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
+        
       - name: Action | Semantic Version Release
         id: release
         uses: python-semantic-release/python-semantic-release@v9.21.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          git_committer_name: "github-actions"
-          git_committer_email: "actions@users.noreply.github.com"
-
-      - name: Publish | Upload to GitHub Release Assets
-        uses: python-semantic-release/publish-action@v9.21.0
+          commit: "false"
+          tag: "false"
+          
+      - name: Create GitHub Release and Tag
         if: steps.release.outputs.released == 'true'
+        uses: actions/github-script@v6
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ steps.release.outputs.tag }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const script = require('./.github/workflows/release-script.js')
+            await script({github, context, core});
