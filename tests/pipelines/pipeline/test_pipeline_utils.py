@@ -190,9 +190,10 @@ def test_decompress_zip_file_no_files(mock_zipfile, mock_path):
     mock_zipfile.assert_called_once_with(local_zip_path, "r")
     mock_zip_instance.extractall.assert_called_once()
 
-    assert file_name in path_instances
+    expected_folder = f"/tmp/{file_name}"
+    assert expected_folder in path_instances
 
-    mock_destination = path_instances[file_name]
+    mock_destination = path_instances[expected_folder]
     mock_destination.mkdir.assert_called_once_with(parents=True, exist_ok=True)
     mock_destination.rglob.assert_called_with("*")
 
@@ -225,9 +226,10 @@ def test_decompress_zip_file_non_recursive(mock_zipfile, mock_path):
     mock_zipfile.assert_called_once_with(local_zip_path, "r")
     mock_zip_instance.extractall.assert_called_once()
 
-    assert file_name in path_instances
+    expected_folder = f"/tmp/{file_name}"
+    assert expected_folder in path_instances
 
-    mock_destination = path_instances[file_name]
+    mock_destination = path_instances[expected_folder]
     mock_destination.mkdir.assert_called_once_with(parents=True, exist_ok=True)
     mock_destination.rglob.assert_called_with("*")
 
@@ -259,10 +261,10 @@ def test_decompress_zip_file_recursive(mock_zipfile, mock_path):
 
     mock_zipfile.assert_called_once_with(local_zip_path, "r")
     mock_zip_instance.extractall.assert_called_once()
+    expected_folder = f"/tmp/{file_name}"
+    assert expected_folder in path_instances
 
-    assert file_name in path_instances
-
-    mock_destination = path_instances[file_name]
+    mock_destination = path_instances[expected_folder]
     mock_destination.mkdir.assert_called_once_with(parents=True, exist_ok=True)
     mock_destination.rglob.assert_called_with("*")
 
@@ -313,6 +315,7 @@ def test_upload_to_s3_processing_folder(
             None,
         ),
     ]
+
     mock_upload.assert_has_calls(upload_calls, any_order=True)
     mock_s3.copy_object.assert_called_once_with(
         Bucket="bucket",
