@@ -18,7 +18,7 @@ for secret_name, config_attr in test_secret_config:
 
 def get_secret(secret_id: str):
     mock_secret = MagicMock()
-    
+
     secret_exists = secret_id in secrets
     if not secret_exists:
         mock_secret.error = f"Could not find secret {secret_id}"
@@ -30,6 +30,7 @@ def get_secret(secret_id: str):
         mock_secret.success = True
 
     return mock_secret
+
 
 @patch("dpytools.secrets.secrets_client.SecretsClient")
 def test_should_load_config(secrets_client):
@@ -45,13 +46,17 @@ def test_should_load_config(secrets_client):
     os.environ["DISABLE_EMAILS"] = "True"
 
     test_environment_vars_config = [
-    # Environment var name, JobConfiguration attribute, default value
-    ("SKIP_DATA_UPLOAD", "skip_data_upload", True),
-    ("DISABLE_NOTIFICATIONS", "disable_notifications", True),
-    ("DISABLE_EMAILS", "disable_emails", True),
-]
+        # Environment var name, JobConfiguration attribute, default value
+        ("SKIP_DATA_UPLOAD", "skip_data_upload", True),
+        ("DISABLE_NOTIFICATIONS", "disable_notifications", True),
+        ("DISABLE_EMAILS", "disable_emails", True),
+    ]
 
-    config = JobConfiguration(secrets_config=test_secret_config, environment_config=test_environment_vars_config, secrets_client=secrets_client())
+    config = JobConfiguration(
+        secrets_config=test_secret_config,
+        environment_config=test_environment_vars_config,
+        secrets_client=secrets_client(),
+    )
     error = config.load_config()
 
     assert error is None
@@ -75,7 +80,7 @@ def test_should_load_config(secrets_client):
 @patch("dpytools.secrets.secrets_client.SecretsClient")
 def test_should_load_secrets_from_constructor(secrets_client):
     """
-    Tests that a secrets job configuration can load secrets when given a secrets client 
+    Tests that a secrets job configuration can load secrets when given a secrets client
     and config as input, and the results are as expected.
     """
     secrets_client.return_value.get_secret.side_effect = get_secret
@@ -97,7 +102,7 @@ def test_should_load_secrets_from_constructor(secrets_client):
 def test_should_load_env_vars_from_constructor(secrets_client):
     """
     Tests that a job configuration can be created taking an environment
-    variables config as input, with the results raising no errors and 
+    variables config as input, with the results raising no errors and
     matching expected results.
     """
     secrets_client.return_value.get_secret.side_effect = get_secret

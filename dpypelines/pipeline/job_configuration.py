@@ -14,7 +14,7 @@ secrets_config = [
     ("DE_SLACK_WEBHOOK", "de_slack_webhook"),
     ("SERVICE_TOKEN_FOR_UPLOAD", "service_token_for_upload"),
     ("SES_EMAIL_IDENTITY", "ses_email_identity"),
-    ("LAMBDA_FAILURE_SLACK_WEBHOOK", "lambda_failure_slack_webhook")
+    ("LAMBDA_FAILURE_SLACK_WEBHOOK", "lambda_failure_slack_webhook"),
 ]
 
 """
@@ -141,6 +141,7 @@ class JobConfiguration:
                 value = str_to_bool(value)
 
         self.__setattr__(class_attribute, value)
+
 
 # Instantiate JobConfiguration class
 secrets_job_config = JobConfiguration()

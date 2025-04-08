@@ -15,23 +15,20 @@ from dpypelines.pipeline.errors import (
     DistributionsException,
     ValidationException,
 )
+from dpypelines.pipeline.job_configuration import secrets_job_config
 from dpypelines.pipeline.messages.email_templates import (
     submission_processed_email,
     successful_file_upload_email,
     successful_metadata_submission,
 )
-from dpypelines.pipeline.messages.notification import (
-    PipelineNotifier,
-    NopNotifier
-)
+from dpypelines.pipeline.messages.notification import NopNotifier, PipelineNotifier
 from dpypelines.pipeline.messages.utils import (
     get_email_client,
-    get_mimetype,
     get_local_time,
+    get_mimetype,
     str_to_bool,
 )
 from dpypelines.pipeline.validate_pipeline import validate_pipeline_files
-from dpypelines.pipeline.job_configuration import secrets_job_config
 
 logger = DpLogger("data-ingress-pipelines")
 
@@ -51,6 +48,7 @@ def create_notifier(webhook: str, process_start_time=None):
         return NopNotifier()
 
     return PipelineNotifier(webhook, process_start_time)
+
 
 def get_notifier():
     # Create notifier from webhook env var
