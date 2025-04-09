@@ -464,7 +464,7 @@ structlog = "^23.2.0"
 type = "git"
 url = "https://github.com/ONSdigital/dp-python-tools.git"
 reference = "refactor/api-error-handling"
-resolved_reference = "0cbb75c3856b6b447a2d97db9724e2b03831b837"
+resolved_reference = "bef8cbbfbbd6d4d5889a1581f4c2ce3bf390cde9"
 
 [[package]]
 name = "email-validator"
