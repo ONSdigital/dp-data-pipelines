@@ -403,6 +403,7 @@ def upload_metadata(local_store, email_client, submitter_email):
         email_content = successful_metadata_submission(dataset_path)
         email_client.send(submitter_email, email_content.subject, email_content.message)
     else:
+        logger.info(f"GET request failed with status code: {dataset_api_get_path_response.status_code}. Response body: {dataset_api_get_path_response.response.text}")
         dataset_api_get_path_response.raise_for_status()
 
 
