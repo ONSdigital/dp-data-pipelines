@@ -303,6 +303,7 @@ def upload_metadata(metadata, email_client, submitter_email) -> bool:
 
         # If the endpoint exists, send POST request
         if dataset_api_get_path_response.status_code != 200:
+            logger.info(dataset_api_get_path_response.text)
             dataset_api_get_path_response.raise_for_status()
         else:
             logger.info(
