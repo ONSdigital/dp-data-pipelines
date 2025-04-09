@@ -22,6 +22,8 @@ jobs:
       contents: write
       packages: write
       id-token: write
+      checks: write
+      statuses: write
     outputs:
       version: ${{ steps.release.outputs.tag }}
       released: ${{ steps.release.outputs.released }}
@@ -48,6 +50,73 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           git_committer_name: "github-actions[bot]"
           git_committer_email: "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Verified Release Commit
+        if: steps.release.outputs.released == 'true'
+        run: |
+          echo "Release ${{ steps.release.outputs.tag }}" > RELEASE.md
+          
+          # Use GraphQL API for verified commit
+          gh api graphql \
+            -F githubRepository=$GITHUB_REPOSITORY \
+            -F branchName=$BRANCH \
+            -F expectedHeadOid=$(git rev-parse HEAD) \
+            -F commitMessage="chore: release ${{ steps.release.outputs.tag }}" \
+            -F files[][path]="RELEASE.md" -F files[][contents]=$(base64 -w0 RELEASE.md) \
+            -F 'query=@.github/api/createCommitOnBranch.gql'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release and Tag
+        if: steps.release.outputs.released == 'true'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const tag = '${{ steps.release.outputs.tag }}';
+            
+            // Get the latest commit SHA (which should be our verified commit)
+            const { data: refData } = await github.rest.git.getRef({
+              owner,
+              repo,
+              ref: `heads/${process.env.BRANCH}`
+            });
+            const latestCommitSha = refData.object.sha;
+            
+            // Create a tag object through the API (which will be verified)
+            const { data: tagObj } = await github.rest.git.createTag({
+              owner,
+              repo,
+              tag: tag,
+              message: `Release ${tag}`,
+              object: latestCommitSha,
+              type: 'commit',
+              tagger: {
+                name: 'github-actions[bot]',
+                email: '41898282+github-actions[bot]@users.noreply.github.com'
+              }
+            });
+            
+            // Create the reference to the tag
+            await github.rest.git.createRef({
+              owner,
+              repo,
+              ref: `refs/tags/${tag}`,
+              sha: tagObj.sha
+            });
+            
+            // Create the release
+            await github.rest.repos.createRelease({
+              owner,
+              repo,
+              tag_name: tag,
+              name: `Release ${tag}`,
+              body: 'Automated release by GitHub Actions',
+              draft: false,
+              prerelease: false,
+              generate_release_notes: true
+            });
 
       - name: Publish | Upload to GitHub Release Assets
         uses: python-semantic-release/publish-action@v9.21.0
