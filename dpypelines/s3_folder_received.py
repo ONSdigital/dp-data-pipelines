@@ -5,7 +5,7 @@ from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.messages.error_handler_module import error_handler
 from dpypelines.pipeline.utils import (
-    copy_s3_processing_folder_to_processed_folder,
+    copy_s3_processing_folder_to_destination_folder,
     delete_s3_processing_folder,
     process_zip_file,
     send_submission_confirmation,
@@ -52,27 +52,47 @@ def start(s3_object_name: str, *args, **kwargs):
         # Upload files & metadata to external APIs.
         if not str_to_bool(os.environ.get("SKIP_DATA_UPLOAD", "False")):
             upload_files(
-                validation_results, email_client, manifest_dict["fileAuthorEmail"]
+                validation_results["config_files"],
+                email_client,
+                manifest_dict["fileAuthorEmail"],
             )
-            upload_metadata(local_store, email_client, manifest_dict["fileAuthorEmail"])
 
-        send_submission_confirmation(email_client, manifest_dict["fileAuthorEmail"])
+            metadata_submitted = upload_metadata(
+                validation_results["metadata"],
+                email_client,
+                manifest_dict["fileAuthorEmail"],
+            )
 
-        # Copy all files in S3 "processing" folder to S3 "processed" folder
-        copy_s3_processing_folder_to_processed_folder(
-            s3_object_name,
-            decompressed_file_dir,
-            s3_processing_folder,
-        )
+        if metadata_submitted:
+            # Copy all files in S3 "processing" folder to S3 "processed" folder
+            copy_s3_processing_folder_to_destination_folder(
+                s3_object_name, decompressed_file_dir, s3_processing_folder, "processed"
+            )
 
-        # Delete files from S3 "processing" folder to indicate successful submission
-        delete_s3_processing_folder(
-            s3_object_name, decompressed_file_dir, s3_processing_folder
-        )
+            send_submission_confirmation(email_client, manifest_dict["fileAuthorEmail"])
 
-        notifier.success()
-        logger.info("ETL process completed successfully")
-        return True
+            notifier.success()
+            logger.info("ETL process completed successfully")
+
+            # Delete files from S3 "processing" folder
+            delete_s3_processing_folder(
+                s3_object_name, decompressed_file_dir, s3_processing_folder
+            )
+            # 2809 Can return value be removed now? Have a feeling this was a temporary fix for something...
+            return True
+        else:
+            # Copy all files in S3 "processing" folder to S3 "dataset-type-not-static" folder
+            copy_s3_processing_folder_to_destination_folder(
+                s3_object_name,
+                decompressed_file_dir,
+                s3_processing_folder,
+                "dataset-type-not-static",
+            )
+            # Delete files from S3 "processing" folder
+            delete_s3_processing_folder(
+                s3_object_name, decompressed_file_dir, s3_processing_folder
+            )
+            return False
 
     except Exception as err:
         logger.error("ETL process failed", err)

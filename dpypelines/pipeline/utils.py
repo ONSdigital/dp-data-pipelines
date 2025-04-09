@@ -10,11 +10,11 @@ from dpytools.logging.logger import DpLogger
 from dpytools.s3.basic import _get_s3_client, upload_local_file_to_s3
 from dpytools.stores.directory.local import LocalDirectoryStore
 
-from dpypelines.pipeline.errors import (
-    DatasetAPIRequestCreationException,
-    DistributionsException,
-    ValidationException,
+from dpypelines.pipeline.dataset_api import (
+    check_dataset_type_is_static,
+    get_post_request_values_from_metadata,
 )
+from dpypelines.pipeline.errors import ValidationException
 from dpypelines.pipeline.messages.email_templates import (
     submission_processed_email,
     successful_file_upload_email,
@@ -165,33 +165,34 @@ def upload_to_s3_processing_folder(
     return s3_processing_folder
 
 
-def copy_s3_processing_folder_to_processed_folder(
+def copy_s3_processing_folder_to_destination_folder(
     s3_object_name: str,
     decompressed_file_dir: Path,
     s3_processing_folder: str,
+    destination: str,
 ) -> str:
     """
-    Copy all files in S3 "processing" folder to S3 "processed" folder.
+    Copy all files in S3 "processing" folder to S3 destination folder.
     """
     bucket_name, object_key = s3_object_name.split("/", maxsplit=1)
-    s3_processed_folder = f"processed/{datetime.now().strftime('%y-%m-%dT%H-%M')}-{decompressed_file_dir.parts[-1]}"
+    s3_destination_folder = f"{destination}/{datetime.now().strftime('%y-%m-%dT%H-%M')}-{decompressed_file_dir.parts[-1]}"
     s3_client = _get_s3_client(profile_name=os.environ.get("AWS_PROFILE"))
 
-    # Copy unzipped files from S3 "processing" folder to "processed" folder
+    # Copy unzipped files from S3 "processing" folder to destination folder
     for file_path in decompressed_file_dir.rglob("*"):
         s3_client.copy_object(
             Bucket=bucket_name,
-            Key=f"{s3_processed_folder}/{file_path.name}",
+            Key=f"{s3_destination_folder}/{file_path.name}",
             CopySource={
                 "Bucket": bucket_name,
                 "Key": f"{s3_processing_folder}/{file_path.name}",
             },
         )
 
-    # Copy original zip file from S3 "processing" folder to "processed" folder
+    # Copy original zip file from S3 "processing" folder to destination folder
     s3_client.copy_object(
         Bucket=bucket_name,
-        Key=f"{s3_processed_folder}/{object_key}",
+        Key=f"{s3_destination_folder}/{object_key}",
         CopySource={
             "Bucket": bucket_name,
             "Key": f"{s3_processing_folder}/{object_key}",
@@ -199,10 +200,10 @@ def copy_s3_processing_folder_to_processed_folder(
     )
     logger.info(
         "Decompressed files and original zip submission copied to S3 'processed' folder",
-        data={"s3_processed_folder": s3_processed_folder},
+        data={"s3_processed_folder": s3_destination_folder},
     )
 
-    return s3_processed_folder
+    return s3_destination_folder
 
 
 def delete_s3_processing_folder(
@@ -282,144 +283,56 @@ def validate_pipeline(files_dir: Path, pipeline_config: dict) -> dict:
     return validation_results
 
 
-def get_post_request_values_from_metadata(metadata: dict):
-    """
-    Generate the required path values and request body to submit to the Dataset API. This will be submitted as a POST request to the endpoint `/datasets/{dataset_path}/editions/{edition_path}/versions`
-    """
-    try:
-        dataset_path = metadata.get("dcterms:identifier", None)
-        editions = metadata.get("TBC:edition", None)
-        if editions is not None:
-            edition: dict = editions[0]
-        else:
-            edition = {"dcterms:identifier": None}
-        edition_path = edition.get("dcterms:identifier", None)
-        dcat_distributions = edition.get("dcat:distribution", None)
-        if dcat_distributions is not None:
-            distributions = get_distribution_details_for_request(dcat_distributions)
-        else:
-            distributions = None
-
-        request_body = {
-            # Required properties (from swagger.yaml)
-            "distributions": distributions,
-            "release_date": "The release date of this version of the dataset",
-            # Tier 0 metadata standards - required with output
-            "title": metadata.get("dcterms:title", None),
-            "description": metadata.get("dcterms:description", None),
-            "next_release": metadata.get("TBC:nextRelease", None),
-            # Tier 0 metadata standards - added during publishing
-            "type": "static",
-            "state": "associated",
-            "themes": metadata.get("dcat:theme", None),
-            # Additional properties (from swagger.yaml)
-            "alerts": edition.get("TBC:alerts", None),
-            "quality_designation": edition.get("TBC:quality_designation", None),
-            "usage_notes": edition.get("TBC:usage_notes", None),
-            # TODO `links:spatial` and `links:job` fields to be removed from data model - hardcode for now to allow request to succeed
-            "links": {
-                "spatial": {"href": "string"},
-                "job": {"href": "string", "id": "string"},
-            },
-            # Not included here ($ref: '#/definitions/Version')
-            # collection_id (auto generated?)
-            # dimensions $ref: '#/definitions/Dimension'
-            # edition (readOnly - auto generated?)
-            # dataset_id (auto generated?)
-            # is_based_on (census only)
-            # last_updated (readOnly - auto generated?)
-            # latest_changes $ref: '#/definitions/LatestChange'
-            # links (auto generated?)
-            # lowest_geography (census only)
-            # temporal $ref: '#/definitions/Temporal'
-            # version (readOnly - auto generated?)
-        }
-        return dataset_path, edition_path, request_body
-    except Exception as err:
-        raise DatasetAPIRequestCreationException(
-            "Error getting POST request values from metadata", metadata=metadata
-        ) from err
-
-
-def get_distribution_details_for_request(dcat_distributions: list) -> list:
-    """
-    Get the information to populate the `distributions` property in the POST request to the Dataset API.
-    """
-    try:
-        distributions = [
-            {
-                "title": distribution["dcterms:title"],
-                "download_url": "The URL to the generated file",
-                # TODO Calculate byte_size during processing
-                "byte_size": "The size of the file in bytes",
-                "format": distribution["TBC:distributionFormat"],
-                "media_type": distribution["dcat:mediaType"],
-            }
-            for distribution in dcat_distributions
-        ]
-        logger.info(
-            "Distributions information retrieved",
-            data={"distributions": distributions},
-        )
-        return distributions
-    except Exception as err:
-        raise DistributionsException(
-            "Error getting details of distributions for Dataset API request",
-            distributions=dcat_distributions,
-        ) from err
-
-
-def upload_metadata(local_store, email_client, submitter_email):
-    """Upload metadata and send notifications."""
+def upload_metadata(metadata, email_client, submitter_email) -> bool:
+    """Upload metadata to the Dataset API and send notifications."""
     dataset_api_url = os.environ.get("DATASET_API_URL")
     if not dataset_api_url:
-        err_msg = (
-            f"Required environment variable(s) not set: "
-            f"DATASET_API_URL: {dataset_api_url}."
-        )
-        raise EnvironmentError(err_msg)
+        msg = "Required environment variable(s) not set: DATASET_API_URL"
+        raise EnvironmentError(msg)
 
-    metadata = local_store.get_lone_matching_json_as_dict("^metadata.json$")
-    if not metadata:
-        err_msg = "metadata.json not found in the local store."
-        raise FileNotFoundError(err_msg)
-
+    # Generate POST request body from metadata
     dataset_path, edition_path, request_body = get_post_request_values_from_metadata(
         metadata
     )
     dataset_api_client = DatasetAPIClient(dataset_api_url, dataset_path, edition_path)
-    dataset_api_get_path_response = dataset_api_client.get_path()
-    logger.info(
-        "Dataset API endpoint exists",
-        data={"dataset_api_endpoint": dataset_api_client.full_url},
-    )
 
-    if dataset_api_get_path_response.status_code == 200:
-        dataset_api_client.post_json(request_body)
-        logger.info(
-            "Metadata submitted to Dataset API endpoint",
-            data={"dataset_api_endpoint": dataset_api_client.full_url},
-        )
-        email_content = successful_metadata_submission(dataset_path)
-        email_client.send(submitter_email, email_content.subject, email_content.message)
-    else:
-        logger.info(f"GET request failed with status code: {dataset_api_get_path_response.status_code}. Response body: {dataset_api_get_path_response.response.text}")
-        dataset_api_get_path_response.raise_for_status()
+    # Upload metadata only if the dataset type is "static"
+    if check_dataset_type_is_static(dataset_api_client, email_client, submitter_email):
+        # Verify that the relevant Dataset API endpoint exists
+        dataset_api_get_path_response = dataset_api_client.get_path()
+
+        # If the endpoint exists, send POST request
+        if dataset_api_get_path_response.status_code != 200:
+            dataset_api_get_path_response.raise_for_status()
+        else:
+            logger.info(
+                "Dataset API endpoint exists",
+                data={"dataset_api_endpoint": dataset_api_client.full_url},
+            )
+
+            post_json_response = dataset_api_client.post_json(request_body)
+            if post_json_response.status_code == 201:
+                logger.info(
+                    "Metadata submitted to Dataset API endpoint",
+                    data={"dataset_api_endpoint": dataset_api_client.full_url},
+                )
+                email_content = successful_metadata_submission(dataset_path)
+                email_client.send(
+                    submitter_email, email_content.subject, email_content.message
+                )
+                return True
+    return False
 
 
-def upload_files(validation_results, email_client, submitter_email):
+def upload_files(files_to_upload, email_client, submitter_email):
     """Upload files and send notifications."""
     upload_url = os.environ.get("UPLOAD_SERVICE_URL")
-    dataset_api_url = os.environ.get("DATASET_API_URL")
-    if not upload_url or not dataset_api_url:
-        err_msg = (
-            f"Required environment variable(s) not set: "
-            f"UPLOAD_SERVICE_URL: {upload_url}, DATASET_API_URL: {dataset_api_url}."
-        )
+    if not upload_url:
+        err_msg = "Required environment variable(s) not set: UPLOAD_SERVICE_URL."
         raise EnvironmentError(err_msg)
 
     upload_client = UploadServiceClient(upload_url)
-    for required_file_path in validation_results["config_files"]:
+    for required_file_path in files_to_upload:
         mimetype = get_mimetype(Path(required_file_path).suffix)
         if not mimetype:
             err_msg = f"Uploading file type {Path(required_file_path).suffix} not supported for file: {required_file_path}."
@@ -433,7 +346,7 @@ def upload_files(validation_results, email_client, submitter_email):
         email_content = successful_file_upload_email(Path(required_file_path).name)
         email_client.send(submitter_email, email_content.subject, email_content.message)
         logger.info(
-            "Upload notification email sent",
+            "File upload notification email sent",
             data={"submitter_email": submitter_email, "file": required_file_path},
         )
 

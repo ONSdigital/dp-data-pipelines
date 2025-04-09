@@ -18,45 +18,53 @@
     ],
     "dqv:hasQualityAnnotation": [
         {
-            "dqv:QualityCertificate": "qmi.href.string_required"
+            "dqv:QualityCertificate": "QMI URL"
         }
     ],
     "dcat:contactPoint": [
         {
-            "vcard:fn": "contact.name.string_required",
-            "vcard:hasEmail": "contact.email.string_required",
-            "vcard:hasTelephone": "contact.telephone.string"
+            "vcard:fn": "Contact name",
+            "vcard:hasEmail": "Contact email",
+            "vcard:hasTelephone": "Contact telephone"
         }
     ],
     "dcterms:publisher": [
         {
-            "TBC:type": "publisher.type.string_required",
-            "foaf:name": "publisher.name.string_required",
-            "foaf:homepage": "publisher.href.string_required"
+            "TBC:type": "Publisher type",
+            "foaf:name": "Publisher name",
+            "foaf:homepage": "Publisher link"
         }
     ],
     "TBC:edition": [
         {
             "@type": "dcat:Dataset",
             "dcterms:identifier": "time-series",
+            "dcterms:title": "Edition title",
             "TBC:quality_designation": "QualityDesignationEnum",
             "TBC:usage_notes": [
                 {
-                    "TBC:title": "usage_notes.title.string",
-                    "TBC:note": "usage_notes.note.string"
+                    "TBC:title": "Usge note title",
+                    "TBC:note": "Usage note description"
                 }
             ],
             "TBC:alerts": [
                 {
                     "TBC:type": "AlertTypeEnum",
-                    "adms:versionNotes": "alerts.description.string_required"
+                    "adms:versionNotes": "Alert description"
                 }
             ],
             "dcat:distribution": [
                 {
-                    "dcterms:title": "distribution.title.string_required",
-                    "dcat:mediaType": "MediaTypeEnum",
-                    "TBC:distributionFormat": "DistributionFormatEnum"
+                    "dcterms:title": "CSV distribution title",
+                    "download_url": "https://download.ons.gov.uk/download.csv",
+                    "dcat:mediaType": "text/csv",
+                    "TBC:distributionFormat": "csv"
+                },
+                {
+                    "dcterms:title": "XLS distribution title",
+                    "download_url": "https://download.ons.gov.uk/download.xls",
+                    "dcat:mediaType": "application/vnd.ms-excel",
+                    "TBC:distributionFormat": "xls"
                 }
             ]
         }

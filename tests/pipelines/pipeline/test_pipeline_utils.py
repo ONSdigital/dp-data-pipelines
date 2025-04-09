@@ -8,17 +8,16 @@ from zipfile import ZipFile
 
 import pytest
 
-from dpypelines.pipeline.errors import DatasetAPIRequestCreationException
 from dpypelines.pipeline.utils import (
-    copy_s3_processing_folder_to_processed_folder,
+    copy_s3_processing_folder_to_destination_folder,
     decompress_zip_file,
     delete_s3_processing_folder,
     download_zip_file,
-    get_post_request_values_from_metadata,
     process_zip_file,
     send_submission_confirmation,
     setup_clients,
     upload_files,
+    upload_metadata,
     upload_to_s3_processing_folder,
     validate_pipeline,
 )
@@ -104,7 +103,6 @@ def test_upload_files(mock_get_mimetype, mock_UploadServiceClient):
         os.environ,
         {
             "UPLOAD_SERVICE_URL": "http://upload.url",
-            "DATASET_API_URL": "http://dataset.api.url",
         },
     ):
         upload_files(mock_validation_results, mock_email_client, mock_submitter_email)
@@ -397,10 +395,11 @@ def test_copy_s3_processing_folder_to_processed_folder(
     now = datetime.now()
     mock_timestamp.now.return_value = now
 
-    s3_processed_folder = copy_s3_processing_folder_to_processed_folder(
+    s3_processed_folder = copy_s3_processing_folder_to_destination_folder(
         s3_object_name="bucket/key/file.zip",
         decompressed_file_dir=mock_path,
         s3_processing_folder=f"processing/{now.strftime('%y-%m-%dT%H-%M')}-file",
+        destination="processed",
     )
 
     assert s3_processed_folder == f"processed/{now.strftime('%y-%m-%dT%H-%M')}-file"
@@ -564,31 +563,135 @@ def test_process_zip_file_errors_when_no_files(
     )
 
 
-def test_get_post_request_values_from_valid_metadata():
-    """
-    Tests that the correct dataset_path, edition_path and request_body are returned from a valid metadata.json file
-    """
-    with open("tests/fixtures/test-cases/test_metadata.json", "r") as f:
-        metadata = json.load(f)
-    dataset_path, edition_path, request_body = get_post_request_values_from_metadata(
-        metadata
+@patch("dpypelines.pipeline.utils.check_dataset_type_is_static")
+@patch("dpypelines.pipeline.utils.get_post_request_values_from_metadata")
+@patch("dpypelines.pipeline.utils.DatasetAPIClient")
+def test_upload_metadata_succeeds(
+    mock_DatasetAPIClient, mock_request_values, mock_dataset_type
+):
+    mock_dataset_api_client = MagicMock()
+    mock_DatasetAPIClient.return_value = mock_dataset_api_client
+    mock_dataset_api_client.get_path.return_value.status_code = 200
+    mock_dataset_api_client.post_json.return_value.status_code = 201
+
+    mock_email_client = MagicMock()
+    mock_submitter_email = "test@example.com"
+
+    mock_request_values.return_value = (
+        "dataset_path",
+        "edition_path",
+        {"key": "value"},
     )
-    assert dataset_path == "trade"
-    assert edition_path == "time-series"
-    assert request_body["title"] == "Dataset title"
-    assert ["title", "download_url", "byte_size", "format", "media_type"] == list(
-        request_body["distributions"][0].keys()
-    )
-
-
-def test_get_post_request_values_from_invalid_metadata():
-    """
-    Tests that an error is raised if attempting to get request parameters with an invalid metadata.json file.
-    """
-    with open("tests/fixtures/test-cases/test_metadata_invalid.json", "r") as f:
+    mock_dataset_type.return_value = True
+    with open("tests/fixtures/test-cases/test_metadata.json") as f:
         metadata = json.load(f)
 
-    with pytest.raises(DatasetAPIRequestCreationException) as e:
-        get_post_request_values_from_metadata(metadata)
+    with patch.dict(
+        os.environ,
+        {
+            "DATASET_API_URL": "http://dataset-api.url",
+        },
+    ):
+        metadata_uploaded = upload_metadata(
+            metadata, mock_email_client, mock_submitter_email
+        )
 
-    assert "DatasetAPIRequestCreationException" in str(e)
+    mock_DatasetAPIClient.assert_called_once_with(
+        "http://dataset-api.url", "dataset_path", "edition_path"
+    )
+    mock_dataset_api_client.get_path.assert_called_once()
+
+    mock_request_values.assert_called_once_with(metadata)
+    mock_dataset_type.assert_called_once_with(
+        mock_dataset_api_client, mock_email_client, mock_submitter_email
+    )
+
+    mock_email_client.send.assert_called_with(
+        "test@example.com",
+        "Dataset Ingest: Metadata Submitted",
+        "The metadata for dataset_path has been successfully submitted to the Dataset API.",
+    )
+    assert metadata_uploaded
+
+
+@patch("dpypelines.pipeline.utils.check_dataset_type_is_static")
+@patch("dpypelines.pipeline.utils.get_post_request_values_from_metadata")
+@patch("dpypelines.pipeline.utils.DatasetAPIClient")
+def test_upload_metadata_fails_not_static(
+    mock_DatasetAPIClient, mock_request_values, mock_dataset_type
+):
+    mock_dataset_api_client = MagicMock()
+    mock_DatasetAPIClient.return_value = mock_dataset_api_client
+    mock_dataset_api_client.get_path.return_value.status_code = 200
+
+    mock_email_client = MagicMock()
+    mock_submitter_email = "test@example.com"
+
+    mock_request_values.return_value = (
+        "dataset_path",
+        "edition_path",
+        {"key": "value"},
+    )
+    mock_dataset_type.return_value = False
+    with open("tests/fixtures/test-cases/test_metadata.json") as f:
+        metadata = json.load(f)
+
+    with patch.dict(
+        os.environ,
+        {
+            "DATASET_API_URL": "http://dataset-api.url",
+        },
+    ):
+        metadata_uploaded = upload_metadata(
+            metadata, mock_email_client, mock_submitter_email
+        )
+
+    mock_DatasetAPIClient.assert_called_once_with(
+        "http://dataset-api.url", "dataset_path", "edition_path"
+    )
+
+    mock_request_values.assert_called_once_with(metadata)
+    mock_dataset_type.assert_called_once_with(
+        mock_dataset_api_client, mock_email_client, mock_submitter_email
+    )
+    assert not metadata_uploaded
+
+
+@patch("dpypelines.pipeline.utils.check_dataset_type_is_static")
+@patch("dpypelines.pipeline.utils.get_post_request_values_from_metadata")
+@patch("dpypelines.pipeline.utils.DatasetAPIClient")
+def test_upload_metadata_fails_get_path_404(
+    mock_DatasetAPIClient, mock_request_values, mock_dataset_type
+):
+    mock_dataset_api_client = MagicMock()
+    mock_DatasetAPIClient.return_value = mock_dataset_api_client
+    mock_dataset_api_client.get_path.return_value.status_code = 404
+
+    mock_email_client = MagicMock()
+    mock_submitter_email = "test@example.com"
+
+    mock_request_values.return_value = (
+        "dataset_path",
+        "edition_path",
+        {"key": "value"},
+    )
+    mock_dataset_type.return_value = True
+    with open("tests/fixtures/test-cases/test_metadata.json") as f:
+        metadata = json.load(f)
+
+    with patch.dict(
+        os.environ,
+        {
+            "DATASET_API_URL": "http://dataset-api.url",
+        },
+    ):
+        upload_metadata(metadata, mock_email_client, mock_submitter_email)
+
+    mock_DatasetAPIClient.assert_called_once_with(
+        "http://dataset-api.url", "dataset_path", "edition_path"
+    )
+    mock_dataset_api_client.get_path.return_value.raise_for_status.assert_called_once()
+    mock_request_values.assert_called_once_with(metadata)
+    mock_dataset_type.assert_called_once_with(
+        mock_dataset_api_client, mock_email_client, mock_submitter_email
+    )
