@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.2.0-wip.2 (2025-04-10)
+
+### Features
+
+- Testing
+  ([`54b7ec4`](https://github.com/ONSdigital/dp-data-pipelines/commit/54b7ec41fdf89561120a5112d1ddf7032e14d403))
+
+
 ## v0.2.0-wip.1 (2025-04-09)
 
 ### Bug Fixes
