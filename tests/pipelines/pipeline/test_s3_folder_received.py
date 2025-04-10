@@ -6,8 +6,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import dpypelines.pipeline.job_configuration
-from dpypelines.s3_folder_received import start
 from dpypelines.pipeline.job_configuration import JobConfiguration
+from dpypelines.s3_folder_received import start
+
 
 @patch("dpypelines.pipeline.utils.JobConfiguration")
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
@@ -31,6 +32,7 @@ def test_start_succeeds(
 ):
     reload(dpypelines.pipeline.job_configuration)
     from dpypelines.pipeline.job_configuration import JobConfiguration
+
     mock_notifier, mock_email_client = (
         MagicMock(name="notifier"),
         MagicMock(name="email_client"),
@@ -83,6 +85,7 @@ def test_start_succeeds(
         "dummy_s3_object_name", Path("files_dir"), "processing/timestamp-files"
     )
 
+
 @patch("dpypelines.pipeline.utils.JobConfiguration")
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
@@ -99,7 +102,7 @@ def test_start_fails_dataset_not_static(
     mock_upload_metadata,
     mock_copy_s3_processing,
     mock_delete_s3_processing,
-    mock_job_config
+    mock_job_config,
 ):
     mock_notifier, mock_email_client = (
         MagicMock(name="notifier"),
