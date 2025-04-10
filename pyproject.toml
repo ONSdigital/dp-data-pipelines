@@ -59,3 +59,12 @@ type = "github"
 [tool.semantic_release.branches]
 release = { match = "release/*", prerelease = true, prerelease_token = "wip",  changelog_file = "CHANGELOG.md",  commit = false }
 testing = { match = "testing/*", prerelease = true, prerelease_token = "wip",  changelog_file = "CHANGELOG.md",  commit = false }
+
+[semantic_release]
+tag_format = "v{version}"
+version_toml = [
+    "pyproject.toml:tool.poetry.version",
+]
+version_variables = [
+    "Makefile:version:tf"
+]
