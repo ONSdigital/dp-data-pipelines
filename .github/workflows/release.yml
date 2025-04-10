@@ -24,6 +24,7 @@ jobs:
       id-token: write
       checks: write
       statuses: write
+      pull-requests: write
     outputs:
       version: ${{ steps.release.outputs.tag }}
       released: ${{ steps.release.outputs.released }}
