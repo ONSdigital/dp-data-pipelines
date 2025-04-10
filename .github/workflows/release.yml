@@ -48,6 +48,8 @@ jobs:
           tag: "false"
           
       - name: Create Pull Request
+        id: create_pull_request
+        if: steps.release.outputs.released == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
           commit-message: "chore: Release ${{ steps.release.outputs.tag }}"
@@ -57,12 +59,13 @@ jobs:
 
       - name: Create Release
         id: create_release
+        if: steps.release.outputs.released == 'true'
         uses: ncipollo/release-action@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag: "${{ steps.release.outputs.tag }}"
           name: "Release ${{ steps.release.outputs.tag }}"
-          bodyFile: "CHANGELOG.md"
+          bodyFile: "${{ github.workspace }}/CHANGELOG.md"
           draft: false
-          prerelease: true
+          prerelease: ${{steps.release.outputs.is_prerelease}}
