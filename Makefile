@@ -1,6 +1,6 @@
 .PHONY: all
 
-version = v0.2.0-rc.1
+version = v0.2.0-rc.3
 remote_tools_config = { git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "${version}" }
 local_tools_config = {path = "../dp-python-tools",  develop = true}
 # Help menu on a naked make
