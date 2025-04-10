@@ -7,7 +7,7 @@ from dpytools.email.ses.client import SesClient
 from dpytools.utilities.utilities import str_to_bool
 from email_validator import EmailNotValidError, validate_email
 
-from dpypelines.pipeline.job_configuration import JobConfiguration
+from dpypelines.pipeline.config import JobConfiguration
 
 MIMETYPES = {
     ".csv": "text/csv",
@@ -27,7 +27,7 @@ def get_email_client():
     """
     Creates an email client object to be used for sending notification/error report emails.
     """
-    emails_disabled = os.environ.get("DISABLE_EMAILS", "True")
+    emails_disabled = str(JobConfiguration().disable_emails)
     emails_disabled = str_to_bool(emails_disabled)
 
     if emails_disabled:

@@ -1,20 +1,38 @@
 import os
 from typing import List, Optional
 
+from dpytools.logging.logger import DpLogger
+from dpytools.secrets.secret import Secret
 from dpytools.secrets.secrets_client import SecretsClient
 from dpytools.utilities.utilities import str_to_bool
+
+from dpypelines.pipeline.config.secret_config import SecretConfig
+from dpypelines.pipeline.config.secret_mapping import SecretMapping
+
+
+def get_secret_name() -> str:
+    return f"dp-{os.environ.get('ENVIRONMENT', 'sandbox')}-secrets"
+
+
+logger = DpLogger("data-ingress-pipeline")
 
 """
 Secrets to retrieve from AWS Secrets Manager
 """
 secrets_config = [
-    # Secret ID, JobConfiguration attribute
-    ("DATASET_API_URL", "dataset_api_url"),
-    ("UPLOAD_SERVICE_URL", "upload_service_url"),
-    ("DE_SLACK_WEBHOOK", "de_slack_webhook"),
-    ("SERVICE_TOKEN_FOR_UPLOAD", "service_token_for_upload"),
-    ("SES_EMAIL_IDENTITY", "ses_email_identity"),
-    ("LAMBDA_FAILURE_SLACK_WEBHOOK", "lambda_failure_slack_webhook"),
+    SecretConfig(
+        secret_id=get_secret_name(),
+        mappings=[
+            SecretMapping("DATASET_API_URL", "dataset_api_url"),
+            SecretMapping("UPLOAD_SERVICE_URL", "upload_service_url"),
+            SecretMapping("DE_SLACK_WEBHOOK", "de_slack_webhook"),
+            SecretMapping("SERVICE_TOKEN_FOR_UPLOAD", "service_token_for_upload"),
+            SecretMapping("SES_EMAIL_IDENTITY", "ses_email_identity"),
+            SecretMapping(
+                "LAMBDA_FAILURE_SLACK_WEBHOOK", "lambda_failure_slack_webhook"
+            ),
+        ],
+    )
 ]
 
 """
@@ -51,7 +69,7 @@ class JobConfiguration:
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
-            cls._instance = super(JobConfiguration, cls).__new__(cls)
+            cls._instance = object.__new__(cls)
 
         return cls._instance
 
@@ -61,32 +79,47 @@ class JobConfiguration:
         environment_config: List[tuple] = environment_variables_config,
         secrets_client: Optional[SecretsClient] = None,
     ):
-        if secrets_client is None:
-            secrets_client = SecretsClient()
-
-        self.secrets_client = secrets_client
+        self.secrets_client = (
+            secrets_client if secrets_client is not None else SecretsClient()
+        )
         self.secrets_config = secrets_config
         self.environment_config = environment_config
+        self.load_config()
 
-    def load_config(self) -> Optional[str]:
+    def load_config(self, reload: bool = False) -> Optional[str]:
         """
         Load config variables
 
+        Args:
+            reload: Force reloading of config
         :return: Error message (if any)
         """
+        if self.loaded and not reload:
+            return
+
+        logger.info("Loading JobConfiguration config")
+
         error = self._load_secrets()
         if error is not None:
             self.error = error
             self.loaded = True
+            logger.error(f"Error loading secrets: {self.error}", error=Exception(error))
             return error
 
         self._load_env_vars()
+        
+        self.export_env_vars()
         self.loaded = True
+        logger.info("Loaded JobConfiguration config")
+
+    def export_env_vars(self):
+        os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = self.service_token_for_upload
 
     def _load_env_vars(self):
         """
         Loads config variables from environment vars
         """
+        logger.info("Setting JobConfiguration values from environment variables")
         for name, attribute, default_value in self.environment_config:
             self._load_environment_variable(name, attribute, default_value)
 
@@ -96,15 +129,30 @@ class JobConfiguration:
 
         :return: Error message if any
         """
+        logger.info("Setting JobConfiguration values from secrets")
         for secret_config in self.secrets_config:
-            error = self._load_secret(secret_config[0], secret_config[1])
+            error = self._load_secret(secret_config)
 
             if error is not None:
                 return error
 
         return None
 
-    def _load_secret(self, secret_name: str, class_attribute: str) -> Optional[str]:
+    def _set_values_from_secret(
+        self, secret: Secret, secret_mapping: List[SecretMapping]
+    ) -> Optional[str]:
+        """
+        Set various attributes based on the value of the secret
+        :return: Error message if any
+        """
+        if secret.value is None or not isinstance(secret.value, dict):
+            raise ValueError("Expected secret to be a dictionary but it is not.")
+
+        for mapping in secret_mapping:
+            value = secret.value.get(mapping.secret_key, None)
+            self.__setattr__(mapping.config_attribute, value)
+
+    def _load_secret(self, secret_config: SecretConfig) -> Optional[str]:
         """
         Load a secret from AWS Secrets Manager and set the appropriate attribute of the
         JobConfiguration instance.
@@ -114,11 +162,24 @@ class JobConfiguration:
 
         :return: Error message if any
         """
-        response = self.secrets_client.get_secret(secret_name)
-        if response.success and response.value is not None:
-            self.__setattr__(class_attribute, response.value)
+        response = self.secrets_client.get_secret(secret_config.secret_id)
+        if (
+            response is None
+            or not response.success
+            or response.error is not None
+            or response.value is None
+        ):
+            return (
+                response.error
+                if response.error is not None
+                else f"An unknown error occurred retrieving {secret_config.secret_id}"
+            )
 
-        return response.error
+        if secret_config.config_attribute is not None:
+            self.__setattr__(secret_config.config_attribute, response.value)
+
+        if secret_config.mappings is not None:
+            self._set_values_from_secret(response, secret_config.mappings)
 
     def _load_environment_variable(
         self, variable_name: str, class_attribute: str, default_value: Optional[str]

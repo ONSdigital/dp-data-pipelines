@@ -562,16 +562,24 @@ def test_process_zip_file_errors_when_no_files(
     )
 
 
+@patch("dpypelines.pipeline.utils.JobConfiguration")
 @patch("dpypelines.pipeline.utils.check_dataset_type_is_static")
 @patch("dpypelines.pipeline.utils.get_post_request_values_from_metadata")
 @patch("dpypelines.pipeline.utils.DatasetAPIClient")
 def test_upload_metadata_succeeds(
-    mock_DatasetAPIClient, mock_request_values, mock_dataset_type
+    mock_DatasetAPIClient, mock_request_values, mock_dataset_type, mock_job_config
 ):
     mock_dataset_api_client = MagicMock()
     mock_DatasetAPIClient.return_value = mock_dataset_api_client
     mock_dataset_api_client.get_path.return_value.status_code = 200
     mock_dataset_api_client.post_json.return_value.status_code = 201
+
+    mock_job_configuration = MagicMock()
+
+    upload_url = "http://upload.url"
+    dataset_api_url = "http://dataset-api.url"
+    mock_job_configuration.upload_service_url = upload_url
+    mock_job_configuration.dataset_api_url = dataset_api_url
 
     mock_request_values.return_value = (
         "dataset_path",
@@ -581,14 +589,9 @@ def test_upload_metadata_succeeds(
     mock_dataset_type.return_value = True
     with open("tests/fixtures/test-cases/test_metadata.json") as f:
         metadata = json.load(f)
+    mock_job_config.return_value = mock_job_configuration
 
-    with patch.dict(
-        os.environ,
-        {
-            "DATASET_API_URL": "http://dataset-api.url",
-        },
-    ):
-        metadata_uploaded = upload_metadata(metadata)
+    metadata_uploaded = upload_metadata(metadata)
 
     mock_DatasetAPIClient.assert_called_once_with(
         "http://dataset-api.url", "dataset_path", "edition_path"
@@ -600,15 +603,23 @@ def test_upload_metadata_succeeds(
     assert metadata_uploaded
 
 
+@patch("dpypelines.pipeline.utils.JobConfiguration")
 @patch("dpypelines.pipeline.utils.check_dataset_type_is_static")
 @patch("dpypelines.pipeline.utils.get_post_request_values_from_metadata")
 @patch("dpypelines.pipeline.utils.DatasetAPIClient")
 def test_upload_metadata_fails_not_static(
-    mock_DatasetAPIClient, mock_request_values, mock_dataset_type
+    mock_DatasetAPIClient, mock_request_values, mock_dataset_type, mock_job_config
 ):
     mock_dataset_api_client = MagicMock()
     mock_DatasetAPIClient.return_value = mock_dataset_api_client
     mock_dataset_api_client.get_path.return_value.status_code = 200
+
+    mock_job_configuration = MagicMock()
+
+    upload_url = "http://upload.url"
+    dataset_api_url = "http://dataset-api.url"
+    mock_job_configuration.upload_service_url = upload_url
+    mock_job_configuration.dataset_api_url = dataset_api_url
 
     mock_request_values.return_value = (
         "dataset_path",
@@ -619,13 +630,9 @@ def test_upload_metadata_fails_not_static(
     with open("tests/fixtures/test-cases/test_metadata.json") as f:
         metadata = json.load(f)
 
-    with patch.dict(
-        os.environ,
-        {
-            "DATASET_API_URL": "http://dataset-api.url",
-        },
-    ):
-        metadata_uploaded = upload_metadata(metadata)
+    mock_job_config.return_value = mock_job_configuration
+
+    metadata_uploaded = upload_metadata(metadata)
 
     mock_DatasetAPIClient.assert_called_once_with(
         "http://dataset-api.url", "dataset_path", "edition_path"
@@ -636,15 +643,23 @@ def test_upload_metadata_fails_not_static(
     assert not metadata_uploaded
 
 
+@patch("dpypelines.pipeline.utils.JobConfiguration")
 @patch("dpypelines.pipeline.utils.check_dataset_type_is_static")
 @patch("dpypelines.pipeline.utils.get_post_request_values_from_metadata")
 @patch("dpypelines.pipeline.utils.DatasetAPIClient")
 def test_upload_metadata_fails_get_path_404(
-    mock_DatasetAPIClient, mock_request_values, mock_dataset_type
+    mock_DatasetAPIClient, mock_request_values, mock_dataset_type, mock_job_config
 ):
     mock_dataset_api_client = MagicMock()
     mock_DatasetAPIClient.return_value = mock_dataset_api_client
     mock_dataset_api_client.get_path.return_value.status_code = 404
+
+    mock_job_configuration = MagicMock()
+
+    upload_url = "http://upload.url"
+    dataset_api_url = "http://dataset-api.url"
+    mock_job_configuration.upload_service_url = upload_url
+    mock_job_configuration.dataset_api_url = dataset_api_url
 
     mock_request_values.return_value = (
         "dataset_path",
@@ -655,13 +670,9 @@ def test_upload_metadata_fails_get_path_404(
     with open("tests/fixtures/test-cases/test_metadata.json") as f:
         metadata = json.load(f)
 
-    with patch.dict(
-        os.environ,
-        {
-            "DATASET_API_URL": "http://dataset-api.url",
-        },
-    ):
-        upload_metadata(metadata)
+    mock_job_config.return_value = mock_job_configuration
+
+    upload_metadata(metadata)
 
     mock_DatasetAPIClient.assert_called_once_with(
         "http://dataset-api.url", "dataset_path", "edition_path"

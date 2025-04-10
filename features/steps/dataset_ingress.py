@@ -1,11 +1,13 @@
-from pathlib import Path
 import json
+import os
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
 from behave import *
 from dictdiffer import diff
+
 from dpypelines.s3_folder_received import start
-from unittest.mock import patch, MagicMock
-import os
 
 CONFIGURATION = {
     "valid": {

@@ -24,21 +24,21 @@ def before_all(context):
     """
 
     # Set environment variable to not send notifications
-    context.disable_notification_setting = os.environ.get("DISABLE_NOTIFICATIONS", None)
+    context.disable_notification_setting = JobConfiguration().disable_notifications
     os.environ["DISABLE_NOTIFICATIONS"] = "True"
 
     # Don't skip the upload when testing
-    context.skip_data_upload = os.environ.get("SKIP_DATA_UPLOAD", None)
+    context.skip_data_upload = JobConfiguration().skip_data_upload
     os.environ["SKIP_DATA_UPLOAD"] = "False"
 
     context.upload_service_url = JobConfiguration().upload_service_url
-    JobConfiguration().upload_service_url = "http://127.0.0.1:5001/upload-new"
+    os.environ["UPLOAD_SERVICE_URL"] = "http://127.0.0.1:5001/upload-new"
 
     context.dataset_api_url = JobConfiguration().dataset_api_url
-    JobConfiguration().dataset_api_url = "http://127.0.0.1:5001/datasets"
+    os.environ["DATASET_API_URL"] = "http://127.0.0.1:5001/datasets"
 
     context.service_token_for_upload = JobConfiguration().service_token_for_upload
-    JobConfiguration().service_token_for_upload = "not-a-real-token"
+    os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = "not-a-real-token"
 
     context.features_directory = Path(__file__).parent
 

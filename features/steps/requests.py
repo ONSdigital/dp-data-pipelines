@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
-from urllib3.util import parse_url
+
 from behave import *
+from urllib3.util import parse_url
 
 
 def _parse_destination_url_from_log(log: str) -> str:

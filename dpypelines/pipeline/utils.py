@@ -10,17 +10,13 @@ from dpytools.logging.logger import DpLogger
 from dpytools.s3.basic import _get_s3_client, upload_local_file_to_s3
 from dpytools.stores.directory.local import LocalDirectoryStore
 
+from dpypelines.pipeline.config import JobConfiguration
 from dpypelines.pipeline.dataset_api import (
     check_dataset_type_is_static,
     get_post_request_values_from_metadata,
 )
 from dpypelines.pipeline.errors import ValidationException
 from dpypelines.pipeline.messages.email_templates import submission_processed_email
-from dpypelines.pipeline.messages.notification import PipelineNotifier
-from dpypelines.pipeline.errors import ValidationException
-from dpypelines.pipeline.job_configuration import JobConfiguration
-from dpypelines.pipeline.messages.email_templates import submission_processed_email
-
 from dpypelines.pipeline.messages.notification import NopNotifier, PipelineNotifier
 from dpypelines.pipeline.messages.utils import (
     get_email_client,
@@ -39,7 +35,7 @@ def create_notifier(webhook: str, process_start_time=None):
     Enables use of webhooks from the AWS secrets manager rather than env vars.
     """
 
-    notifications_disabled = os.environ.get("DISABLE_NOTIFICATIONS", None)
+    notifications_disabled = str(JobConfiguration().disable_notifications)
     notifications_disabled = (
         False if notifications_disabled is None else str_to_bool(notifications_disabled)
     )
@@ -303,9 +299,9 @@ def upload_metadata(metadata) -> bool:
     """
     Upload metadata to the Dataset API.
     """
-    dataset_api_url = os.environ.get("DATASET_API_URL")
+    dataset_api_url = JobConfiguration().dataset_api_url
     if not dataset_api_url:
-        msg = "Required environment variable not set: DATASET_API_URL"
+        msg = "Required variable not set: DATASET_API_URL"
         raise EnvironmentError(msg)
 
     # Generate POST request body from metadata

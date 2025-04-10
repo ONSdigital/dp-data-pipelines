@@ -1,16 +1,12 @@
-import os
-from importlib import reload
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-import dpypelines.pipeline.job_configuration
-from dpypelines.pipeline.job_configuration import JobConfiguration
 from dpypelines.s3_folder_received import start
 
 
-@patch("dpypelines.pipeline.utils.JobConfiguration")
+@patch("dpypelines.s3_folder_received.JobConfiguration")
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
 @patch("dpypelines.s3_folder_received.upload_metadata")
@@ -30,8 +26,6 @@ def test_start_succeeds(
     mock_delete_s3_processing,
     mock_job_config,
 ):
-    reload(dpypelines.pipeline.job_configuration)
-    from dpypelines.pipeline.job_configuration import JobConfiguration
 
     mock_notifier, mock_email_client = (
         MagicMock(name="notifier"),
@@ -64,6 +58,7 @@ def test_start_succeeds(
     dataset_api_url = "http://datasetapi.url"
     mock_job_configuration.upload_service_url = upload_url
     mock_job_configuration.dataset_api_url = dataset_api_url
+    mock_job_configuration.skip_data_upload = False
     mock_job_config.return_value = mock_job_configuration
 
     start("dummy_s3_object_name")
@@ -86,7 +81,7 @@ def test_start_succeeds(
     )
 
 
-@patch("dpypelines.pipeline.utils.JobConfiguration")
+@patch("dpypelines.s3_folder_received.JobConfiguration")
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
 @patch("dpypelines.s3_folder_received.upload_metadata")
@@ -136,6 +131,7 @@ def test_start_fails_dataset_not_static(
     dataset_api_url = "http://datasetapi.url"
     mock_job_configuration.upload_service_url = upload_url
     mock_job_configuration.dataset_api_url = dataset_api_url
+    mock_job_configuration.skip_data_upload = False
     mock_job_config.return_value = mock_job_configuration
 
     start("dummy_s3_object_name")
