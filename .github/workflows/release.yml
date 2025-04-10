@@ -48,7 +48,7 @@ jobs:
       - name: Create Verified Release Commit
         if: steps.release.outputs.released == 'true'
         run: |
-          echo "Release ${{ steps.release.outputs.tag }}" > RELEASE.md
+          echo "Release ${{ steps.release.outputs.tag }}"
           
           # Use GraphQL API for verified commit
           gh api graphql \
