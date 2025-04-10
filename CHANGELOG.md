@@ -1,6 +1,70 @@
 # CHANGELOG
 
 
+## v0.2.0-wip.10 (2025-04-10)
+
+### Features
+
+- Write pull request
+  ([`39ba2f2`](https://github.com/ONSdigital/dp-data-pipelines/commit/39ba2f23e61da38a0124545884be0d183f85906a))
+
+
+## v0.2.0-wip.9 (2025-04-10)
+
+### Features
+
+- Create PR
+  ([`9f4d3f2`](https://github.com/ONSdigital/dp-data-pipelines/commit/9f4d3f2b7aaf6c934301aa1cb37736bd0b0cadb2))
+
+
+## v0.2.0-wip.8 (2025-04-10)
+
+### Features
+
+- Testing
+  ([`d2c4bb5`](https://github.com/ONSdigital/dp-data-pipelines/commit/d2c4bb54905a75d6f1feab3b54da2afce99bc466))
+
+
+## v0.2.0-wip.7 (2025-04-10)
+
+### Features
+
+- Test
+  ([`da4bddc`](https://github.com/ONSdigital/dp-data-pipelines/commit/da4bddcdb87d61a77a1b9b386bbc33807ac1e53f))
+
+
+## v0.2.0-wip.6 (2025-04-10)
+
+### Features
+
+- Not gonna work
+  ([`b4e26a8`](https://github.com/ONSdigital/dp-data-pipelines/commit/b4e26a813c38ebc7db6cc51142cea150573a810e))
+
+
+## v0.2.0-wip.5 (2025-04-10)
+
+### Features
+
+- Testing
+  ([`afdc60c`](https://github.com/ONSdigital/dp-data-pipelines/commit/afdc60c35192b112cc3e0769e4b7d57188636259))
+
+
+## v0.2.0-wip.4 (2025-04-10)
+
+### Features
+
+- Test
+  ([`c0c9249`](https://github.com/ONSdigital/dp-data-pipelines/commit/c0c92490aead07a19338882c7426dc86b29b4d49))
+
+
+## v0.2.0-wip.3 (2025-04-10)
+
+### Features
+
+- Test
+  ([`0cc578d`](https://github.com/ONSdigital/dp-data-pipelines/commit/0cc578d34cbee627f45910ec126fad24532e2a19))
+
+
 ## v0.2.0-wip.2 (2025-04-10)
 
 ### Features
