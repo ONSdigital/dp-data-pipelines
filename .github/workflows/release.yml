@@ -55,9 +55,9 @@ jobs:
               const { owner, repo } = context.repo;
               const tag = '${{ steps.release.outputs.tag }}';
               
-              const createBlobForFile = (octo, org, repo) => async (filePath) => {
+              const createBlobForFile = (org, repo) => async (filePath) => {
                 const content = await getFileAsUTF8(filePath)
-                const blobData = await octo.rest.git.createBlob({
+                const blobData = await github.rest.git.createBlob({
                     owner: org,
                     repo,
                     content,
@@ -66,15 +66,14 @@ jobs:
                 return blobData.data
               }
 
-              const createNewTree = async (octo, owner, repo, blobs, paths, parentTreeSha) => {
-                  // My custom config. Could be taken as parameters
+              const createNewTree = async (owner, repo, blobs, paths, parentTreeSha) => {
                   const tree = blobs.map(({ sha }, index) => ({
                       path: paths[index],
                       mode: `100644`,
                       type: `blob`,
                       sha,
                   }))
-                  const { data } = await octo.rest.git.createTree({
+                  const { data } = await github.rest.git.createTree({
                       owner,
                       repo,
                       tree,
@@ -83,8 +82,8 @@ jobs:
                   return data
               }
 
-              const createNewCommit = async (octo, org, repo, message, currentTreeSha, currentCommitSha) =>
-                  (await octo.rest.git.createCommit({
+              const createNewCommit = async (org, repo, message, currentTreeSha, currentCommitSha) =>
+                  (await github.rest.git.createCommit({
                       owner: org,
                       repo,
                       message,
@@ -93,8 +92,8 @@ jobs:
                   })).data
 
               console.log(createNewCommit);
-              const setBranchToCommit = (octo, org, repo, branch, commitSha) =>
-                  octo.rest.git.updateRef({
+              const setBranchToCommit = (org, repo, branch, commitSha) =>
+                  github.rest.git.updateRef({
                       owner: org,
                       repo,
                       ref: `heads/${branch}`,
@@ -108,12 +107,12 @@ jobs:
                 ref: `heads/${process.env.BRANCH}`
               });
               const latestCommitSha = refData.object.sha;
-              const { data: commitData } = await octo.rest.git.getCommit({
+              const { data: commitData } = await github.rest.git.getCommit({
                 owner: org,
                 repo,
                 commit_sha: commitSha,
               })
-              const filesBlobs = await Promise.all(filesPaths.map(createBlobForFile(octo, org, repo)))
+              const filesBlobs = await Promise.all(filesPaths.map(createBlobForFile(org, repo)))
               const pathsForBlobs = filesPaths.map(fullPath => path.relative(coursePath, fullPath))
 
               const currentCommitTreeSha = commitData.tree.sha
@@ -133,7 +132,7 @@ jobs:
                     newTree.sha,
                     latestCommitSha
                 )
-                await setBranchToCommit(octo, org, repo, branch, newCommit.sha)
+                await setBranchToCommit(org, repo, branch, newCommit.sha)
 
               // Create the release
               await github.rest.repos.createRelease({
