@@ -1,9 +1,11 @@
 import os
+from importlib import reload
 from unittest.mock import MagicMock, patch
 
 import pytest
 from dpytools.secrets.secret import Secret
 
+import dpypelines.pipeline.job_configuration
 from dpypelines.pipeline.job_configuration import JobConfiguration, secrets_config
 
 secrets = {}
@@ -40,6 +42,9 @@ def test_should_load_config(secrets_client):
     The result should raisei no errors, with the contents matching the expected results.
     """
     secrets_client.return_value.get_secret.side_effect = get_secret
+
+    reload(dpypelines.pipeline.job_configuration)
+    from dpypelines.pipeline.job_configuration import JobConfiguration
 
     mp = pytest.MonkeyPatch()
 
@@ -87,6 +92,9 @@ def test_should_load_secrets_from_constructor(secrets_client):
     """
     secrets_client.return_value.get_secret.side_effect = get_secret
 
+    reload(dpypelines.pipeline.job_configuration)
+    from dpypelines.pipeline.job_configuration import JobConfiguration
+
     config = JobConfiguration(
         secrets_client=secrets_client(), secrets_config=test_secret_config
     )
@@ -108,6 +116,9 @@ def test_should_load_env_vars_from_constructor(secrets_client):
     matching expected results.
     """
     secrets_client.return_value.get_secret.side_effect = get_secret
+
+    reload(dpypelines.pipeline.job_configuration)
+    from dpypelines.pipeline.job_configuration import JobConfiguration
 
     # First tuple element == the environment variable config
     # Second tuple element == value to set environment var to
@@ -168,24 +179,20 @@ def test_should_load_env_vars_from_constructor(secrets_client):
 
 
 @patch("dpytools.secrets.secrets_client.SecretsClient")
-def test_should_exits_on_secret_error(secrets_client):
-    """
-    """
+def test_should_exits_on_secret_error(secrets_client, monkeypatch):
+    """ """
     secrets_client.return_value.get_secret.side_effect = get_secret
 
     missing_secret_key = "THIS_SECRET_DOESNT_EXIST"
     missing_secret_attr = "attr_should_not_be_set"
     secrets_with_missing = [*secrets_config, (missing_secret_key, missing_secret_attr)]
 
-    mp = pytest.MonkeyPatch()
+    monkeypatch.setenv("SKIP_DATA_UPLOAD", "True")
+    monkeypatch.setenv("DISABLE_NOTIFICATIONS", "True")
+    monkeypatch.setenv("DISABLE_EMAILS", "True")
 
-    mp.delenv("SKIP_DATA_UPLOAD", raising=False)
-    mp.delenv("DISABLE_NOTIFICATIONS", raising=False)
-    mp.delenv("DISABLE_EMAILS", raising=False)
-
-    mp.setenv("SKIP_DATA_UPLOAD", "True")
-    mp.setenv("DISABLE_NOTIFICATIONS", "True")
-    mp.setenv("DISABLE_EMAILS", "True")
+    reload(dpypelines.pipeline.job_configuration)
+    from dpypelines.pipeline.job_configuration import JobConfiguration
 
     config = JobConfiguration(
         secrets_client=secrets_client(), secrets_config=secrets_with_missing
@@ -210,8 +217,10 @@ def test_should_exits_on_secret_error(secrets_client):
 
 @patch("dpytools.secrets.secrets_client.SecretsClient")
 def test_should_exits_early_on_secret_error(secrets_client):
-    """
-    """
+    """ """
+    reload(dpypelines.pipeline.job_configuration)
+    from dpypelines.pipeline.job_configuration import JobConfiguration
+
     secrets_client.return_value.get_secret.side_effect = get_secret
 
     missing_secret_key = "THIS_SECRET_DOESNT_EXIST"

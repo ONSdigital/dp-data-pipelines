@@ -15,7 +15,11 @@ from dpypelines.pipeline.errors import (
     DistributionsException,
     ValidationException,
 )
-from dpypelines.pipeline.job_configuration import JobConfiguration
+from dpypelines.pipeline.job_configuration import (
+    JobConfiguration,
+    environment_variables_config,
+    secrets_config,
+)
 from dpypelines.pipeline.messages.email_templates import (
     submission_processed_email,
     successful_file_upload_email,

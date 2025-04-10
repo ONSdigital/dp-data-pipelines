@@ -88,28 +88,29 @@ def test_validate_pipeline(mock_validate_pipeline_files):
     assert validation_results == mock_validation_results
 
 
+@patch("dpypelines.pipeline.utils.JobConfiguration")
 @patch("dpypelines.pipeline.utils.UploadServiceClient")
 @patch("dpypelines.pipeline.utils.get_mimetype")
-def test_upload_files(mock_get_mimetype, mock_UploadServiceClient):
+def test_upload_files(mock_get_mimetype, mock_UploadServiceClient, mock_job_config):
     """Test that `upload_files()` uploads the files and sends the email."""
     mock_validation_results = {"config_files": ["file1", "file2"]}
     mock_email_client = MagicMock()
     mock_submitter_email = "test@example.com"
     mock_upload_client = MagicMock()
+    mock_job_configuration = MagicMock()
+
+    upload_url = "http://upload.url"
+    dataset_api_url = "http://datasetapi.url"
+    mock_job_configuration.upload_service_url = upload_url
+    mock_job_configuration.dataset_api_url = dataset_api_url
 
     mock_get_mimetype.return_value = "text/csv"
     mock_UploadServiceClient.return_value = mock_upload_client
+    mock_job_config.return_value = mock_job_configuration
 
-    with patch.dict(
-        os.environ,
-        {
-            "UPLOAD_SERVICE_URL": "http://upload.url",
-            "DATASET_API_URL": "http://dataset.api.url",
-        },
-    ):
-        upload_files(mock_validation_results, mock_email_client, mock_submitter_email)
+    upload_files(mock_validation_results, mock_email_client, mock_submitter_email)
 
-    mock_UploadServiceClient.assert_called_once_with("http://upload.url")
+    mock_UploadServiceClient.assert_called_once_with(upload_url)
     mock_get_mimetype.assert_called()
     mock_upload_client.upload_new.assert_called()
     mock_email_client.send.assert_called()
