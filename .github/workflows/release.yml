@@ -45,25 +45,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           commit: "false"
 
-      - name: Create Verified Release Commit
-        if: steps.release.outputs.released == 'true'
-        run: |
-          echo "Release ${{ steps.release.outputs.tag }}"
-          
-          # Use GraphQL API for verified commit
-          gh api graphql \
-            -F githubRepository=$GITHUB_REPOSITORY \
-            -F branchName=$BRANCH \
-            -F expectedHeadOid=$(git rev-parse HEAD) \
-            -F commitMessage="chore: release ${{ steps.release.outputs.tag }}" \
-            -F files[][path]="RELEASE.md" -F files[][contents]=$(base64 -w0 RELEASE.md) \
-            -F 'query=@.github/api/createCommitOnBranch.gql'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish | Upload to GitHub Release Assets
-        uses: python-semantic-release/publish-action@v9.21.0
-        if: steps.release.outputs.released == 'true'
+      - name: Create Pull Request
+        id: create-pull-request
+        uses: peter-evans/create-pull-request@v7
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ steps.release.outputs.tag }}
+          branch: ${{ github.head_ref }}
+          sign-commits: true
