@@ -64,8 +64,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag: "${{ steps.release.outputs.tag }}"
-          name: "Release ${{ steps.release.outputs.tag }}"
-          bodyFile: "${{ github.workspace }}/CHANGELOG.md"
+          tag: ${{ steps.release.outputs.tag }}
+          name: Release ${{ steps.release.outputs.tag }}
+          bodyFile: ${{ github.workspace }}/CHANGELOG.md
           draft: false
           prerelease: ${{steps.release.outputs.is_prerelease}}
