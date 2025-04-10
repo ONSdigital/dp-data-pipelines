@@ -44,105 +44,25 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           commit: "false"
-
-
-      - name: Create GitHub Release and Tag
-        if: steps.release.outputs.released == 'true'
-        uses: actions/github-script@v6
+          
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-              const { owner, repo } = context.repo;
-              const tag = '${{ steps.release.outputs.tag }}';
-              
-              const createBlobForFile = (org, repo) => async (filePath) => {
-                const content = await getFileAsUTF8(filePath)
-                const blobData = await github.rest.git.createBlob({
-                    owner: org,
-                    repo,
-                    content,
-                    encoding: 'utf-8',
-                })
-                return blobData.data
-              }
+          commit-message: "chore: Release ${{ steps.release.outputs.tag }}"
+          sign-commits: true
+          branch: "release/${{steps.release.outputs.tag}}"
 
-              const createNewTree = async (owner, repo, blobs, paths, parentTreeSha) => {
-                  const tree = blobs.map(({ sha }, index) => ({
-                      path: paths[index],
-                      mode: `100644`,
-                      type: `blob`,
-                      sha,
-                  }))
-                  const { data } = await github.rest.git.createTree({
-                      owner,
-                      repo,
-                      tree,
-                      base_tree: parentTreeSha,
-                  })
-                  return data
-              }
-
-              const createNewCommit = async (org, repo, message, currentTreeSha, currentCommitSha) =>
-                  (await github.rest.git.createCommit({
-                      owner: org,
-                      repo,
-                      message,
-                      tree: currentTreeSha,
-                      parents: [currentCommitSha],
-                  })).data
-
-              console.log(createNewCommit);
-              const setBranchToCommit = (org, repo, branch, commitSha) =>
-                  github.rest.git.updateRef({
-                      owner: org,
-                      repo,
-                      ref: `heads/${branch}`,
-                      sha: commitSha,
-                  })
-
-              // Get the latest commit SHA (which should be our verified commit)
-              const { data: refData } = await github.rest.git.getRef({
-                owner,
-                repo,
-                ref: `heads/${process.env.BRANCH}`
-              });
-              const latestCommitSha = refData.object.sha;
-              const { data: commitData } = await github.rest.git.getCommit({
-                owner: org,
-                repo,
-                commit_sha: commitSha,
-              })
-              const filesBlobs = await Promise.all(filesPaths.map(createBlobForFile(org, repo)))
-              const pathsForBlobs = filesPaths.map(fullPath => path.relative(coursePath, fullPath))
-
-              const currentCommitTreeSha = commitData.tree.sha
-                  const newTree = await createNewTree(
-                    octo,
-                    org,
-                    repo,
-                    filesBlobs,
-                    pathsForBlobs,
-                    currentCommitTreeSha
-                )
-                const newCommit = await createNewCommit(
-                    octo,
-                    org,
-                    repo,
-                    "testing new commit",
-                    newTree.sha,
-                    latestCommitSha
-                )
-                await setBranchToCommit(org, repo, branch, newCommit.sha)
-
-              // Create the release
-              await github.rest.repos.createRelease({
-                owner,
-                repo,
-                tag_name: tag,
-                name: `Release ${tag}`,
-                body: 'Automated release by GitHub Actions',
-                draft: false,
-                prerelease: false,
-                generate_release_notes: true
-              });
-  
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          release_name: Release ${{ steps.release.outputs.tag }}
+          body: |
+            Changes in this Release
+            - First Change
+            - Second Change
+          draft: false
+          prerelease: true
