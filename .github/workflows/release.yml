@@ -12,8 +12,9 @@ env:
   BRANCH: ${{ github.head_ref || github.ref_name }}
 
 jobs:
+
   release:
-   # if: startsWith(github.head_ref || github.ref_name, 'release')
+    #if: startsWith(github.head_ref || github.ref_name, 'release')
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-release-${{ github.ref_name }}
@@ -52,6 +53,7 @@ jobs:
         uses: actions/github-script@v6
         env:
           TAG: ${{ steps.release.outputs.tag }}
+          IS_PRERELEASE: ${{ steps.release.outputs.is_prerelease }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

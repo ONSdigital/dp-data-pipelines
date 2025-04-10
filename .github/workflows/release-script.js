@@ -8,6 +8,7 @@ class GitHubReleaseManager {
     this.repo = context.repo.repo;
     this.branch = process.env.BRANCH;
     this.tag = process.env.TAG;
+    this.isPrelease = process.env.IS_PRERELEASE ?? false;
   }
 
   getFileAsUTF8(filePath) {
@@ -42,7 +43,6 @@ class GitHubReleaseManager {
     
     return data;
   }
-
 
   async createNewCommit(message, treeSha, parentCommitSha) {
     const { data } = await this.github.rest.git.createCommit({
@@ -103,15 +103,17 @@ class GitHubReleaseManager {
   }
 
   async createRelease(tag) {
+    const releaseNotes = this.getFileAsUTF8("./CHANGELOG.md");
+
     return this.github.rest.repos.createRelease({
       owner: this.owner,
       repo: this.repo,
       tag_name: tag,
       name: `Release ${tag}`,
-      body: 'Automated release by GitHub Actions',
+      body: releaseNotes,
       draft: false,
       prerelease: false,
-      generate_release_notes: true
+      generate_release_notes: false
     });
   }
 
@@ -126,7 +128,7 @@ class GitHubReleaseManager {
     
     const currentCommitTreeSha = commitData.tree.sha;
     
-    const filesPaths = ["./CHANGELOG.md", "./Makefile", "./pyproject.toml"];
+    const filesPaths = ["./Makefile", "./pyproject.toml"];
     
     const filesBlobs = await Promise.all(
       filesPaths.map(filePath => this.createBlobForFile(filePath))
