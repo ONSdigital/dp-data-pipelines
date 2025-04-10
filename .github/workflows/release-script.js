@@ -1,6 +1,9 @@
 const fs = require('fs');
 const path = require('path'); // Added missing import
 
+
+const getFileAsUTF8 = (filePath) =>  fs.readFileSync(filePath, 'utf8');
+
 class GitHubReleaseManager {
   constructor(github, context) {
     this.github = github;
@@ -11,12 +14,9 @@ class GitHubReleaseManager {
     this.isPrelease = process.env.IS_PRERELEASE ?? false;
   }
 
-  getFileAsUTF8(filePath) {
-    return fs.readFileSync(filePath, 'utf8');
-  }
 
   async createBlobForFile(filePath) {
-    const content = this.getFileAsUTF8(filePath);
+    const content = getFileAsUTF8(filePath);
     const blobData = await this.github.rest.git.createBlob({
       owner: this.owner,
       repo: this.repo,
@@ -103,7 +103,7 @@ class GitHubReleaseManager {
   }
 
   async createRelease(tag) {
-    const releaseNotes = this.getFileAsUTF8("./CHANGELOG.md");
+    const releaseNotes = getFileAsUTF8("./CHANGELOG.md");
 
     return this.github.rest.repos.createRelease({
       owner: this.owner,
