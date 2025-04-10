@@ -45,9 +45,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           commit: "false"
 
-      - name: Create Pull Request
-        id: create-pull-request
-        uses: peter-evans/create-pull-request@v7
-        with:
-          branch: ${{ github.head_ref }}
-          sign-commits: true
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -S -m "generated"
+          git push
