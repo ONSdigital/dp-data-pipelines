@@ -1,99 +1,204 @@
-import re
+import os
+from importlib import reload
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+import dpypelines.pipeline.job_configuration
 from dpypelines.s3_folder_received import start
+from dpypelines.pipeline.job_configuration import JobConfiguration
 
-
-@patch(
-    "dpypelines.s3_folder_received.process_zip_file",
-    side_effect=FileNotFoundError(
-        "[Errno 2] No such file or directory: 'dummy_s3_object_name'"
-    ),
-)
-@patch("dpypelines.pipeline.utils.Path.is_dir", return_value=True)
-@patch("dpypelines.pipeline.utils.Path.exists", return_value=True)
-@patch("dpypelines.s3_folder_received.setup_clients")
-@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
-@patch("dpypelines.s3_folder_received.validate_pipeline")
+@patch("dpypelines.pipeline.utils.JobConfiguration")
+@patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
+@patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
+@patch("dpypelines.s3_folder_received.upload_metadata")
 @patch("dpypelines.s3_folder_received.upload_files")
-@patch("dpypelines.s3_folder_received.send_submission_confirmation")
-def test_start_valid_data(
-    mock_send_submission_confirmation,
-    mock_upload_files,
-    mock_validate_pipeline,
-    mock_retrieve_config_and_files,
+@patch("dpypelines.s3_folder_received.validate_pipeline")
+@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
+@patch("dpypelines.s3_folder_received.process_zip_file")
+@patch("dpypelines.s3_folder_received.setup_clients")
+def test_start_succeeds(
     mock_setup_clients,
-    mock_path_exists,
-    mock_path_isdir,
     mock_process_zip_file,
+    mock_config_and_files,
+    mock_validation,
+    mock_upload_files,
+    mock_upload_metadata,
+    mock_copy_s3_processing,
+    mock_delete_s3_processing,
+    mock_job_config,
 ):
-    """
-    Test that `start()` raises an Exception with the expected message when processing the zip file fails.
-    """
-    mock_setup_clients.return_value = (MagicMock(), MagicMock())
-    mock_retrieve_config_and_files.return_value = (
+    reload(dpypelines.pipeline.job_configuration)
+    from dpypelines.pipeline.job_configuration import JobConfiguration
+    mock_notifier, mock_email_client = (
+        MagicMock(name="notifier"),
+        MagicMock(name="email_client"),
+    )
+    mock_setup_clients.return_value = (mock_notifier, mock_email_client)
+    mock_local_store = MagicMock(name="local_store")
+    mock_process_zip_file.return_value = (
+        mock_local_store,
+        Path("files_dir"),
+        "processing/timestamp-files",
+    )
+    mock_config_and_files.return_value = (
         {"fileAuthorEmail": "test@example.com"},
         {"config": "value"},
         "files_dir",
     )
-    mock_validate_pipeline.side_effect = FileNotFoundError(
-        "[Errno 2] No such file or directory: 'dummy_s3_object_name'"
+    mock_validation.return_value = {
+        "manifest": {"fileAuthorEmail": "test@example.com"},
+        "metadata": {"key": "value"},
+        "input_files": ["data.csv", "metadata.json"],
+        "config_files": ["data.csv", "metadata.json"],
+        "supplementary_files": ["data.xls"],
+    }
+    mock_upload_metadata.return_value = True
+    mock_copy_s3_processing.return_value = "processed/timestamp-files"
+    mock_job_configuration = MagicMock()
+
+    upload_url = "http://upload.url"
+    dataset_api_url = "http://datasetapi.url"
+    mock_job_configuration.upload_service_url = upload_url
+    mock_job_configuration.dataset_api_url = dataset_api_url
+    mock_job_config.return_value = mock_job_configuration
+
+    start("dummy_s3_object_name")
+
+    mock_setup_clients.assert_called_once()
+    mock_process_zip_file.assert_called_once_with("dummy_s3_object_name")
+    mock_config_and_files.assert_called_once_with(mock_local_store)
+    mock_validation.assert_called_once_with("files_dir", {"config": "value"})
+    mock_upload_files.assert_called_once_with(["data.csv", "metadata.json"])
+    mock_upload_metadata.assert_called_once_with({"key": "value"})
+    mock_copy_s3_processing.assert_called_once_with(
+        "dummy_s3_object_name",
+        Path("files_dir"),
+        "processing/timestamp-files",
+        "processed",
+    )
+    mock_notifier.success.assert_called_once()
+    mock_delete_s3_processing.assert_called_once_with(
+        "dummy_s3_object_name", Path("files_dir"), "processing/timestamp-files"
     )
 
-    with pytest.raises(
-        Exception,
-        match=re.escape("[Errno 2] No such file or directory: 'dummy_s3_object_name'"),
-    ):
-        start("dummy_s3_object_name")
-
-
-@patch("dpypelines.s3_folder_received.process_zip_file")
-@patch("dpypelines.pipeline.utils.Path.is_dir", return_value=True)
-@patch("dpypelines.pipeline.utils.Path.exists", return_value=True)
-@patch("dpypelines.s3_folder_received.setup_clients")
-@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
+@patch("dpypelines.pipeline.utils.JobConfiguration")
+@patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
+@patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
+@patch("dpypelines.s3_folder_received.upload_metadata")
 @patch("dpypelines.s3_folder_received.validate_pipeline")
-@patch("dpypelines.s3_folder_received.upload_files")
-@patch("dpypelines.s3_folder_received.send_submission_confirmation")
-@patch("dpypelines.s3_folder_received.error_handler")
-def test_start_missing_files(
-    mock_error_handler,
-    mock_send_submission_confirmation,
-    mock_upload_files,
-    mock_validate_pipeline,
-    mock_retrieve_config_and_files,
+@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
+@patch("dpypelines.s3_folder_received.process_zip_file")
+@patch("dpypelines.s3_folder_received.setup_clients")
+def test_start_fails_dataset_not_static(
     mock_setup_clients,
-    mock_path_exists,
-    mock_path_isdir,
     mock_process_zip_file,
+    mock_config_and_files,
+    mock_validation,
+    mock_upload_metadata,
+    mock_copy_s3_processing,
+    mock_delete_s3_processing,
+    mock_job_config
+):
+    mock_notifier, mock_email_client = (
+        MagicMock(name="notifier"),
+        MagicMock(name="email_client"),
+    )
+    mock_setup_clients.return_value = (mock_notifier, mock_email_client)
+    mock_local_store = MagicMock(name="local_store")
+    mock_process_zip_file.return_value = (
+        mock_local_store,
+        Path("files_dir"),
+        "processing/timestamp-files",
+    )
+    mock_config_and_files.return_value = (
+        {"fileAuthorEmail": "test@example.com"},
+        {"config": "value"},
+        "files_dir",
+    )
+    mock_validation.return_value = {
+        "manifest": {"fileAuthorEmail": "test@example.com"},
+        "metadata": {"key": "value"},
+        "input_files": ["data.csv", "metadata.json"],
+        "config_files": ["data.csv", "metadata.json"],
+        "supplementary_files": ["data.xls"],
+    }
+    mock_upload_metadata.return_value = False
+    mock_copy_s3_processing.return_value = "processed/timestamp-files"
+
+    mock_job_configuration = MagicMock()
+
+    upload_url = "http://upload.url"
+    dataset_api_url = "http://datasetapi.url"
+    mock_job_configuration.upload_service_url = upload_url
+    mock_job_configuration.dataset_api_url = dataset_api_url
+    mock_job_config.return_value = mock_job_configuration
+
+    start("dummy_s3_object_name")
+
+    mock_setup_clients.assert_called_once()
+    mock_process_zip_file.assert_called_once_with("dummy_s3_object_name")
+    mock_config_and_files.assert_called_once_with(mock_local_store)
+    mock_validation.assert_called_once_with("files_dir", {"config": "value"})
+    mock_upload_metadata.assert_called_once_with({"key": "value"})
+    mock_copy_s3_processing.assert_called_once_with(
+        "dummy_s3_object_name",
+        Path("files_dir"),
+        "processing/timestamp-files",
+        "dataset-type-not-static",
+    )
+    mock_delete_s3_processing.assert_called_once_with(
+        "dummy_s3_object_name", Path("files_dir"), "processing/timestamp-files"
+    )
+
+
+@patch("dpypelines.s3_folder_received.error_handler")
+@patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
+@patch("dpypelines.s3_folder_received.validate_pipeline")
+@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
+@patch("dpypelines.s3_folder_received.process_zip_file")
+@patch("dpypelines.s3_folder_received.setup_clients")
+def test_start_fails_invalid_manifest(
+    mock_setup_clients,
+    mock_process_zip_file,
+    mock_config_and_files,
+    mock_validate_pipeline,
+    mock_delete_s3_processing,
+    mock_error_handler,
 ):
     """
     Test that `start()` raises an exception when the manifest is invalid.
     """
-    mock_notifier = MagicMock()
-    mock_email_client = MagicMock()
+    mock_notifier, mock_email_client = (
+        MagicMock(name="notifier"),
+        MagicMock(name="email_client"),
+    )
     mock_setup_clients.return_value = (mock_notifier, mock_email_client)
-    mock_local_store = MagicMock()
-    mock_decompressed_file_dir = Path("decompressed_files_dir")
-    mock_s3_processing_folder = "processing"
+    mock_local_store = MagicMock(name="local_store")
     mock_process_zip_file.return_value = (
         mock_local_store,
-        mock_decompressed_file_dir,
-        mock_s3_processing_folder,
+        Path("decompressed_files_dir"),
+        "processing/timestamp-file",
     )
-    mock_manifest_dict = {"fileAuthorEmail": "test@example.com"}
-    mock_pipeline_config = {"config": "value"}
-    mock_files_dir = "files_dir"
-    mock_local_store.get_current_source_pathlike.return_value = Path(mock_files_dir)
-    mock_retrieve_config_and_files.return_value = (
-        mock_manifest_dict,
-        mock_pipeline_config,
-        mock_files_dir,
+    mock_config_and_files.return_value = (
+        {"fileAuthorEmail": "test@example.com"},
+        {"config": "value"},
+        Path("files_dir"),
     )
+    mock_validate_pipeline.side_effect = ValueError(
+        "Failed to retrieve and validate manifest"
+    )
+    mock_delete_s3_processing = MagicMock("delete_s3_processing")
+    mock_delete_s3_processing.return_value = None
+    mock_error_handler = MagicMock("error_handler")
     mock_error_handler.return_value = None
-    mock_validate_pipeline.side_effect = ValueError("Invalid manifest file")
-    with pytest.raises(ValueError, match="Invalid manifest file"):
-        start("dummy_s3_object_name")
+    with pytest.raises(ValueError) as e:
+        start("bucket/folder/file.zip")
+    assert "Failed to retrieve and validate manifest" in str(e)
+    mock_notifier.failure.assert_called_once()
+    mock_process_zip_file.assert_called_once_with("bucket/folder/file.zip")
+    mock_config_and_files.assert_called_once_with(mock_local_store)
+    mock_validate_pipeline.assert_called_once_with(
+        Path("files_dir"), {"config": "value"}
+    )
