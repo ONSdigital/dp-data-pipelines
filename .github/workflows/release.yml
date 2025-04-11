@@ -86,6 +86,7 @@ jobs:
         env:
           TAG: ${{ steps.release.outputs.tag }}
           IS_PRERELEASE: ${{ steps.release.outputs.is_prerelease }}
+          RELEASE_NOTES: ${{ steps.get-changelog.outputs.result }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string

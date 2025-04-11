@@ -1,11 +1,8 @@
-const { release } = require('os');
-const getChangelog = require('./changelog-parser');
-
 //Remove the first line (with the version number header) and empty lines
 const removeVersionNumberLine = (changelog) => changelog.split("\n").slice(2).join("\n").trim();
 
-const getReleaseNotes = async () => {
-  const releaseNotes = await getChangelog();
+const getReleaseNotes = () => {
+  const releaseNotes = process.env.RELEASE_NOTES;
 
   return !releaseNotes.startsWith("## ") ? releaseNotes : removeVersionNumberLine(releaseNotes);
 }
@@ -57,7 +54,7 @@ class GitHubReleaseManager {
   }
 
   async createRelease(tag) {
-    const releaseNotes = await getReleaseNotes();
+    const releaseNotes = getReleaseNotes();
 
     return this.github.rest.repos.createRelease({
       owner: this.owner,
