@@ -53,7 +53,7 @@ class GitHubReleaseManager {
       owner: this.owner,
       repo: this.repo,
       tag_name: tag,
-      name: `Release ${tag}`,
+      name: tag,
       body: releaseNotes,
       draft: false,
       prerelease: false,
