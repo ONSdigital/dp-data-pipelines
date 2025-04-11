@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dpypelines"
-version = "0.2.0-rc.2"
+version = "0.2.0-rc.4"
 description = "Data ingest pipelines for ONS Digital Publishing"
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
