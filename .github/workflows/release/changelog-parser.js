@@ -23,4 +23,4 @@ const getLatestChangelog = () => {
   return '## ' + latestSection.trim();
 } 
 
-module.exports = async ({ github, context, core }) => getLatestChangelog();
+module.exports = async () => getLatestChangelog();

@@ -53,18 +53,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           commit: "false"
           tag: "false"
-      
-      - name: Create GitHub Release and Tag
-        if: steps.release.outputs.released == 'true'
-        uses: actions/github-script@v6
-        env:
-          TAG: ${{ steps.release.outputs.tag }}
-          IS_PRERELEASE: ${{ steps.release.outputs.is_prerelease }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const script = require('./.github/workflows/release-script.js')
-            await script({github, context, core});
 
       - name: Get changelog
         if: steps.release.outputs.released == 'true'
@@ -74,7 +62,7 @@ jobs:
           result-encoding: string
           script: |
             const script = require('./.github/workflows/release/changelog-parser.js')
-            return await script({github, context, core});
+            return await script();
 
       - name: Create Pull Request
         id: cpr
@@ -90,3 +78,17 @@ jobs:
           body: ${{ steps.get-changelog.outputs.result }}
           draft: false
           sign-commits: true
+
+      - name: Create GitHub Release and Tag
+        if: steps.release.outputs.released == 'true'
+        uses: actions/github-script@v6
+        id: create-release
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          IS_PRERELEASE: ${{ steps.release.outputs.is_prerelease }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          script: |
+            const script = require('./.github/workflows/release-script.js')
+            await script({github, context, core});
