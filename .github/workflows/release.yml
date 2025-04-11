@@ -79,6 +79,7 @@ jobs:
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v7
+        if: steps.release.outputs.released == 'true'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Release ${{ steps.release.outputs.tag }}"
