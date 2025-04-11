@@ -1,7 +1,22 @@
 name: Build and tag release
 
 on:
+  pull_request:
+    branches:
+      - sandbox
+      - staging
+      - production
   workflow_dispatch: 
+    inputs:
+      sourceBranch:
+        description: 'What branch to start release from'
+        required: true
+        default: 'sandbox'
+        type: choice
+        options:
+          - sandbox
+          - staging
+          - debug
 
 env:
   BRANCH: ${{ github.head_ref || github.ref_name }}
@@ -20,9 +35,6 @@ jobs:
       checks: write
       statuses: write
       pull-requests: write
-    outputs:
-      version: ${{ steps.release.outputs.tag }}
-      released: ${{ steps.release.outputs.released }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,10 +46,6 @@ jobs:
         with:
           python-version: '3.11'
         
-      - name: Create dummy changelog
-        run: |
-          touch CHANGELOG.md
-          
       - name: Action | Semantic Version Release
         id: release
         uses: python-semantic-release/python-semantic-release@v9.21.0
@@ -45,7 +53,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           commit: "false"
           tag: "false"
-          
+      
       - name: Create GitHub Release and Tag
         if: steps.release.outputs.released == 'true'
         uses: actions/github-script@v6
@@ -57,3 +65,27 @@ jobs:
           script: |
             const script = require('./.github/workflows/release-script.js')
             await script({github, context, core});
+
+      - name: Get changelog
+        if: steps.release.outputs.released == 'true'
+        uses: actions/github-script@v6
+        id: get-changelog
+        with:
+          result-encoding: string
+          script: |
+            const script = require('./.github/workflows/release/changelog-parser.js')
+            return await script({github, context, core});
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Release ${{ steps.release.outputs.tag }}"
+          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
+          branch: release/${{ steps.release.outputs.tag }}
+          title: 'Release ${{ steps.release.outputs.tag }}'
+          body: ${{ steps.get-changelog.outputs.result }}
+          draft: false
+          sign-commits: true
