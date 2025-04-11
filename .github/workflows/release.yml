@@ -67,7 +67,7 @@ jobs:
         id: create-branch-name
         if: steps.release.outputs.released == 'true'
         run: |
-          BRANCH_NAME="Release ${{ steps.release.outputs.tag }}"
+          BRANCH_NAME="release/${{ steps.release.outputs.tag }}"
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
     
       - name: Create Pull Request
@@ -79,7 +79,7 @@ jobs:
           commit-message: "Release ${{ steps.release.outputs.tag }}"
           committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
-          branch: release/${{ steps.release.outputs.tag }}
+          branch: ${{ steps.create-branch-name.outputs.BRANCH_NAME }}
           title: 'Release ${{ steps.release.outputs.tag }}'
           body: ${{ steps.get-changelog.outputs.result }}
           draft: false
