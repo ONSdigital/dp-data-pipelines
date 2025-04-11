@@ -59,6 +59,7 @@ type = "github"
 [tool.semantic_release.branches]
 sandbox = { match = "sandbox", prerelease = true, prerelease_token = "rc" }
 other = { match = "staging|production", prerelease = false }
+testing = { match = "testing/", prerelease = true, prerelease_token = "rc" }
 
 [tool.semantic_release]
 tag_format = "v{version}"
