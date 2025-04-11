@@ -22,7 +22,6 @@ env:
   BRANCH: ${{ github.head_ref || github.ref_name }}
 
 jobs:
-
   release:
     runs-on: ubuntu-latest
     concurrency:
@@ -64,6 +63,13 @@ jobs:
             const script = require('./.github/workflows/release/changelog-parser.js')
             return await script();
 
+      - name: Create branch name
+        id: create-branch-name
+        if: steps.release.outputs.released == 'true'
+        run: |
+          BRANCH_NAME="Release ${{ steps.release.outputs.tag }}"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+    
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v7
@@ -87,6 +93,7 @@ jobs:
           TAG: ${{ steps.release.outputs.tag }}
           IS_PRERELEASE: ${{ steps.release.outputs.is_prerelease }}
           RELEASE_NOTES: ${{ steps.get-changelog.outputs.result }}
+          BRANCH: ${{ steps.create-branch-name.outputs.BRANCH_NAME }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
