@@ -1,11 +1,6 @@
 name: Build and tag release
 
 on:
-  pull_request:
-    branches:
-      - sandbox
-      - staging
-      - production
   workflow_dispatch: 
 
 env:
@@ -14,7 +9,6 @@ env:
 jobs:
 
   release:
-    #if: startsWith(github.head_ref || github.ref_name, 'release')
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-release-${{ github.ref_name }}
