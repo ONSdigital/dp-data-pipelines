@@ -57,8 +57,8 @@ exclude = [
 type = "github"
 
 [tool.semantic_release.branches]
-release = { match = "release/*", prerelease = true, prerelease_token = "rc",  changelog_file = "CHANGELOG.md",  commit = false }
-testing = { match = "testing/*", prerelease = true, prerelease_token = "rc",  changelog_file = "CHANGELOG.md",  commit = false }
+sandbox = { match = "sandbox", prerelease = true, prerelease_token = "rc" }
+other = { match = "staging|production", prerelease = false }
 
 [tool.semantic_release]
 tag_format = "v{version}"
