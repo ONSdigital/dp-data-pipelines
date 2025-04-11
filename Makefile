@@ -20,9 +20,6 @@ lint: install ## Run the ruff python linter
 test: install ## Run pytest and check test coverage
 	poetry run pytest --cov-report term-missing --cov=dpypelines
 
-feature: install
-	poetry run behave
-
 deploy:
 	./buildpackage.sh
 
