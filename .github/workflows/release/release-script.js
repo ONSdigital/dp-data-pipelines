@@ -7,6 +7,11 @@ const getReleaseNotes = () => {
   return !releaseNotes.startsWith("## ") ? releaseNotes : removeVersionNumberLine(releaseNotes);
 }
 
+const getPrereleaseStatus = () => {
+  const isPrelease = process.env.IS_PRERELEASE ?? false;
+  return isPrelease == true || isPrelease == "true";
+}
+
 class GitHubReleaseManager {
   constructor(github, context) {
     this.github = github;
@@ -14,7 +19,7 @@ class GitHubReleaseManager {
     this.repo = context.repo.repo;
     this.branch = process.env.BRANCH;
     this.tag = process.env.TAG;
-    this.isPrelease = process.env.IS_PRERELEASE ?? false;
+    this.isPrelease = getPrereleaseStatus();
   }
 
   async getLatestCommitHash() {
