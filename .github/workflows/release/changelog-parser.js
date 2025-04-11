@@ -24,3 +24,5 @@ const getLatestChangelog = () => {
 } 
 
 module.exports = async () => getLatestChangelog();
+
+const test = getLatestChangelog();

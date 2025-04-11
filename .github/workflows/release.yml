@@ -90,5 +90,5 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
           script: |
-            const script = require('./.github/workflows/release-script.js')
+            const script = require('./.github/workflows/release/release-script.js')
             await script({github, context, core});
