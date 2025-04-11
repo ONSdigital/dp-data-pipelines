@@ -102,7 +102,7 @@ class GitHubReleaseManager {
   }
 
   async createRelease(tag) {
-    const releaseNotes = getLatestChangelog();
+    const releaseNotes = getLatestChangelog({});
 
     return this.github.rest.repos.createRelease({
       owner: this.owner,
@@ -163,5 +163,3 @@ module.exports = async ({ github, context, core }) => {
   const releaseManager = new GitHubReleaseManager(github, context);
   await releaseManager.createNewRelease();
 };
-
-console.log(getLatestChangelog());
