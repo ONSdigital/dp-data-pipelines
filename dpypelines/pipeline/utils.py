@@ -11,7 +11,7 @@ from dpytools.s3.basic import _get_s3_client, upload_local_file_to_s3
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 from dpypelines.pipeline.config import JobConfiguration
-from dpypelines.pipeline.dataset_api import (
+from dpypelines.pipeline.connectors.dataset_api.service import (
     check_dataset_type_is_static,
     get_post_request_values_from_metadata,
 )

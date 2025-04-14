@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from dpypelines.pipeline.dataset_api import (
+from dpypelines.pipeline.connectors.dataset_api import (
     check_dataset_type_is_static,
     get_post_request_values_from_metadata,
 )
@@ -43,7 +43,7 @@ def test_get_post_request_values_from_invalid_metadata():
     assert "DatasetAPIRequestCreationException" in str(e)
 
 
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIClient")
+@patch("dpypelines.pipeline.connectors.dataset_api.service.DatasetAPIClient")
 def test_check_dataset_type_is_static(mock_dataset_api_client):
     mock_dataset_api_client = MagicMock()
     mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
@@ -60,7 +60,7 @@ def test_check_dataset_type_is_static(mock_dataset_api_client):
     )
 
 
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIClient")
+@patch("dpypelines.pipeline.connectors.dataset_api.service.DatasetAPIClient")
 def test_check_dataset_type_is_not_static(mock_dataset_api_client):
     mock_dataset_api_client = MagicMock()
     mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
@@ -79,7 +79,7 @@ def test_check_dataset_type_is_not_static(mock_dataset_api_client):
     )
 
 
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIClient")
+@patch("dpypelines.pipeline.connectors.dataset_api.service.DatasetAPIClient")
 def test_check_dataset_type_is_missing(mock_dataset_api_client):
     mock_dataset_api_client = MagicMock()
     mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
@@ -97,7 +97,7 @@ def test_check_dataset_type_is_missing(mock_dataset_api_client):
     )
 
 
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIClient")
+@patch("dpypelines.pipeline.connectors.dataset_api.service.DatasetAPIClient")
 def test_check_dataset_type_current_missing(mock_dataset_api_client):
     mock_dataset_api_client = MagicMock()
     mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
@@ -115,7 +115,7 @@ def test_check_dataset_type_current_missing(mock_dataset_api_client):
     )
 
 
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIClient")
+@patch("dpypelines.pipeline.connectors.dataset_api.service.DatasetAPIClient")
 def test_check_dataset_type_404(mock_dataset_api_client):
     mock_dataset_api_client = MagicMock(name="dataset_api_client")
     mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"

@@ -6,3 +6,5 @@ features/fixtures/data/
 data
 .env
 .venv*
+
+*.zip
