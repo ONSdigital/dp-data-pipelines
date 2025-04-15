@@ -1,39 +1,29 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "type": "object",
-    "properties": {
-      "manifestVersion": {
-        "type": "integer"
-      },
-      "source_id": {
-        "type": "string"
-      },
-      "fileAuthorEmail": {
-        "type": "string"
-      },
-      "fileAuthorUsername": {
-        "type": "string"
-      },
-      "isPublishable": {
-        "type": "boolean"
-      },
-      "licence": {
-        "type": "string"
-      },
-      "licenceUrl": {
-        "type": "string"
-      },
-      "title": {
-        "type": "string"
-      },
-      "aliasName": {
-        "type": "string"
-      }
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "metadata_file": {
+      "type": "string"
     },
-    "required": [
-      "manifestVersion",
-      "source_id",
-      "fileAuthorEmail",
-      "fileAuthorUsername"
-    ]
-  }
+    "submission_contacts": {
+      "type": "array",
+      "items": [
+        {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "email"
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "metadata_file",
+    "submission_contacts"
+  ]
+}

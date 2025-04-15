@@ -7,21 +7,22 @@ from unittest.mock import MagicMock, call, patch
 from zipfile import ZipFile
 
 import pytest
-
-from dpypelines.pipeline.utils import (
+from dpypelines.pipeline.process_zip_file import (
     copy_s3_processing_folder_to_destination_folder,
     decompress_zip_file,
     delete_s3_processing_folder,
     download_zip_file,
     process_zip_file,
+    upload_to_s3_processing_folder,
+)
+from dpypelines.pipeline.validate_pipeline import validate_pipeline_files
+from dpypelines.pipeline.utils import (
     send_submission_confirmation,
     setup_clients,
     upload_files,
     upload_metadata,
-    upload_to_s3_processing_folder,
-    validate_pipeline,
 )
-from dpypelines.pipeline.validate_pipeline import retrieve_config_and_files
+from dpypelines.pipeline.validate_pipeline import retrieve_and_validate_manifest
 from tests.pipelines.pipeline.mocks import (
     MockLocalDirectoryStore,
     mock_decompress_zip_file,
@@ -64,7 +65,7 @@ def test_retrieve_config_and_files(
     mock_get_pipeline_config_for_source.return_value = mock_pipeline_config
     mock_local_store.get_current_source_pathlike.return_value = mock_files_dir
 
-    manifest_dict, pipeline_config, files_dir = retrieve_config_and_files(
+    manifest_dict, pipeline_config, files_dir = retrieve_and_validate_manifest(
         mock_local_store
     )
 
@@ -82,7 +83,7 @@ def test_validate_pipeline(mock_validate_pipeline_files):
 
     mock_validate_pipeline_files.return_value = mock_validation_results
 
-    validation_results = validate_pipeline(mock_files_dir, mock_pipeline_config)
+    validation_results = validate_pipeline_files(mock_files_dir, mock_pipeline_config)
 
     assert validation_results == mock_validation_results
 

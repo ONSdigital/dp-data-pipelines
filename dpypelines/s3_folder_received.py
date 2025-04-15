@@ -1,20 +1,26 @@
 import os
+from pathlib import Path
 
 from dpytools.logging.logger import DpLogger
 from dpytools.utilities.utilities import str_to_bool
 
 from dpypelines.pipeline.messages.error_handler_module import error_handler
+from dpypelines.pipeline.models import Manifest
 from dpypelines.pipeline.utils import (
-    copy_s3_processing_folder_to_destination_folder,
-    delete_s3_processing_folder,
-    process_zip_file,
     send_submission_confirmation,
     setup_clients,
     upload_files,
     upload_metadata,
-    validate_pipeline,
 )
-from dpypelines.pipeline.validate_pipeline import retrieve_config_and_files
+from dpypelines.pipeline.process_zip_file import (
+    copy_s3_processing_folder_to_destination_folder,
+    delete_s3_processing_folder,
+    process_zip_file,
+)
+from dpypelines.pipeline.validate_pipeline import (
+    retrieve_and_validate_manifest,
+    validate_pipeline_files,
+)
 
 logger = DpLogger("data-ingress-pipeline")
 
@@ -38,25 +44,27 @@ def start(s3_object_name: str, *args, **kwargs):
         # Set up clients.
         notifier, email_client = setup_clients()
 
-        # Decompress zip file, create local directory store and move files to S3 `processing` folder
+        # Create local directory store from decompressed zip file and move files to S3 `processing` folder
         local_store, decompressed_file_dir, s3_processing_folder = process_zip_file(
             s3_object_name
         )
 
         # Validate configuration and files.
-        manifest_dict, pipeline_config, files_dir = retrieve_config_and_files(
-            local_store
-        )
-        validation_results = validate_pipeline(files_dir, pipeline_config)
+        manifest = retrieve_and_validate_manifest(local_store)
+        metadata = validate_pipeline_files(manifest, local_store)
 
         # Upload metadata to Dataset API.
         if not str_to_bool(os.environ.get("SKIP_DATA_UPLOAD", "False")):
             metadata_submitted = upload_metadata(
-                validation_results["metadata"],
+                metadata,
             )
             if metadata_submitted:
                 # If metadata successfully submitted, upload data files to the Upload Service
-                upload_files(validation_results["config_files"])
+                files_to_upload = [
+                    decompressed_file_dir / distribution.file
+                    for distribution in metadata.distributions
+                ]
+                upload_files(files_to_upload)
 
                 # Copy all files in S3 "processing" folder to S3 "processed" folder
                 copy_s3_processing_folder_to_destination_folder(
@@ -67,7 +75,7 @@ def start(s3_object_name: str, *args, **kwargs):
                 )
 
                 send_submission_confirmation(
-                    email_client, manifest_dict["fileAuthorEmail"]
+                    email_client, manifest.submission_contacts[0].email
                 )
 
                 notifier.success()
@@ -99,9 +107,7 @@ def start(s3_object_name: str, *args, **kwargs):
             error=err,
             data={"s3_object_name": s3_object_name},
             submitter_email=(
-                manifest_dict.get("fileAuthorEmail", "")
-                if "manifest_dict" in locals()
-                else ""
+                manifest.submission_contacts[0].email if "manifest" in locals() else ""
             ),
             enable_email=ENABLE_EMAIL,
             enable_logs=ENABLE_LOGS,
