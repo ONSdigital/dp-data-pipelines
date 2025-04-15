@@ -27,9 +27,9 @@ def _correct_columns_exist(csv_path: Path, columns: List[str]):
     """
     df = pd.read_csv(csv_path, nrows=0)  # reading in columns only
 
-    assert len(df.columns) == len(
-        columns
-    ), f"Number of columns in csv file ({len(df.columns)}) does not match len of expected columns ({len(columns)})"
+    assert len(df.columns) == len(columns), (
+        f"Number of columns in csv file ({len(df.columns)}) does not match len of expected columns ({len(columns)})"
+    )
 
     for col in columns:
         assert col in df.columns, f"Expect column {col} not found in csv file"
@@ -49,15 +49,15 @@ def _dataframe_has_no_blanks(
     if check_specific_columns is None:
         columns_to_check = list(df.columns)
     else:
-        assert isinstance(
-            check_specific_columns, list
-        ), "check_specific_columns kwarg must be a list"
+        assert isinstance(check_specific_columns, list), (
+            "check_specific_columns kwarg must be a list"
+        )
 
         # confirm all columns in check_specific_columns are in df
         for col in check_specific_columns:
-            assert (
-                col in df.columns
-            ), f"{col} in check_specific_columns not found in dataframe"
+            assert col in df.columns, (
+                f"{col} in check_specific_columns not found in dataframe"
+            )
 
         columns_to_check = check_specific_columns
 
@@ -79,9 +79,9 @@ def _dataframe_has_no_duplicates(df: pd.DataFrame):
     """
     given a df confirm that there are no duplicate values
     """
-    assert len(df) == len(
-        df.drop_duplicates()
-    ), "Found duplicate rows in the dataframe, failed validation"
+    assert len(df) == len(df.drop_duplicates()), (
+        "Found duplicate rows in the dataframe, failed validation"
+    )
 
 
 def generated_dataframe_slices(csv_path: Path, chunk_size: Optional[int] = 5000):

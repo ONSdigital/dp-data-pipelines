@@ -7,7 +7,6 @@ from dpypelines.pipeline.transforms.sdmx.generate_versions_metadata import (
 
 
 def sdmx_compact_2_0_prototype_1(input_file: Path):
-
     csv_out = Path("data.csv")
     metadata_out = Path("metadata.json")
 

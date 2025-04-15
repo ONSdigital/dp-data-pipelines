@@ -18,7 +18,6 @@ for potential_env_var_name in [
     "DE_SLACK_WEBHOOK",
     "FLORENCE_TOKEN",
 ]:
-
     env_var = os.environ.get(potential_env_var_name, None)
     if env_var is not None:
         mp.delenv(potential_env_var_name)

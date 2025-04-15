@@ -10,12 +10,11 @@ help:
 install: ## Install development dependencies
 	poetry install
 
-fmt: install ## (Format) - runs black and isort against the codebase (auto triggered on pre-commit)
-	poetry run black .
-	poetry run isort ./dpypelines/ ./tests/*
+fmt: install ## (Format) - runs Ruff against the codebase (auto triggered on pre-commit)
+	poetry run ruff format
 
 lint: install ## Run the ruff python linter
-	poetry run ruff check
+	poetry run ruff check --fix
 
 test: install ## Run pytest and check test coverage
 	poetry run pytest --cov-report term-missing --cov=dpypelines

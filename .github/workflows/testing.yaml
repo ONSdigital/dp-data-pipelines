@@ -117,11 +117,8 @@ jobs:
       - name: Install test dependencies
         run: poetry install
 
-      - name: Check black has been ran (make fmt)
-        run: poetry run black dpypelines tests --check
+      - name: Run linting
+        run: poetry run ruff check
 
-      - name: Check isort has been ran (make fmt)
-        run: poetry run isort dpypelines tests --diff --check-only
-
-      - name: Check ruff has been ran (make lint)
-        run: poetry run ruff check dpypelines tests
+      - name: Run formatting
+        run: poetry run ruff format

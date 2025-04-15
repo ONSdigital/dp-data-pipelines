@@ -7,32 +7,18 @@ repos:
     -   id: check-yaml
     -   id: check-added-large-files
 
--   repo: https://github.com/psf/black
-    rev: 24.2.0
-    hooks:
-    -   id: black
-        name: black
-        entry: poetry run black
-        language: system
-        types: [python]
-        files: ^(dpypelines|tests)/
-
--   repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-    -   id: isort
-        name: isort
-        entry: poetry run isort
-        language: system
-        types: [python]
-        files: ^(dpypelines|tests)/
-
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.2.2
     hooks:
     -   id: ruff
-        name: ruff
-        entry: poetry run ruff check
+        name: Ruff format
+        entry: poetry run ruff check --fix
+        language: system
+        types: [python]
+
+    -   id: ruff
+        name: Ruff lint
+        entry: poetry run ruff format
         language: system
         types: [python]
 

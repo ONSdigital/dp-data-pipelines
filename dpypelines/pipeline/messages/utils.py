@@ -55,7 +55,7 @@ def get_submitter_email(manifest_dict: dict) -> str:
 
     if manifest_dict["manifestVersion"] != 1:
         raise ValueError(
-            f'The manifest version does not match required version(which should be 1) suppllied version: {manifest_dict["manifestVersion"]}.'
+            f"The manifest version does not match required version(which should be 1) suppllied version: {manifest_dict['manifestVersion']}."
         )
 
     if submitter_email is None:
