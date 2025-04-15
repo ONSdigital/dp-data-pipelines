@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -7,6 +6,7 @@ import pytest
 from dpypelines.s3_folder_received import start
 
 
+@patch("dpypelines.s3_folder_received.JobConfiguration")
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
 @patch("dpypelines.s3_folder_received.upload_metadata")
@@ -24,7 +24,9 @@ def test_start_succeeds(
     mock_upload_metadata,
     mock_copy_s3_processing,
     mock_delete_s3_processing,
+    mock_job_config,
 ):
+
     mock_notifier, mock_email_client = (
         MagicMock(name="notifier"),
         MagicMock(name="email_client"),
@@ -50,15 +52,16 @@ def test_start_succeeds(
     }
     mock_upload_metadata.return_value = True
     mock_copy_s3_processing.return_value = "processed/timestamp-files"
+    mock_job_configuration = MagicMock()
 
-    with patch.dict(
-        os.environ,
-        {
-            "DATASET_API_URL": "http://dataset-api.url",
-            "UPLOAD_SERVICE_URL": "http://upload-service.url",
-        },
-    ):
-        start("dummy_s3_object_name")
+    upload_url = "http://upload.url"
+    dataset_api_url = "http://datasetapi.url"
+    mock_job_configuration.upload_service_url = upload_url
+    mock_job_configuration.dataset_api_url = dataset_api_url
+    mock_job_configuration.skip_data_upload = False
+    mock_job_config.return_value = mock_job_configuration
+
+    start("dummy_s3_object_name")
 
     mock_setup_clients.assert_called_once()
     mock_process_zip_file.assert_called_once_with("dummy_s3_object_name")
@@ -78,6 +81,7 @@ def test_start_succeeds(
     )
 
 
+@patch("dpypelines.s3_folder_received.JobConfiguration")
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
 @patch("dpypelines.s3_folder_received.upload_metadata")
@@ -93,6 +97,7 @@ def test_start_fails_dataset_not_static(
     mock_upload_metadata,
     mock_copy_s3_processing,
     mock_delete_s3_processing,
+    mock_job_config,
 ):
     mock_notifier, mock_email_client = (
         MagicMock(name="notifier"),
@@ -120,14 +125,16 @@ def test_start_fails_dataset_not_static(
     mock_upload_metadata.return_value = False
     mock_copy_s3_processing.return_value = "processed/timestamp-files"
 
-    with patch.dict(
-        os.environ,
-        {
-            "DATASET_API_URL": "http://dataset-api.url",
-            "UPLOAD_SERVICE_URL": "http://upload-service.url",
-        },
-    ):
-        start("dummy_s3_object_name")
+    mock_job_configuration = MagicMock()
+
+    upload_url = "http://upload.url"
+    dataset_api_url = "http://datasetapi.url"
+    mock_job_configuration.upload_service_url = upload_url
+    mock_job_configuration.dataset_api_url = dataset_api_url
+    mock_job_configuration.skip_data_upload = False
+    mock_job_config.return_value = mock_job_configuration
+
+    start("dummy_s3_object_name")
 
     mock_setup_clients.assert_called_once()
     mock_process_zip_file.assert_called_once_with("dummy_s3_object_name")

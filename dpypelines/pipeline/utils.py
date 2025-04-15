@@ -10,32 +10,48 @@ from dpytools.logging.logger import DpLogger
 from dpytools.s3.basic import _get_s3_client, upload_local_file_to_s3
 from dpytools.stores.directory.local import LocalDirectoryStore
 
+from dpypelines.pipeline.config import JobConfiguration
 from dpypelines.pipeline.dataset_api import (
     check_dataset_type_is_static,
     get_post_request_values_from_metadata,
 )
 from dpypelines.pipeline.errors import ValidationException
 from dpypelines.pipeline.messages.email_templates import submission_processed_email
-from dpypelines.pipeline.messages.notification import (
-    PipelineNotifier,
-    notifier_from_env_var_webhook,
-)
+from dpypelines.pipeline.messages.notification import NopNotifier, PipelineNotifier
 from dpypelines.pipeline.messages.utils import (
     get_email_client,
     get_local_time,
     get_mimetype,
+    str_to_bool,
 )
 from dpypelines.pipeline.validate_pipeline import validate_pipeline_files
 
 logger = DpLogger("data-ingress-pipelines")
 
 
+def create_notifier(webhook: str, process_start_time=None):
+    """
+    Create a variant of BasePipelineMessenger by passing in a webhook.
+    Enables use of webhooks from the AWS secrets manager rather than env vars.
+    """
+
+    notifications_disabled = str(JobConfiguration().disable_notifications)
+    notifications_disabled = (
+        False if notifications_disabled is None else str_to_bool(notifications_disabled)
+    )
+
+    if notifications_disabled is True:
+        return NopNotifier()
+
+    return PipelineNotifier(webhook, process_start_time)
+
+
 def get_notifier():
     # Create notifier from webhook env var
     try:
         process_start_time = get_local_time()
-        notifier: PipelineNotifier = notifier_from_env_var_webhook(
-            "DE_SLACK_WEBHOOK",
+        notifier: PipelineNotifier = create_notifier(
+            JobConfiguration().de_slack_webhook,
             process_start_time=process_start_time,
         )
         logger.info("Notifier created", data={"notifier": notifier})
@@ -283,9 +299,9 @@ def upload_metadata(metadata) -> bool:
     """
     Upload metadata to the Dataset API.
     """
-    dataset_api_url = os.environ.get("DATASET_API_URL")
+    dataset_api_url = JobConfiguration().dataset_api_url
     if not dataset_api_url:
-        msg = "Required environment variable not set: DATASET_API_URL"
+        msg = "Required variable not set: DATASET_API_URL"
         raise EnvironmentError(msg)
 
     # Generate POST request body from metadata
@@ -320,12 +336,14 @@ def upload_metadata(metadata) -> bool:
 
 
 def upload_files(files_to_upload):
-    """
-    Upload data files to the Upload Service.
-    """
-    upload_url = os.environ.get("UPLOAD_SERVICE_URL")
-    if not upload_url:
-        err_msg = "Required environment variable not set: UPLOAD_SERVICE_URL."
+    """Upload files and send notifications."""
+    upload_url = JobConfiguration().upload_service_url
+    dataset_api_url = JobConfiguration().dataset_api_url
+    if not upload_url or not dataset_api_url:
+        err_msg = (
+            f"Required variables not set: "
+            f"UPLOAD_SERVICE_URL: {upload_url}, DATASET_API_URL: {dataset_api_url}."
+        )
         raise EnvironmentError(err_msg)
 
     upload_client = UploadServiceClient(upload_url)
