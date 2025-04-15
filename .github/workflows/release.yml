@@ -1,19 +1,23 @@
 name: Build and tag release
 
 on:
-  pull_request:
-    branches:
-      - sandbox
-      - staging
-      - production
   workflow_dispatch: 
+    inputs:
+      sourceBranch:
+        description: 'What branch to start release from'
+        required: true
+        default: 'sandbox'
+        type: choice
+        options:
+          - sandbox
+          - staging
+          - production
 
 env:
   BRANCH: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   release:
-    if: startsWith(github.head_ref || github.ref_name, 'release')
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-release-${{ github.ref_name }}
@@ -21,9 +25,8 @@ jobs:
     permissions:
       contents: write
       packages: write
-    outputs:
-      version: ${{ steps.release.outputs.tag }}
-      released: ${{ steps.release.outputs.released }}
+      statuses: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,18 +37,59 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
+        
       - name: Action | Semantic Version Release
         id: release
         uses: python-semantic-release/python-semantic-release@v9.21.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          git_committer_name: "github-actions"
-          git_committer_email: "actions@users.noreply.github.com"
+          commit: "false"
+          tag: "false"
 
-      - name: Publish | Upload to GitHub Release Assets
-        uses: python-semantic-release/publish-action@v9.21.0
+      - name: Get changelog
+        if: steps.release.outputs.released == 'true'
+        uses: actions/github-script@v6
+        id: get-changelog
+        with:
+          result-encoding: string
+          script: |
+            const script = require('./.github/workflows/release/changelog-parser.js')
+            return await script();
+
+      - name: Create branch name
+        id: create-branch-name
+        if: steps.release.outputs.released == 'true'
+        run: |
+          BRANCH_NAME="release/${{ steps.release.outputs.tag }}"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+    
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
         if: steps.release.outputs.released == 'true'
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ steps.release.outputs.tag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Release ${{ steps.release.outputs.tag }}"
+          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
+          branch: ${{ steps.create-branch-name.outputs.BRANCH_NAME }}
+          title: 'Release ${{ steps.release.outputs.tag }}'
+          body: ${{ steps.get-changelog.outputs.result }}
+          draft: false
+          sign-commits: true
+
+      - name: Create GitHub Release and Tag
+        if: steps.release.outputs.released == 'true'
+        uses: actions/github-script@v6
+        id: create-release
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          IS_PRERELEASE: ${{ steps.release.outputs.is_prerelease }}
+          RELEASE_NOTES: ${{ steps.get-changelog.outputs.result }}
+          BRANCH: ${{ steps.create-branch-name.outputs.BRANCH_NAME }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-encoding: string
+          script: |
+            const script = require('./.github/workflows/release/release-script.js')
+            await script({github, context, core});
