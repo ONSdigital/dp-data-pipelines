@@ -7,40 +7,32 @@ from dpypelines.pipeline.dataset_api import (
     check_dataset_type_is_static,
     get_post_request_values_from_metadata,
 )
-from dpypelines.pipeline.errors import (
-    DatasetAPIRequestCreationException,
-    DatasetTypeException,
-)
+from dpypelines.pipeline.errors import DatasetTypeException
+from dpypelines.pipeline.models import Metadata
 
 
 def test_get_post_request_values_from_valid_metadata():
     """
-    Tests that the correct dataset_path, edition_path and request_body are returned from a valid metadata.json file
+    Tests that the correct dataset_path, edition_path and request_body are returned from a valid Metadata model.
     """
     with open("tests/fixtures/test-cases/test_metadata.json", "r") as f:
-        metadata = json.load(f)
+        metadata_json = json.load(f)
+    metadata = Metadata.model_validate(metadata_json)
+
     dataset_path, edition_path, request_body = get_post_request_values_from_metadata(
         metadata
     )
-    assert dataset_path == "trade"
-    assert edition_path == "time-series"
-    assert request_body["title"] == "Dataset title"
-    assert ["title", "download_url", "byte_size", "format", "media_type"] == list(
-        request_body["distributions"][0].keys()
-    )
 
-
-def test_get_post_request_values_from_invalid_metadata():
-    """
-    Tests that an error is raised if attempting to get request parameters with an invalid metadata.json file.
-    """
-    with open("tests/fixtures/test-cases/test_metadata_invalid.json", "r") as f:
-        metadata = json.load(f)
-
-    with pytest.raises(DatasetAPIRequestCreationException) as e:
-        get_post_request_values_from_metadata(metadata)
-
-    assert "DatasetAPIRequestCreationException" in str(e)
+    assert dataset_path == "test-static-dataset-1"
+    assert edition_path == "test-edition-1"
+    assert request_body["edition_title"] == "July to September 2022"
+    assert list(request_body["distributions"][0].keys()) == [
+        "title",
+        "format",
+        "file",
+        "download_url",
+        "media_type",
+    ]
 
 
 @patch("dpypelines.pipeline.dataset_api.DatasetAPIClient")

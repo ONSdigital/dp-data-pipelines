@@ -3,6 +3,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from dpypelines.pipeline.models import (
+    Alert,
+    Distribution,
+    Manifest,
+    Metadata,
+    SubmissionContact,
+    UsageNote,
+)
 from dpypelines.s3_folder_received import start
 
 
@@ -11,15 +19,15 @@ from dpypelines.s3_folder_received import start
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
 @patch("dpypelines.s3_folder_received.upload_metadata")
 @patch("dpypelines.s3_folder_received.upload_files")
-@patch("dpypelines.s3_folder_received.validate_pipeline")
-@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
+@patch("dpypelines.s3_folder_received.validate_pipeline_files")
+@patch("dpypelines.s3_folder_received.retrieve_and_validate_manifest")
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.s3_folder_received.setup_clients")
 def test_start_succeeds(
     mock_setup_clients,
     mock_process_zip_file,
-    mock_config_and_files,
-    mock_validation,
+    mock_manifest_validation,
+    mock_pipeline_validation,
     mock_upload_files,
     mock_upload_metadata,
     mock_copy_s3_processing,
@@ -37,18 +45,23 @@ def test_start_succeeds(
         Path("files_dir"),
         "processing/timestamp-files",
     )
-    mock_config_and_files.return_value = (
-        {"fileAuthorEmail": "test@example.com"},
-        {"config": "value"},
-        "files_dir",
+    mock_manifest_validation.return_value = Manifest(
+        metadata_file="metadata.json",
+        submission_contacts=[SubmissionContact(email="test@example.org")],
     )
-    mock_validation.return_value = {
-        "manifest": {"fileAuthorEmail": "test@example.com"},
-        "metadata": {"key": "value"},
-        "input_files": ["data.csv", "metadata.json"],
-        "config_files": ["data.csv", "metadata.json"],
-        "supplementary_files": ["data.xls"],
-    }
+    mock_pipeline_validation.return_value = Metadata(
+        dataset_id="dataset-id",
+        edition="edition-id",
+        edition_title="Edition title",
+        quality_designation="quality-designation",
+        usage_notes=[UsageNote(title="Usage note title", note="Usage note content")],
+        alerts=[Alert(type="alert", description="Alert description")],
+        distributions=[
+            Distribution(
+                title="Distribution title", format="csv", file="distribution.csv"
+            )
+        ],
+    )
     mock_upload_metadata.return_value = True
     mock_copy_s3_processing.return_value = "processed/timestamp-files"
     mock_job_configuration = MagicMock()
@@ -64,10 +77,12 @@ def test_start_succeeds(
 
     mock_setup_clients.assert_called_once()
     mock_process_zip_file.assert_called_once_with("dummy_s3_object_name")
-    mock_config_and_files.assert_called_once_with(mock_local_store)
-    mock_validation.assert_called_once_with("files_dir", {"config": "value"})
-    mock_upload_files.assert_called_once_with(["data.csv", "metadata.json"])
-    mock_upload_metadata.assert_called_once_with({"key": "value"})
+    mock_manifest_validation.assert_called_once_with(mock_local_store)
+    mock_pipeline_validation.assert_called_once_with(
+        mock_manifest_validation.return_value, mock_local_store
+    )
+    mock_upload_metadata.assert_called_once_with(mock_pipeline_validation.return_value)
+    mock_upload_files.assert_called_once_with([Path("files_dir") / "distribution.csv"])
     mock_copy_s3_processing.assert_called_once_with(
         "dummy_s3_object_name",
         Path("files_dir"),
@@ -84,15 +99,15 @@ def test_start_succeeds(
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
 @patch("dpypelines.s3_folder_received.upload_metadata")
-@patch("dpypelines.s3_folder_received.validate_pipeline")
-@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
+@patch("dpypelines.s3_folder_received.validate_pipeline_files")
+@patch("dpypelines.s3_folder_received.retrieve_and_validate_manifest")
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.s3_folder_received.setup_clients")
 def test_start_fails_dataset_not_static(
     mock_setup_clients,
     mock_process_zip_file,
-    mock_config_and_files,
-    mock_validation,
+    mock_manifest_validation,
+    mock_pipeline_validation,
     mock_upload_metadata,
     mock_copy_s3_processing,
     mock_delete_s3_processing,
@@ -109,18 +124,23 @@ def test_start_fails_dataset_not_static(
         Path("files_dir"),
         "processing/timestamp-files",
     )
-    mock_config_and_files.return_value = (
-        {"fileAuthorEmail": "test@example.com"},
-        {"config": "value"},
-        "files_dir",
+    mock_manifest_validation.return_value = Manifest(
+        metadata_file="metadata.json",
+        submission_contacts=[SubmissionContact(email="test@example.org")],
     )
-    mock_validation.return_value = {
-        "manifest": {"fileAuthorEmail": "test@example.com"},
-        "metadata": {"key": "value"},
-        "input_files": ["data.csv", "metadata.json"],
-        "config_files": ["data.csv", "metadata.json"],
-        "supplementary_files": ["data.xls"],
-    }
+    mock_pipeline_validation.return_value = Metadata(
+        dataset_id="dataset-id",
+        edition="edition-id",
+        edition_title="Edition title",
+        quality_designation="quality-designation",
+        usage_notes=[UsageNote(title="Usage note title", note="Usage note content")],
+        alerts=[Alert(type="alert", description="Alert description")],
+        distributions=[
+            Distribution(
+                title="Distribution title", format="csv", file="distribution.csv"
+            )
+        ],
+    )
     mock_upload_metadata.return_value = False
     mock_copy_s3_processing.return_value = "processed/timestamp-files"
 
@@ -137,9 +157,11 @@ def test_start_fails_dataset_not_static(
 
     mock_setup_clients.assert_called_once()
     mock_process_zip_file.assert_called_once_with("dummy_s3_object_name")
-    mock_config_and_files.assert_called_once_with(mock_local_store)
-    mock_validation.assert_called_once_with("files_dir", {"config": "value"})
-    mock_upload_metadata.assert_called_once_with({"key": "value"})
+    mock_manifest_validation.assert_called_once_with(mock_local_store)
+    mock_pipeline_validation.assert_called_once_with(
+        mock_manifest_validation.return_value, mock_local_store
+    )
+    mock_upload_metadata.assert_called_once_with(mock_pipeline_validation.return_value)
     mock_copy_s3_processing.assert_called_once_with(
         "dummy_s3_object_name",
         Path("files_dir"),
@@ -152,17 +174,13 @@ def test_start_fails_dataset_not_static(
 
 
 @patch("dpypelines.s3_folder_received.error_handler")
-@patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
-@patch("dpypelines.s3_folder_received.validate_pipeline")
-@patch("dpypelines.s3_folder_received.retrieve_config_and_files")
+@patch("dpypelines.s3_folder_received.retrieve_and_validate_manifest")
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.s3_folder_received.setup_clients")
 def test_start_fails_invalid_manifest(
     mock_setup_clients,
     mock_process_zip_file,
-    mock_config_and_files,
-    mock_validate_pipeline,
-    mock_delete_s3_processing,
+    mock_manifest_validation,
     mock_error_handler,
 ):
     """
@@ -179,24 +197,16 @@ def test_start_fails_invalid_manifest(
         Path("decompressed_files_dir"),
         "processing/timestamp-file",
     )
-    mock_config_and_files.return_value = (
-        {"fileAuthorEmail": "test@example.com"},
-        {"config": "value"},
-        Path("files_dir"),
-    )
-    mock_validate_pipeline.side_effect = ValueError(
-        "Failed to retrieve and validate manifest"
+    mock_manifest_validation.side_effect = FileNotFoundError(
+        "Failed to retrieve manifest from the local directory store."
     )
     mock_delete_s3_processing = MagicMock("delete_s3_processing")
     mock_delete_s3_processing.return_value = None
     mock_error_handler = MagicMock("error_handler")
     mock_error_handler.return_value = None
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(FileNotFoundError) as e:
         start("bucket/folder/file.zip")
-    assert "Failed to retrieve and validate manifest" in str(e)
+    assert "Failed to retrieve manifest from the local directory store." in str(e)
     mock_notifier.failure.assert_called_once()
     mock_process_zip_file.assert_called_once_with("bucket/folder/file.zip")
-    mock_config_and_files.assert_called_once_with(mock_local_store)
-    mock_validate_pipeline.assert_called_once_with(
-        Path("files_dir"), {"config": "value"}
-    )
+    mock_manifest_validation.assert_called_once_with(mock_local_store)

@@ -8,74 +8,38 @@ from dpypelines.pipeline.errors import (
     DatasetAPIRequestCreationException,
     DatasetNotFoundException,
     DatasetTypeException,
-    DistributionsException,
 )
+from dpypelines.pipeline.models import Metadata
 
 logger = DpLogger("data-ingress-pipelines")
 
 
-def get_post_request_values_from_metadata(metadata: dict):
+def get_post_request_values_from_metadata(metadata: Metadata):
     """
     Generate the required path values and request body to submit to the Dataset API. This will be submitted as a POST request to the endpoint `/datasets/{dataset_path}/editions/{edition_path}/versions`
     """
     try:
-        dataset_path = metadata.get("dcterms:identifier", None)
-        editions = metadata.get("TBC:edition", None)
-        if editions is not None:
-            edition: dict = editions[0]
-        else:
-            edition = {"dcterms:identifier": None}
-        edition_path = edition.get("dcterms:identifier", None)
-        metadata_distributions = edition.get("dcat:distribution", None)
-        if metadata_distributions is not None:
-            distributions = get_distribution_details_for_request(metadata_distributions)
-        else:
-            distributions = None
+        dataset_path = metadata.dataset_id
+        edition_path = metadata.edition
 
         request_body = {
-            "distributions": distributions,
+            "edition_title": metadata.edition_title,
+            "quality_designation": metadata.quality_designation,
+            # 2885 metadata standards document says distribution.byte_size should come from querying the files API?
+            "distributions": [
+                distribution.model_dump() for distribution in metadata.distributions
+            ],
+            "usage_notes": [
+                usage_note.model_dump() for usage_note in metadata.usage_notes
+            ],
+            "alerts": [alert.model_dump() for alert in metadata.alerts],
+            # 2885 Should release_date be the timestamp of when the pipeline runs, or is it determined by a date specified in the publishing schedule?
             "release_date": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-            "edition_title": edition.get("dcterms:title", None),
-            "title": metadata.get("dcterms:title", None),
-            "description": metadata.get("dcterms:description", None),
-            "next_release": metadata.get("TBC:nextRelease", None),
-            "themes": metadata.get("dcat:theme", None),
-            "alerts": edition.get("TBC:alerts", None),
-            "usage_notes": edition.get("TBC:usage_notes", None),
-            "quality_designation": edition.get("TBC:quality_designation", None),
         }
         return dataset_path, edition_path, request_body
     except Exception as err:
         raise DatasetAPIRequestCreationException(
             "Error getting POST request values from metadata", metadata=metadata
-        ) from err
-
-
-def get_distribution_details_for_request(metadata_distributions: list) -> list:
-    """
-    Get the information to populate the `distributions` property in the POST request to the Dataset API.
-    """
-    try:
-        distributions = [
-            {
-                "title": distribution["dcterms:title"],
-                "download_url": distribution["download_url"],
-                # TODO Calculate byte_size during processing
-                "byte_size": 0,
-                "format": distribution["TBC:distributionFormat"],
-                "media_type": distribution["dcat:mediaType"],
-            }
-            for distribution in metadata_distributions
-        ]
-        logger.info(
-            "Distributions information retrieved",
-            data={"distributions": distributions},
-        )
-        return distributions
-    except Exception as err:
-        raise DistributionsException(
-            "Error getting details of distributions for Dataset API request",
-            distributions=metadata_distributions,
         ) from err
 
 
@@ -101,18 +65,13 @@ def get_current_dataset_type(dataset_result: dict) -> str:
 
 def check_dataset_type_is_static(dataset_api_client: DatasetAPIClient) -> bool:
     dataset_result = get_dataset_api_response(dataset_api_client)
-    if dataset_result:
-        dataset_type = get_current_dataset_type(dataset_result)
-    else:
+    if not dataset_result:
         raise DatasetNotFoundException(
             "Dataset not found", dataset_path=dataset_api_client.dataset_path
         )
 
-    if dataset_type and dataset_type == "static":
-        logger.info("Dataset type is static")
-        return True
-    elif dataset_type and dataset_type != "static":
-        logger.info("Dataset type is not static")
-        return False
-    else:
+    dataset_type = get_current_dataset_type(dataset_result)
+    if not dataset_type:
         raise DatasetTypeException("Dataset type error", dataset_type=str(dataset_type))
+
+    return dataset_type == "static"
