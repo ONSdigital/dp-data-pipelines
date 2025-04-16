@@ -31,8 +31,8 @@ class DatasetVersion(BaseModel):
     description: str
     keywords: List[str] = []
     id: str
-    links: Links
-    next_release: str
+    links: Optional[Links] = None
+    next_release: Optional[str] = None
     publisher: Optional[Publisher] = None
     state: str
     title: str
