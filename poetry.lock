@@ -366,24 +366,24 @@ name = "dpytools"
 version = "0.6.0"
 description = "Simple reusable python resources for digital publishing"
 optional = false
-python-versions = ">=3.9, <3.12"
+python-versions = ">=3.11, <3.12"
 groups = ["main"]
 files = []
 develop = false
 
 [package.dependencies]
 backoff = "^2.2.1"
-boto3 = "^1.34.45"
-email-validator = "^2.1.1"
-jsonschema = "^4.21.1"
-requests = "^2.31.0"
-structlog = "^23.2.0"
+boto3 = "^1.37.34"
+email-validator = "^2.2.0"
+jsonschema = "^4.23.0"
+requests = "^2.32.3"
+structlog = "^25.2.0"
 
 [package.source]
 type = "git"
 url = "https://github.com/ONSdigital/dp-python-tools.git"
-reference = "v0.6.0"
-resolved_reference = "23055eabfb9fb1082c48633ce97fd17a1fd42abd"
+reference = "v0.7.0"
+resolved_reference = "406dc289d217fc4c53f2373e2cabca3b59c3335d"
 
 [[package]]
 name = "email-validator"
@@ -1128,19 +1128,19 @@ files = [
 
 [[package]]
 name = "structlog"
-version = "23.3.0"
+version = "25.2.0"
 description = "Structured Logging for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "structlog-23.3.0-py3-none-any.whl", hash = "sha256:d6922a88ceabef5b13b9eda9c4043624924f60edbb00397f4d193bd754cde60a"},
-    {file = "structlog-23.3.0.tar.gz", hash = "sha256:24b42b914ac6bc4a4e6f716e82ac70d7fb1e8c3b1035a765591953bfc37101a5"},
+    {file = "structlog-25.2.0-py3-none-any.whl", hash = "sha256:0fecea2e345d5d491b72f3db2e5fcd6393abfc8cd06a4851f21fcd4d1a99f437"},
+    {file = "structlog-25.2.0.tar.gz", hash = "sha256:d9f9776944207d1035b8b26072b9b140c63702fd7aa57c2f85d28ab701bd8e92"},
 ]
 
 [package.extras]
-dev = ["structlog[tests,typing]"]
-docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-mermaid", "sphinxext-opengraph", "twisted"]
+dev = ["freezegun (>=0.2.8)", "mypy (>=1.4)", "pretend", "pytest (>=6.0)", "pytest-asyncio (>=0.17)", "rich", "simplejson", "twisted"]
+docs = ["cogapp", "furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-mermaid", "sphinxext-opengraph", "twisted"]
 tests = ["freezegun (>=0.2.8)", "pretend", "pytest (>=6.0)", "pytest-asyncio (>=0.17)", "simplejson"]
 typing = ["mypy (>=1.4)", "rich", "twisted"]
 
@@ -1234,4 +1234,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11.0,<3.12.0"
-content-hash = "2e787d73de0c791f38c4186722c8b2b225dc2c6290f2dbfb049fc36cdd5157c3"
+content-hash = "cf135276c9e4f09c726450165754100cfddd047b0800651bc69714af82511bc2"
