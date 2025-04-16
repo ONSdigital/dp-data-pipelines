@@ -340,10 +340,7 @@ def upload_files(files_to_upload):
     upload_url = JobConfiguration().upload_service_url
     dataset_api_url = JobConfiguration().dataset_api_url
     if not upload_url or not dataset_api_url:
-        err_msg = (
-            f"Required variables not set: "
-            f"UPLOAD_SERVICE_URL: {upload_url}, DATASET_API_URL: {dataset_api_url}."
-        )
+        err_msg = f"Required variables not set: UPLOAD_SERVICE_URL: {upload_url}, DATASET_API_URL: {dataset_api_url}."
         raise EnvironmentError(err_msg)
 
     upload_client = UploadServiceClient(upload_url)

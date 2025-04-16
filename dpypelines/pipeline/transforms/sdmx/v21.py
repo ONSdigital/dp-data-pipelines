@@ -7,7 +7,6 @@ from dpypelines.pipeline.transforms.sdmx.generic.v21.prototype.v1 import xmlToCs
 
 
 def sdmx_generic_2_1_prototype_1(input_file: Path):
-
     csv_out = Path("data.csv")
     metadata_out = Path("metadata.json")
 

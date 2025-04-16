@@ -9,7 +9,6 @@ from dpypelines.pipeline.transforms.utils import pathify, set_key
 def generate_versions_metadata(
     transformedCSV, outputPath, metadataTemplate=False, structureXML=False, config=False
 ):
-
     # Read in Structure XML provided with the SDMX and tidyCSV we created earlier in the transform
     if structureXML:
         with open(structureXML, "r") as file:

@@ -18,7 +18,6 @@ from dpypelines.pipeline.transforms.sdmx.generic.v21.prototype.v1 import xmlToCs
 
 
 def sdmx_compact_2_0_prototype_1(input_file: Path):
-
     csv_out = Path("data.csv")
     metadata_out = Path("metadata.json")
 
@@ -29,7 +28,6 @@ def sdmx_compact_2_0_prototype_1(input_file: Path):
 
 
 def sdmx_compact_2_1_prototype(input_file: Path):
-
     csv_out = Path("data.csv")
     metadata_out = Path("metadata.json")
 

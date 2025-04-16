@@ -12,7 +12,6 @@ from dpypelines.pipeline.messages.error_handler_module import (
 @patch("dpypelines.pipeline.messages.error_handler_module.get_email_client")
 @patch("dpypelines.pipeline.messages.error_handler_module.get_notifier")
 class TestErrorHandler:
-
     def test_error_handler_fail(self, mock_notifier, mock_email_client, mock_logger):
         """Testing that `error handler` raises a `TypeError` when argument/arguments are missing"""
         print(mock_logger, mock_email_client, mock_notifier)

@@ -49,9 +49,9 @@ class NopNotifier(BasePipelineNotifier):
 
 class PipelineNotifier(BasePipelineNotifier):
     def __init__(self, webhook_url, process_start_time=None):
-        assert (
-            webhook_url is not None
-        ), "Unable to find required environment variable to populate webhook_url argument"
+        assert webhook_url is not None, (
+            "Unable to find required environment variable to populate webhook_url argument"
+        )
         self.client = SlackMessenger(webhook_url)
         self.notification_postfix = os.environ.get("NOTIFICATION_POSTFIX", "")
         self.process_start_time = process_start_time

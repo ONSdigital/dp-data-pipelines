@@ -16,7 +16,6 @@ from dpypelines.pipeline.transforms.validate_transform_v21 import (
 
 
 def xmlToCsvSDMX2_1(input_path, output_path):
-
     check_read_in_sdmx(input_path)  # transform validation
 
     # Converting the XML file into a giant dictionary from the nested header dictionary

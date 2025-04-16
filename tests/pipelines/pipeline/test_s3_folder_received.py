@@ -26,7 +26,6 @@ def test_start_succeeds(
     mock_delete_s3_processing,
     mock_job_config,
 ):
-
     mock_notifier, mock_email_client = (
         MagicMock(name="notifier"),
         MagicMock(name="email_client"),
