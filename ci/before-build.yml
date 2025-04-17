@@ -1,0 +1,21 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: onsdigital/dp-concourse-tools-ubuntu
+    tag: latest
+
+inputs:
+  - name: dp-data-pipelines
+
+outputs:
+  - name: build
+  - name: dp-data-pipelines
+  
+params:
+  LAMBDA_NAME:
+  
+run:
+  path: dp-data-pipelines/ci/scripts/before-build.sh
