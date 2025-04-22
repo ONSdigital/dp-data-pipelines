@@ -27,8 +27,7 @@ def get_email_client():
     """
     Creates an email client object to be used for sending notification/error report emails.
     """
-    emails_disabled = str(JobConfiguration().disable_emails)
-    emails_disabled = str_to_bool(emails_disabled)
+    emails_disabled = JobConfiguration().disable_emails
 
     if emails_disabled:
         return NopEmailClient()
