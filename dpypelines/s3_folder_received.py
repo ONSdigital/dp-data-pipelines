@@ -1,4 +1,3 @@
-import os
 
 from dpytools.logging.logger import DpLogger
 

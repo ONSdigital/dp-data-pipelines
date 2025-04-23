@@ -1,6 +1,4 @@
-import os
 from pathlib import Path
-from typing import List
 
 from dpytools.http.api.dataset_api_client import DatasetAPIClient
 from dpytools.http.upload.upload_service_client import UploadServiceClient
