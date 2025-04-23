@@ -25,6 +25,7 @@ def test_setup_clients(mock_get_email_client, mock_get_notifier):
     assert email_client == mock_email_client
 
 
+@patch("dpypelines.pipeline.utils.JobConfiguration")
 @patch("dpypelines.pipeline.utils.UploadServiceClient")
 @patch("dpypelines.pipeline.utils.get_mimetype")
 def test_upload_files(mock_get_mimetype, mock_UploadServiceClient, mock_job_config):
@@ -65,6 +66,7 @@ def test_send_submission_confirmation(mock_submission_processed_email):
     )
 
 
+@patch("dpypelines.pipeline.utils.JobConfiguration")
 @patch("dpypelines.pipeline.utils.check_dataset_type_is_static")
 @patch("dpypelines.pipeline.utils.get_post_request_values_from_metadata")
 @patch("dpypelines.pipeline.utils.DatasetAPIClient")
