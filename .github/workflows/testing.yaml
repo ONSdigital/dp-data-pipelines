@@ -58,7 +58,7 @@ jobs:
 
           export COVERAGE_PERCENT=$(echo $DIFF_COVER_OUTPUT | grep -o "Coverage: [0-9]\+%" | sed 's/Coverage: //' | sed 's/%//')
 
-          if [ -z "${COVERAGE_PERCENT}" ] || [ $COVERAGE_PERCENT -gt 80 ]; then
+          if [ -z "${COVERAGE_PERCENT}" ] || [ $COVERAGE_PERCENT -ge 80 ]; then
             echo "status=success" >> $GITHUB_OUTPUT
           else
             echo "status=failure" >> $GITHUB_OUTPUT
