@@ -6,13 +6,14 @@ test_data = [
     (True, "other-format", None),
     (True, "excel", "Should't be an error here but doesn't matter"),
     (False, "json", "Some error here"),
-    (False, "xls", "")
+    (False, "xls", ""),
 ]
+
 
 @pytest.mark.parametrize("success,format,error", test_data)
 def test_should_write_success_to_string(success: bool, format: str, error):
     result = ValidationResult(success, format, error)
-    
+
     result_string = result.__repr__()
 
     assert "[ValidationResult]" in result_string, result_string

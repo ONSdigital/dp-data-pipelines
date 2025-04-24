@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   unit-tests:
-    name: Pytest with code coverage
+    name: Unit tests with code coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +40,7 @@ jobs:
         run: poetry install
 
       - name: Pytest (make test)
-        run: poetry run pytest --cov=dpypelines --cov-report=xml
+        run: poetry run pytest --cov=dpypelines --cov-report=xml ./tests/pipelines
 
       - name: Get base branch commit
         id: get-base-ref
@@ -92,6 +92,36 @@ jobs:
         run: |
           echo "Coverage of changed code is below 80%. Please add tests to cover your changes."
           exit 1
+
+  integration-tests:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: "pip"
+
+      - name: Install poetry
+        run: pip install poetry
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: ${{ runner.os }}-poetry-
+
+      - name: Install test dependencies
+        run: poetry install
+
+      - name: Pytest (make test)
+        run: poetry run pytest --cov=dpypelines --cov-report=xml ./tests/integration
 
   code-quality:
     name: Linting + formatting

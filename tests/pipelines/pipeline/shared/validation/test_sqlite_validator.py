@@ -1,6 +1,6 @@
 from pathlib import Path
-import sqlite3
 from dpypelines.pipeline.validation.sqlite_validator import SQLiteValidator
+from tests.helpers.generators.data_file_generators import generate_csdb
 from tests.pipelines.pipeline.shared.validation.base_test_file_validator import (
     BaseTestFileValidator,
 )
@@ -11,10 +11,7 @@ class TestSQLiteValidator(BaseTestFileValidator):
     validator_type = SQLiteValidator
 
     def generate_test_file(self, file_path: Path):
-        conn = sqlite3.connect(str(file_path))
-        cursor = conn.cursor()
-        cursor.execute("CREATE TABLE dummy_table(id)")
-        conn.close()
+        generate_csdb(file_path)
 
     def test_validator_passes_valid_file(self):
         """Test that sqlite files are validated with the sqlite validator."""

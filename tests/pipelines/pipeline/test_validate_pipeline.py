@@ -16,6 +16,7 @@ from dpypelines.pipeline.validation.models import ValidationResult
 
 test_cases_base_dir = Path("tests/fixtures/test-cases")
 
+
 @patch("dpypelines.pipeline.validate_pipeline.LocalDirectoryStore")
 def test_validate_manifest(mock_local_store):
     mock_local_store = MagicMock(name="local_store")
@@ -37,6 +38,7 @@ def test_validate_manifest_file_not_found(mock_local_store):
     with pytest.raises(FileNotFoundError) as e:
         validate_manifest(mock_local_store)
     assert "Failed to retrieve manifest from the local directory store." in str(e)
+
 
 @patch("dpypelines.pipeline.validate_pipeline.validate_file_exists_and_not_empty")
 @patch("dpypelines.pipeline.validate_pipeline.validate_file_format")
@@ -86,11 +88,13 @@ def test_load_and_validate_metadata_invalid_metadata(
 
     assert "1 validation error for Metadata\ndataset_id" in str(e)
 
+
 def test_validate_manifest_schema_fails():
     manifest_dict = {"key": "value"}
     with pytest.raises(ValueError) as e:
         validate_manifest_schema(manifest_dict)
     assert "Manifest schema validation failed" in str(e)
+
 
 def test_read_json_file():
     """
@@ -115,4 +119,5 @@ def test_read_json_file_invalid():
     with pytest.raises(ValueError) as e:
         read_json_file(file_path)
 
-    assert "File is not valid JSON" in str(e.value)
+    assert "not valid JSON" in str(e.value)
+    assert str(file_path) in str(e.value)

@@ -111,4 +111,4 @@ def read_json_file(file_path: Path) -> dict:
             data = json.load(f)
         return data
     except json.JSONDecodeError as e:
-        raise ValueError(f"File is not valid JSON: {str(e)}")
+        raise ValueError(f"File {file_path} is not valid JSON: {str(e)}")

@@ -17,7 +17,7 @@ def error_handler(
     enable_logs: bool = True,
     enable_email: bool = True,
     enable_notification: bool = True,
-    notifier: Optional[BasePipelineNotifier] = None
+    notifier: Optional[BasePipelineNotifier] = None,
 ):
     """
     This function handles the errors.

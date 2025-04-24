@@ -5,6 +5,7 @@ from dpypelines.pipeline.validation.models import ValidationResult
 import csv
 from pathlib import Path
 
+
 class CSVValidator(FileFormatValidator):
     def __init__(self):
         super().__init__(["csv", "tsv"])
@@ -21,8 +22,10 @@ class CSVValidator(FileFormatValidator):
         """
         try:
             if file_path.stat().st_size == 0:
-                return self._generate_error(file_path, f"File '{str(file_path)}' is empty")
-            
+                return self._generate_error(
+                    file_path, f"File '{str(file_path)}' is empty"
+                )
+
             with open(file_path, "r", newline="", encoding="utf-8") as file:
                 valid_csv = self._try_validate_with_sniffer(file)
 
@@ -47,13 +50,19 @@ class CSVValidator(FileFormatValidator):
             bool: True == valid, False == invalid
         """
         try:
-            csv_test_bytes = file.read(1024)  # Grab a sample of the CSV for format detection.
+            csv_test_bytes = file.read(
+                1024
+            )  # Grab a sample of the CSV for format detection.
             file.seek(0)  # Rewind
-            has_header = csv.Sniffer().has_header(csv_test_bytes)  # Check to see if there's a header in the file.
-            dialect = csv.Sniffer().sniff(csv_test_bytes)  # Check what kind of csv/tsv file we have.
+            has_header = csv.Sniffer().has_header(
+                csv_test_bytes
+            )  # Check to see if there's a header in the file.
+            dialect = csv.Sniffer().sniff(
+                csv_test_bytes
+            )  # Check what kind of csv/tsv file we have.
             inputreader = csv.reader(file, dialect)
             if has_header:
-                next(inputreader) # Skip the header if we have one.
+                next(inputreader)  # Skip the header if we have one.
             for row in inputreader:
                 print(row)
             return True

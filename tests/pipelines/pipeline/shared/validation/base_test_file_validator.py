@@ -60,7 +60,9 @@ class BaseTestFileValidator:
         file_path = self._get_test_file_path()
 
         with open(file_path, "w") as f:
-            f.write('\x00\nt\n"dsaasd,"\n\theader1#header2#header3\nvalue1#value2#value3')
+            f.write(
+                '\x00\nt\n"dsaasd,"\n\theader1#header2#header3\nvalue1#value2#value3'
+            )
 
         validator = self.validator_type()
 

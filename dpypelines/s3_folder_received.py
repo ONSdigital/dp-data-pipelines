@@ -110,6 +110,6 @@ def start(s3_object_name: str, *args, **kwargs):
             enable_email=ENABLE_EMAIL,
             enable_logs=ENABLE_LOGS,
             enable_notification=ENABLE_NOTIFICATION,
-            notifier=notifier
+            notifier=notifier,
         )
         raise
