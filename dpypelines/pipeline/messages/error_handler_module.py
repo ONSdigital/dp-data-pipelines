@@ -2,6 +2,7 @@ from typing import Optional
 
 from dpytools.logging.logger import DpLogger
 
+from dpypelines.pipeline.messages.notification import BasePipelineNotifier
 from dpypelines.pipeline.messages.utils import get_email_client
 from dpypelines.pipeline.utils import get_notifier
 
@@ -16,6 +17,7 @@ def error_handler(
     enable_logs: bool = True,
     enable_email: bool = True,
     enable_notification: bool = True,
+    notifier: Optional[BasePipelineNotifier] = None
 ):
     """
     This function handles the errors.
@@ -44,14 +46,15 @@ def error_handler(
     # Send system notifiations if `surpress_notification` is set to false
     if enable_notification:
         try:
-            notifier = get_notifier()
+            if notifier is None:
+                notifier = get_notifier()
             notifier.failure()
         except Exception as notification_err:
             logger.error(
                 "Failed to trigger system notifications", error=notification_err
             )
 
-    raise Exception(error)
+    raise error
 
 
 def send_error_email(
