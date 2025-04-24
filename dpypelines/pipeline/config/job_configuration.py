@@ -13,6 +13,7 @@ from dpypelines.pipeline.config.secret_mapping import SecretMapping
 def get_secret_name() -> str:
     return f"dp-{os.environ.get('ENVIRONMENT', 'sandbox')}-secrets"
 
+
 def get_default_environment_variables_config():
     """
     Environment variables to retrieve
@@ -23,6 +24,7 @@ def get_default_environment_variables_config():
         ("DISABLE_NOTIFICATIONS", "disable_notifications", False),
         ("DISABLE_EMAILS", "disable_emails", False),
     ]
+
 
 def get_default_secrets_config():
     """
@@ -44,7 +46,9 @@ def get_default_secrets_config():
         )
     ]
 
+
 logger = DpLogger("data-ingress-pipeline")
+
 
 class JobConfiguration:
     """
@@ -82,9 +86,22 @@ class JobConfiguration:
         self.secrets_client = (
             secrets_client if secrets_client is not None else SecretsClient()
         )
-        self.secrets_config = secrets_config if secrets_config is not None else get_default_secrets_config()
-        self.environment_config = environment_config if environment_config is not None else get_default_environment_variables_config()
-        self.load_config()
+        self.secrets_config = (
+            secrets_config
+            if secrets_config is not None
+            else get_default_secrets_config()
+        )
+        self.environment_config = (
+            environment_config
+            if environment_config is not None
+            else get_default_environment_variables_config()
+        )
+        error = self.load_config()
+
+        if error is not None:
+            raise Exception(
+                f"Failed to retrieve secrets from AWS Secrets Manager. Error: {error}"
+            )
 
     def load_config(self, reload: bool = False) -> Optional[str]:
         """
@@ -113,7 +130,8 @@ class JobConfiguration:
         logger.info("Loaded JobConfiguration config")
 
     def export_env_vars(self):
-        os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = self.service_token_for_upload
+        if self.service_token_for_upload:
+            os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = self.service_token_for_upload
 
     def _load_env_vars(self):
         """
@@ -150,6 +168,10 @@ class JobConfiguration:
 
         for mapping in secret_mapping:
             value = secret.value.get(mapping.secret_key, None)
+            if value is None:
+                raise AttributeError(
+                    f"Secret key '{mapping.secret_key}' missing in Secret {secret.id}"
+                )
             self.__setattr__(mapping.config_attribute, value)
 
     def _load_secret(self, secret_config: SecretConfig) -> Optional[str]:
