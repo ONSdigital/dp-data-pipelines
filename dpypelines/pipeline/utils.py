@@ -10,7 +10,6 @@ from dpypelines.pipeline.messages.utils import (
     get_email_client,
     get_local_time,
     get_mimetype,
-    str_to_bool,
 )
 
 logger = DpLogger("data-ingress-pipelines")
@@ -22,10 +21,7 @@ def create_notifier(webhook: str, process_start_time=None):
     Enables use of webhooks from the AWS secrets manager rather than env vars.
     """
 
-    notifications_disabled = str(JobConfiguration().disable_notifications)
-    notifications_disabled = (
-        False if notifications_disabled is None else str_to_bool(notifications_disabled)
-    )
+    notifications_disabled = JobConfiguration().disable_notifications
 
     if notifications_disabled is True:
         return NopNotifier()
