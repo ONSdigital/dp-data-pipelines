@@ -17,10 +17,10 @@ from dpypelines.s3_folder_received import start
 @patch("dpypelines.s3_folder_received.JobConfiguration")
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
-@patch("dpypelines.s3_folder_received.upload_metadata")
+@patch("dpypelines.s3_folder_received.validate_and_upload_metadata")
 @patch("dpypelines.s3_folder_received.upload_files")
 @patch("dpypelines.s3_folder_received.validate_pipeline_files")
-@patch("dpypelines.s3_folder_received.retrieve_and_validate_manifest")
+@patch("dpypelines.s3_folder_received.validate_manifest")
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.s3_folder_received.setup_clients")
 def test_start_succeeds(
@@ -54,6 +54,7 @@ def test_start_succeeds(
         edition="edition-id",
         edition_title="Edition title",
         quality_designation="quality-designation",
+        release_date="2025-01-01T00:00:00.000Z",
         usage_notes=[UsageNote(title="Usage note title", note="Usage note content")],
         alerts=[Alert(type="alert", description="Alert description")],
         distributions=[
@@ -98,9 +99,9 @@ def test_start_succeeds(
 @patch("dpypelines.s3_folder_received.JobConfiguration")
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
-@patch("dpypelines.s3_folder_received.upload_metadata")
+@patch("dpypelines.s3_folder_received.validate_and_upload_metadata")
 @patch("dpypelines.s3_folder_received.validate_pipeline_files")
-@patch("dpypelines.s3_folder_received.retrieve_and_validate_manifest")
+@patch("dpypelines.s3_folder_received.validate_manifest")
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.s3_folder_received.setup_clients")
 def test_start_fails_dataset_not_static(
@@ -133,6 +134,7 @@ def test_start_fails_dataset_not_static(
         edition="edition-id",
         edition_title="Edition title",
         quality_designation="quality-designation",
+        release_date="2025-01-01T00:00:00.000Z",
         usage_notes=[UsageNote(title="Usage note title", note="Usage note content")],
         alerts=[Alert(type="alert", description="Alert description")],
         distributions=[
@@ -174,7 +176,7 @@ def test_start_fails_dataset_not_static(
 
 
 @patch("dpypelines.s3_folder_received.error_handler")
-@patch("dpypelines.s3_folder_received.retrieve_and_validate_manifest")
+@patch("dpypelines.s3_folder_received.validate_manifest")
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.s3_folder_received.setup_clients")
 def test_start_fails_invalid_manifest(

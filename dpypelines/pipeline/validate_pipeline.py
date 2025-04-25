@@ -10,7 +10,7 @@ from dpypelines.pipeline.models import Manifest, Metadata
 logger = DpLogger("data-ingress-pipeline")
 
 
-def retrieve_and_validate_manifest(
+def validate_manifest(
     local_store: LocalDirectoryStore,
 ) -> Manifest:
     """Retrieve and validate manifest from the local directory store."""

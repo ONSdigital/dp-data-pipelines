@@ -7,7 +7,7 @@ from pydantic_core import ValidationError
 
 from dpypelines.pipeline.models import Manifest, Metadata, SubmissionContact
 from dpypelines.pipeline.validate_pipeline import (
-    retrieve_and_validate_manifest,
+    validate_manifest,
     validate_file_exists_and_not_empty,
     validate_json_file,
     validate_manifest_schema,
@@ -24,7 +24,7 @@ def test_retrieve_and_validate_manifest(mock_local_store):
         "metadata_file": "metadata.json",
         "submission_contacts": [{"email": "jane.doe@ons.gov.uk"}],
     }
-    manifest = retrieve_and_validate_manifest(mock_local_store)
+    manifest = validate_manifest(mock_local_store)
 
     assert isinstance(manifest, Manifest)
     assert manifest.metadata_file == "metadata.json"
@@ -36,7 +36,7 @@ def test_retrieve_and_validate_manifest_file_not_found(mock_local_store):
     mock_local_store = MagicMock(name="local_store")
     mock_local_store.get_lone_matching_json_as_dict.return_value = {}
     with pytest.raises(FileNotFoundError) as e:
-        retrieve_and_validate_manifest(mock_local_store)
+        validate_manifest(mock_local_store)
     assert "Failed to retrieve manifest from the local directory store." in str(e)
 
 

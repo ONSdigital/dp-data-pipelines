@@ -121,6 +121,10 @@ components:
             - accredited-official
             - official
             - official-in-development
+        release_date:
+          description: "The date and time the dataset is to be released"
+          type: string
+          example: "2025-01-01T00:00:00.000Z"
         usage_notes:
           type: array
           items:
@@ -138,7 +142,9 @@ components:
         - dataset_id
         - edition
         - edition_title
+        - release_date
         - distributions
+  
 
     Submitter:
       description: An individual responsible for submitting the dataset who should be sent processing and failure notifications from the import pipeline.

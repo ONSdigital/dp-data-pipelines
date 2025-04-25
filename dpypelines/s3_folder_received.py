@@ -1,7 +1,7 @@
-
 from dpytools.logging.logger import DpLogger
 
 from dpypelines.pipeline.config import JobConfiguration
+from dpypelines.pipeline.dataset_api import validate_and_upload_metadata
 from dpypelines.pipeline.messages.error_handler_module import error_handler
 from dpypelines.pipeline.process_zip_file import (
     copy_s3_processing_folder_to_destination_folder,
@@ -12,10 +12,9 @@ from dpypelines.pipeline.utils import (
     send_submission_confirmation,
     setup_clients,
     upload_files,
-    upload_metadata,
 )
 from dpypelines.pipeline.validate_pipeline import (
-    retrieve_and_validate_manifest,
+    validate_manifest,
     validate_pipeline_files,
 )
 
@@ -47,12 +46,12 @@ def start(s3_object_name: str, *args, **kwargs):
         )
 
         # Validate configuration and files.
-        manifest = retrieve_and_validate_manifest(local_store)
+        manifest = validate_manifest(local_store)
         metadata = validate_pipeline_files(manifest, local_store)
 
         # Upload metadata to Dataset API.
         if not JobConfiguration().skip_data_upload:
-            metadata_submitted = upload_metadata(
+            metadata_submitted = validate_and_upload_metadata(
                 metadata,
             )
             if metadata_submitted:
