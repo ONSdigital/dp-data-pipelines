@@ -36,6 +36,8 @@ def start(s3_object_name: str, *args, **kwargs):
         *args: Optional extra positional arguments.
         **kwargs: Optional extra keyword arguments.
     """
+    notifier = None
+    email_client = None
     try:
         # Set up clients.
         notifier, email_client = setup_clients()
