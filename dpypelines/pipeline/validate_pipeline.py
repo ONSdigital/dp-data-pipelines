@@ -5,7 +5,10 @@ from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.validation.json.validation import validate_json_schema
 
-from dpypelines.pipeline.models import Manifest, Metadata
+from dpypelines.pipeline.models import Distribution, Manifest, Metadata
+from dpypelines.pipeline.validation.utils import validate_file_format
+from dpypelines.pipeline.validation.models import ValidationResult
+from dpypelines.pipeline.validation.utils import validate_file_exists_and_not_empty
 
 logger = DpLogger("data-ingress-pipeline")
 
@@ -49,43 +52,59 @@ def validate_manifest_schema(manifest_dict: dict) -> None:
         raise ValueError(f"Manifest schema validation failed: {e}")
 
 
-def validate_pipeline_files(
+def load_and_validate_metadata(
     manifest: Manifest, local_store: LocalDirectoryStore
 ) -> Metadata:
     """
     Main validation function that returns validated objects.
     """
     # Retrieve and validate metadata.json
-    validate_file_exists_and_not_empty(
-        local_store.local_path.absolute() / manifest.metadata_file
-    )
-    metadata_dict = validate_json_file(
-        local_store.local_path.absolute() / manifest.metadata_file
-    )
-
-    # Create Metadata model from metadata_dict
-    metadata = Metadata.model_validate(metadata_dict)
+    metadata = load_metadata(manifest, local_store)
 
     # Retrieve and validate data files
     for distribution in metadata.distributions:
-        validate_file_exists_and_not_empty(
-            local_store.local_path.absolute() / distribution.file
-        )
-        logger.info("Data file found", data={"data_file_name": distribution.file})
+        validate_distribution_file(distribution, local_store)
 
     logger.info("Metadata and data files validated.")
     return metadata
 
 
-def validate_file_exists_and_not_empty(file_path: Path) -> None:
-    """Ensure file exists and is not empty."""
-    if not file_path.is_file():
-        raise FileNotFoundError(f"Required file not found: {file_path.name}")
-    if file_path.stat().st_size == 0:
-        raise ValueError(f"File is empty: {file_path.name}")
+def validate_distribution_file(
+    distribution: Distribution, local_store: LocalDirectoryStore
+) -> ValidationResult:
+    logger.info(f"Validating distribution file {distribution.file}")
+    file_path = local_store.local_path.absolute() / distribution.file
+
+    validate_file_exists_and_not_empty(file_path)
+    logger.info("Data file found", data={"data_file_name": distribution.file})
+
+    validation_result = validate_file_format(file_path)
+    if not validation_result.valid or validation_result.error:
+        raise ValueError(
+            f"File format validation failed for {distribution.file}: {validation_result.error}"
+        )
+    logger.info(
+        f"Validated file format for {distribution.file}",
+        data={"format": validation_result.format},
+    )
 
 
-def validate_json_file(file_path: Path) -> dict:
+def load_metadata(manifest: Manifest, local_store: LocalDirectoryStore) -> Metadata:
+    """
+    Validates the manifest file and then reads + deserialises JSON to Metadata instance.
+    """
+    validate_file_exists_and_not_empty(
+        local_store.local_path.absolute() / manifest.metadata_file
+    )
+
+    metadata_dict = read_json_file(
+        local_store.local_path.absolute() / manifest.metadata_file
+    )
+
+    return Metadata.model_validate(metadata_dict)
+
+
+def read_json_file(file_path: Path) -> dict:
     """Validate and parse JSON file."""
     try:
         with open(file_path) as f:

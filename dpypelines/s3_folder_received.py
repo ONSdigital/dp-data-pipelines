@@ -15,7 +15,7 @@ from dpypelines.pipeline.utils import (
 )
 from dpypelines.pipeline.validate_pipeline import (
     validate_manifest,
-    validate_pipeline_files,
+    load_and_validate_metadata,
 )
 
 logger = DpLogger("data-ingress-pipeline")
@@ -47,7 +47,7 @@ def start(s3_object_name: str, *args, **kwargs):
 
         # Validate configuration and files.
         manifest = validate_manifest(local_store)
-        metadata = validate_pipeline_files(manifest, local_store)
+        metadata = load_and_validate_metadata(manifest, local_store)
 
         # Upload metadata to Dataset API.
         if not JobConfiguration().skip_data_upload:
