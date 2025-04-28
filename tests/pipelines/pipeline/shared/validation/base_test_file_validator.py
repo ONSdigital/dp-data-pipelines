@@ -44,19 +44,23 @@ class BaseTestFileValidator:
         self.validate_success(result)
 
     def _test_validator_errors_empty_file(self):
-        file_path = self._get_test_file_path()
-        file_path.touch()
+        file_path = self._generate_empty_file()
         validator = self.validator_type()
 
         result = validator.validate_file_format(file_path)
 
         self.validate_error(result)
 
+    def _generate_empty_file(self):
+        file_path = self._get_test_file_path()
+        file_path.touch()
+        return file_path
+
     def test_validator_errors_invalid_file(self):
         file_path = self._get_test_file_path()
 
         with open(file_path, "w") as f:
-            f.write("this should fail everything except text")
+            f.write('\x00\nt\n"dsaasd,"\n\theader1#header2#header3\nvalue1#value2#value3')
 
         validator = self.validator_type()
 
