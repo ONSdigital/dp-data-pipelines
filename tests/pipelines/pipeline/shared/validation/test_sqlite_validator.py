@@ -24,3 +24,9 @@ class TestSQLiteValidator(BaseTestFileValidator):
     def test_validator_errors_empty_file(self):
         """Test that sqlite files are validated with the sqlite validator."""
         self._test_validator_errors_empty_file()
+
+    def test_handles_sqlite_error(self):
+        file_path = self._get_test_file_path()
+
+        with open(file_path, "w") as f:
+            f.write("this is not a sqlite file")

@@ -52,6 +52,18 @@ class BaseTestFileValidator:
 
         self.validate_error(result)
 
+    def test_validator_errors_invalid_file(self):
+        file_path = self._get_test_file_path()
+
+        with open(file_path, "w") as f:
+            f.write("this should fail everything except text")
+
+        validator = self.validator_type()
+
+        result = validator.validate_file_format(file_path)
+
+        self.validate_error(result)
+
     def validate_error(self, result: ValidationResult, error: Optional[str] = None):
         assert not result.valid
         assert result.error is not None if error is None else error
