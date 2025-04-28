@@ -49,11 +49,42 @@ def test_validate_and_upload_metadata_succeeds(
     assert metadata_uploaded
 
 
-@patch("dpypelines.pipeline.dataset_api.upload_metadata")
+# @patch("dpypelines.pipeline.dataset_api.upload_metadata")
 @patch("dpypelines.pipeline.dataset_api.is_valid_dataset")
 @patch("dpypelines.pipeline.dataset_api.DatasetAPIClient")
 @patch("dpypelines.pipeline.dataset_api.JobConfiguration")
 def test_validate_and_upload_metadata_fails_invalid_dataset(
+    mock_job_config, mock_DatasetAPIClient, mock_valid_dataset
+):
+    metadata = Metadata(
+        edition_title="Edition title",
+        distributions=[
+            Distribution(title="Distribution title", format="csv", file="data.csv")
+        ],
+        release_date="2025-01-01T00:00:00",
+        dataset_id="dataset-id",
+        edition="edition-id",
+    )
+
+    mock_job_configuration = MagicMock(name="JobConfiguration")
+    mock_job_configuration.dataset_api_url = "http://dataset-api.url"
+    mock_job_config.return_value = mock_job_configuration
+
+    mock_dataset_api_client = MagicMock(name="DatasetAPIClient")
+    mock_DatasetAPIClient.return_value = mock_dataset_api_client
+
+    mock_valid_dataset.return_value = False
+
+    metadata_uploaded = validate_and_upload_metadata(metadata)
+
+    assert not metadata_uploaded
+
+
+@patch("dpypelines.pipeline.dataset_api.upload_metadata")
+@patch("dpypelines.pipeline.dataset_api.is_valid_dataset")
+@patch("dpypelines.pipeline.dataset_api.DatasetAPIClient")
+@patch("dpypelines.pipeline.dataset_api.JobConfiguration")
+def test_validate_and_upload_metadata_fails_upload_error(
     mock_job_config, mock_DatasetAPIClient, mock_valid_dataset, mock_upload_metadata
 ):
     metadata = Metadata(
@@ -73,10 +104,7 @@ def test_validate_and_upload_metadata_fails_invalid_dataset(
     mock_dataset_api_client = MagicMock(name="DatasetAPIClient")
     mock_DatasetAPIClient.return_value = mock_dataset_api_client
 
-    mock_valid_dataset = MagicMock(name="is_valid_dataset")
-    mock_valid_dataset.return_value = False
-
-    mock_upload_metadata = MagicMock(name="upload_metadata")
+    mock_valid_dataset.return_value = True
     mock_upload_metadata.return_value = False
 
     metadata_uploaded = validate_and_upload_metadata(metadata)
