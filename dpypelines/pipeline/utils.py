@@ -64,46 +64,6 @@ def setup_clients():
     return notifier, email_client
 
 
-# def upload_metadata(metadata: Metadata) -> bool:
-#     """
-#     Upload metadata to the Dataset API.
-#     """
-#     dataset_api_url = JobConfiguration().dataset_api_url
-#     if not dataset_api_url:
-#         msg = "Required variable not set: DATASET_API_URL"
-#         raise EnvironmentError(msg)
-
-#     # Generate POST request body from metadata
-#     dataset_path, edition_path, request_body = get_post_request_values_from_metadata(
-#         metadata
-#     )
-#     dataset_api_client = DatasetAPIClient(dataset_api_url, dataset_path, edition_path)
-
-#     # Upload metadata only if the dataset type is "static"
-#     if dataset_type_is_static(dataset_api_client):
-#         # Verify that the relevant Dataset API endpoint exists
-#         get_versions_path_response = dataset_api_client.get_path()
-
-#         # If the endpoint exists, send POST request
-#         if get_versions_path_response.status_code != 200:
-#             get_versions_path_response.raise_for_status()
-#         else:
-#             logger.info(
-#                 "Dataset API endpoint exists",
-#                 data={"dataset_api_endpoint": dataset_api_client.full_url},
-#             )
-
-#             post_json_response = dataset_api_client.post_json(request_body)
-
-#             if post_json_response.status_code == 201:
-#                 logger.info(
-#                     "Metadata submitted to Dataset API endpoint",
-#                     data={"dataset_api_endpoint": dataset_api_client.full_url},
-#                 )
-#                 return True
-#     return False
-
-
 def upload_files(files_to_upload):
     """Upload files and send notifications."""
     upload_url = JobConfiguration().upload_service_url
