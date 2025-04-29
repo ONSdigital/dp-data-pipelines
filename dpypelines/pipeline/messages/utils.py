@@ -14,6 +14,7 @@ MIMETYPES = {
     ".json": "application/json",
     ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     ".csdb": "text/plain",
+    ".xls": "application/vnd.ms-excel",
 }
 
 
