@@ -13,7 +13,7 @@ MIMETYPES = {
     ".xml": "application/xml",
     ".json": "application/json",
     ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    ".csdb": "application/octet-stream",
+    ".csdb": "text/plain",
 }
 
 
