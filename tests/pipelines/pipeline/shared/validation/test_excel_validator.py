@@ -1,5 +1,5 @@
-import pandas as pd
 from dpypelines.pipeline.validation.excel_validator import ExcelValidator
+from tests.helpers.generators.data_file_generators import generate_excel
 from tests.pipelines.pipeline.shared.validation.base_test_file_validator import (
     BaseTestFileValidator,
 )
@@ -10,10 +10,7 @@ class BaseTestExcelValidator(BaseTestFileValidator):
     validator_type = ExcelValidator
 
     def generate_test_file(self, file_path: Path):
-        data = {"id": [1, 2], "name": ["item1", "item2"], "value": [42.5, 13.7]}
-        df = pd.DataFrame(data)
-
-        df.to_excel(file_path, index=False)
+        generate_excel(file_path)
 
 
 class TestXLSValidator(BaseTestExcelValidator):

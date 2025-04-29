@@ -16,8 +16,15 @@ fmt: install ## (Format) - runs Ruff against the codebase (auto triggered on pre
 lint: install ## Run the ruff python linter
 	poetry run ruff check --fix
 
+tests-unit: install
+	poetry run pytest --cov-report term-missing --cov=dpypelines ./tests/pipelines
+
+tests-integration: install
+	poetry run pytest --cov-report term-missing --cov=dpypelines ./tests/integration
+
 test: install ## Run pytest and check test coverage
-	poetry run pytest --cov-report term-missing --cov=dpypelines
+	make tests-unit
+	make tests-integration
 
 deploy:
 	./buildpackage.sh

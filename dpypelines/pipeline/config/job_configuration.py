@@ -14,36 +14,40 @@ def get_secret_name() -> str:
     return f"dp-{os.environ.get('ENVIRONMENT', 'sandbox')}-secrets"
 
 
+def get_default_environment_variables_config():
+    """
+    Environment variables to retrieve
+    """
+    return [
+        # Environment var name, JobConfiguration attribute, default value
+        ("SKIP_DATA_UPLOAD", "skip_data_upload", False),
+        ("DISABLE_NOTIFICATIONS", "disable_notifications", False),
+        ("DISABLE_EMAILS", "disable_emails", False),
+    ]
+
+
+def get_default_secrets_config():
+    """
+    Secrets to retrieve from AWS Secrets Manager
+    """
+    return [
+        SecretConfig(
+            secret_id=get_secret_name(),
+            mappings=[
+                SecretMapping("DATASET_API_URL", "dataset_api_url"),
+                SecretMapping("UPLOAD_SERVICE_URL", "upload_service_url"),
+                SecretMapping("DE_SLACK_WEBHOOK", "de_slack_webhook"),
+                SecretMapping("SERVICE_TOKEN_FOR_UPLOAD", "service_token_for_upload"),
+                SecretMapping("SES_EMAIL_IDENTITY", "ses_email_identity"),
+                SecretMapping(
+                    "LAMBDA_FAILURE_SLACK_WEBHOOK", "lambda_failure_slack_webhook"
+                ),
+            ],
+        )
+    ]
+
+
 logger = DpLogger("data-ingress-pipeline")
-
-"""
-Secrets to retrieve from AWS Secrets Manager
-"""
-secrets_config = [
-    SecretConfig(
-        secret_id=get_secret_name(),
-        mappings=[
-            SecretMapping("DATASET_API_URL", "dataset_api_url"),
-            SecretMapping("UPLOAD_SERVICE_URL", "upload_service_url"),
-            SecretMapping("DE_SLACK_WEBHOOK", "de_slack_webhook"),
-            SecretMapping("SERVICE_TOKEN_FOR_UPLOAD", "service_token_for_upload"),
-            SecretMapping("SES_EMAIL_IDENTITY", "ses_email_identity"),
-            SecretMapping(
-                "LAMBDA_FAILURE_SLACK_WEBHOOK", "lambda_failure_slack_webhook"
-            ),
-        ],
-    )
-]
-
-"""
-Environment variables to retrieve
-"""
-environment_variables_config = [
-    # Environment var name, JobConfiguration attribute, default value
-    ("SKIP_DATA_UPLOAD", "skip_data_upload", False),
-    ("DISABLE_NOTIFICATIONS", "disable_notifications", False),
-    ("DISABLE_EMAILS", "disable_emails", False),
-]
 
 
 class JobConfiguration:
@@ -75,16 +79,29 @@ class JobConfiguration:
 
     def __init__(
         self,
-        secrets_config: List[tuple] = secrets_config,
-        environment_config: List[tuple] = environment_variables_config,
+        secrets_config: Optional[List[tuple]] = None,
+        environment_config: Optional[List[tuple]] = None,
         secrets_client: Optional[SecretsClient] = None,
     ):
         self.secrets_client = (
             secrets_client if secrets_client is not None else SecretsClient()
         )
-        self.secrets_config = secrets_config
-        self.environment_config = environment_config
-        self.load_config()
+        self.secrets_config = (
+            secrets_config
+            if secrets_config is not None
+            else get_default_secrets_config()
+        )
+        self.environment_config = (
+            environment_config
+            if environment_config is not None
+            else get_default_environment_variables_config()
+        )
+        error = self.load_config()
+
+        if error is not None:
+            raise Exception(
+                f"Failed to retrieve secrets from AWS Secrets Manager. Error: {error}"
+            )
 
     def load_config(self, reload: bool = False) -> Optional[str]:
         """
@@ -113,7 +130,8 @@ class JobConfiguration:
         logger.info("Loaded JobConfiguration config")
 
     def export_env_vars(self):
-        os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = self.service_token_for_upload
+        if self.service_token_for_upload:
+            os.environ["SERVICE_TOKEN_FOR_UPLOAD"] = self.service_token_for_upload
 
     def _load_env_vars(self):
         """
@@ -150,6 +168,10 @@ class JobConfiguration:
 
         for mapping in secret_mapping:
             value = secret.value.get(mapping.secret_key, None)
+            if value is None:
+                raise AttributeError(
+                    f"Secret key '{mapping.secret_key}' missing in Secret {secret.id}"
+                )
             self.__setattr__(mapping.config_attribute, value)
 
     def _load_secret(self, secret_config: SecretConfig) -> Optional[str]:

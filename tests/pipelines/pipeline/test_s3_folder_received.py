@@ -204,11 +204,10 @@ def test_start_fails_invalid_manifest(
     )
     mock_delete_s3_processing = MagicMock("delete_s3_processing")
     mock_delete_s3_processing.return_value = None
-    mock_error_handler = MagicMock("error_handler")
     mock_error_handler.return_value = None
     with pytest.raises(FileNotFoundError) as e:
         start("bucket/folder/file.zip")
     assert "Failed to retrieve manifest from the local directory store." in str(e)
-    mock_notifier.failure.assert_called_once()
+    mock_error_handler.assert_called_once()
     mock_process_zip_file.assert_called_once_with("bucket/folder/file.zip")
     mock_manifest_validation.assert_called_once_with(mock_local_store)

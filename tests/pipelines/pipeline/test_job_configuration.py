@@ -5,13 +5,15 @@ import pytest
 
 import dpypelines.pipeline.config.job_configuration
 from dpypelines.pipeline.config import SecretConfig
-from dpypelines.pipeline.config.job_configuration import secrets_config
+from dpypelines.pipeline.config.job_configuration import get_default_secrets_config
+from dpypelines.pipeline.config.secret_mapping import SecretMapping
 
 secrets = {}
 
 expected_secret_name = "dp-sandbox-secrets"
 test_secret_one = SecretConfig("TEST_ONE", "test_attr_one")
 test_secret_two = SecretConfig("OTHER_TEST", "other_test_attr")
+secrets_config = get_default_secrets_config()
 test_secret_config = [*secrets_config, test_secret_one, test_secret_two]
 
 
@@ -54,10 +56,10 @@ def test_should_load_config(secrets_client):
     can be created taking a secrets client, environment variables config, and secrets config.
     The result should raisei no errors, with the contents matching the expected results.
     """
-    secrets_client.return_value.get_secret.side_effect = get_secret
-
     reload(dpypelines.pipeline.config.job_configuration)
     from dpypelines.pipeline.config.job_configuration import JobConfiguration
+
+    secrets_client.return_value.get_secret.side_effect = get_secret
 
     mp = pytest.MonkeyPatch()
 
@@ -192,7 +194,7 @@ def test_should_load_env_vars_from_constructor(secrets_client):
 
 
 @patch("dpytools.secrets.secrets_client.SecretsClient")
-def test_should_exits_on_secret_error(secrets_client, monkeypatch):
+def test_raises_exception_on_secret_not_found_error(secrets_client, monkeypatch):
     """ """
     secrets_client.return_value.get_secret.side_effect = get_secret
 
@@ -206,50 +208,54 @@ def test_should_exits_on_secret_error(secrets_client, monkeypatch):
     reload(dpypelines.pipeline.config.job_configuration)
     from dpypelines.pipeline.config.job_configuration import JobConfiguration
 
-    config = JobConfiguration(
-        secrets_client=secrets_client(), secrets_config=secrets_with_missing
-    )
+    with pytest.raises(Exception) as e:
+        JobConfiguration(
+            secrets_client=secrets_client(), secrets_config=secrets_with_missing
+        )
 
-    assert config.error is not None
-    assert config.loaded
-
-    # Should not exist
-    with pytest.raises(AttributeError):
-        config.__getattribute__(missing_secret.secret_id)
-
-    # Since the missing secret was _last_ in the list, this _should_ exist
-    assert config.dataset_api_url is not None
-
-    # But these should be None since they will not have been retrieved:
-    assert config.disable_emails is None
-    assert config.disable_notifications is None
-    assert config.skip_data_upload is None
+    assert "Failed to retrieve secrets from AWS Secrets Manager. Error" in str(e.value)
 
 
 @patch("dpytools.secrets.secrets_client.SecretsClient")
-def test_should_exits_early_on_secret_error(secrets_client):
+def test_raises_exception_on_secret_key_missing_error(secrets_client, monkeypatch):
     """ """
     reload(dpypelines.pipeline.config.job_configuration)
     from dpypelines.pipeline.config.job_configuration import JobConfiguration
 
     secrets_client.return_value.get_secret.side_effect = get_secret
 
-    missing_secret = SecretConfig("THIS_SECRET_DOESNT_EXIST", "attr_should_not_be_set")
-    secrets_with_missing = [
-        missing_secret,
-        *secrets_config,
+    mp = pytest.MonkeyPatch()
+
+    mp.setenv("SKIP_DATA_UPLOAD", "True")
+    mp.setenv("DISABLE_NOTIFICATIONS", "True")
+    mp.setenv("DISABLE_EMAILS", "True")
+
+    test_environment_vars_config = [
+        # Environment var name, JobConfiguration attribute, default value
+        ("SKIP_DATA_UPLOAD", "skip_data_upload", True),
+        ("DISABLE_NOTIFICATIONS", "disable_notifications", True),
+        ("DISABLE_EMAILS", "disable_emails", True),
     ]
 
-    config = JobConfiguration(
-        secrets_client=secrets_client(), secrets_config=secrets_with_missing
+    secrets_client.return_value.get_secret.side_effect = get_secret
+
+    missing_secret_key = "missing_secret_key"
+    secret_config_copy = secrets_config.copy()
+    secret_config_copy[0].mappings.append(
+        SecretMapping(missing_secret_key, "some_config_attribute")
     )
 
-    assert config.error is not None
-    assert config.loaded
+    monkeypatch.setenv("SKIP_DATA_UPLOAD", "True")
+    monkeypatch.setenv("DISABLE_NOTIFICATIONS", "True")
+    monkeypatch.setenv("DISABLE_EMAILS", "True")
 
-    # Should not exist
-    with pytest.raises(AttributeError):
-        config.__getattribute__(missing_secret.secret_id)
+    reload(dpypelines.pipeline.config.job_configuration)
 
-    # Since the missing secret was _first_ in the list, this _should not_ exist as we should have already exited
-    assert config.dataset_api_url is None
+    with pytest.raises(AttributeError) as e:
+        JobConfiguration(
+            secrets_client=secrets_client(),
+            secrets_config=secret_config_copy,
+            environment_config=test_environment_vars_config,
+        )
+
+    assert f"Secret key '{missing_secret_key}' " in str(e.value)

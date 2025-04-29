@@ -34,3 +34,6 @@ class TestXMLValidator(BaseTestFileValidator):
         result = validator.validate_file_format(file_path)
 
         self.validate_error(result)
+
+    def test_validator_errors_invalid_file(self):
+        pass

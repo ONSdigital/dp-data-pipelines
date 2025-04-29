@@ -18,7 +18,7 @@ test_cases_base_dir = Path("tests/fixtures/test-cases")
 
 
 @patch("dpypelines.pipeline.validate_pipeline.LocalDirectoryStore")
-def test_retrieve_and_validate_manifest(mock_local_store):
+def test_validate_manifest(mock_local_store):
     mock_local_store = MagicMock(name="local_store")
     mock_local_store.get_lone_matching_json_as_dict.return_value = {
         "metadata_file": "metadata.json",
@@ -32,7 +32,7 @@ def test_retrieve_and_validate_manifest(mock_local_store):
 
 
 @patch("dpypelines.pipeline.validate_pipeline.LocalDirectoryStore")
-def test_retrieve_and_validate_manifest_file_not_found(mock_local_store):
+def test_validate_manifest_file_not_found(mock_local_store):
     mock_local_store = MagicMock(name="local_store")
     mock_local_store.get_lone_matching_json_as_dict.return_value = {}
     with pytest.raises(FileNotFoundError) as e:
@@ -119,4 +119,5 @@ def test_read_json_file_invalid():
     with pytest.raises(ValueError) as e:
         read_json_file(file_path)
 
-    assert "File is not valid JSON" in str(e.value)
+    assert "not valid JSON" in str(e.value)
+    assert str(file_path) in str(e.value)

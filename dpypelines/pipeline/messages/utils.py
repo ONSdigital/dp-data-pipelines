@@ -4,7 +4,6 @@ from typing import Optional
 
 import pytz
 from dpytools.email.ses.client import SesClient
-from dpytools.utilities.utilities import str_to_bool
 from email_validator import EmailNotValidError, validate_email
 
 from dpypelines.pipeline.config import JobConfiguration
@@ -14,7 +13,8 @@ MIMETYPES = {
     ".xml": "application/xml",
     ".json": "application/json",
     ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    ".csdb": "application/octet-stream",
+    ".csdb": "text/plain",
+    ".xls": "application/vnd.ms-excel",
 }
 
 
@@ -27,8 +27,7 @@ def get_email_client():
     """
     Creates an email client object to be used for sending notification/error report emails.
     """
-    emails_disabled = str(JobConfiguration().disable_emails)
-    emails_disabled = str_to_bool(emails_disabled)
+    emails_disabled = JobConfiguration().disable_emails
 
     if emails_disabled:
         return NopEmailClient()
