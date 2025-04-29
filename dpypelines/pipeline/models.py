@@ -8,7 +8,7 @@ from dpypelines.pipeline.messages.utils import get_mimetype
 
 class DatasetVersion(BaseModel):
     edition_title: str
-    distributions: List["Distribution"] = Field(default_factory=list)
+    distributions: List["Distribution"]
     release_date: datetime
     quality_designation: Optional[str] = None
     usage_notes: Optional[List["UsageNote"]] = Field(default_factory=list)
@@ -22,7 +22,7 @@ class Metadata(DatasetVersion):
 
 class Manifest(BaseModel):
     metadata_file: str
-    submission_contacts: List["SubmissionContact"] = Field(default_factory=list)
+    submission_contacts: List["SubmissionContact"]
 
 
 class Distribution(BaseModel):

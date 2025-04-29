@@ -49,7 +49,6 @@ def test_validate_and_upload_metadata_succeeds(
     assert metadata_uploaded
 
 
-# @patch("dpypelines.pipeline.dataset_api.upload_metadata")
 @patch("dpypelines.pipeline.dataset_api.is_valid_dataset")
 @patch("dpypelines.pipeline.dataset_api.DatasetAPIClient")
 @patch("dpypelines.pipeline.dataset_api.JobConfiguration")

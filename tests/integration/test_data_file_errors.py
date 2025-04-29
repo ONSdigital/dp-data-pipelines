@@ -107,15 +107,15 @@ def test_unsupported_filetype(
     spy_notifier,
 ):
     """Test a successful pipeline execution with mocked AWS services."""
-    data_contents = {
-        "somekey": "somevalue"
-    }
+    data_contents = {"somekey": "somevalue"}
     data_file_name = "data.json"
     from dpypelines.s3_folder_received import start
 
     zip_file_object_key = zip_file_object_key_factory(
-        data_config=FileGenerationConfig(include=True, content=json.dumps(data_contents)),
-        data_file_name=data_file_name
+        data_config=FileGenerationConfig(
+            include=True, content=json.dumps(data_contents)
+        ),
+        data_file_name=data_file_name,
     )
 
     # The following assertions are likely incorrect, but match current implementation
@@ -135,6 +135,6 @@ def test_unsupported_filetype(
     uploaded_file_info.verify_files_in_destination(
         s3_client, expected_files, "processed/"
     )
-    
+
     # Not desired behaviour
     assert_successful_email()

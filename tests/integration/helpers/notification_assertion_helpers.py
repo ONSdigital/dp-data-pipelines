@@ -8,6 +8,7 @@ def assert_no_success_and_one_failure(spy_notifier):
     spy_notifier_instance.success.assert_not_called()
     spy_notifier_instance.failure.assert_called_once()
 
+
 def assert_success_notification(spy_notifier):
     """
     Verifies that there was one notification client instantiated, one success notification, and no failure notification

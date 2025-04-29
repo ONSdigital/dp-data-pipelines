@@ -94,7 +94,13 @@ def test_empty_metadata(
     assert_exception_email_sent(str(e.value))
 
 
-required_metadata_fields = ["dataset_id", "edition_title", "release_date", "edition"]
+required_metadata_fields = [
+    "dataset_id",
+    "edition_title",
+    "release_date",
+    "edition",
+    "distributions",
+]
 
 
 @pytest.mark.parametrize("field_to_remove", required_metadata_fields)
@@ -144,7 +150,6 @@ def test_metadata_fails_when_missing_required_field(
 
 
 metadata_optional_fields = [
-    "distributions",
     "quality_designation",
     "usage_notes",
     "alerts",

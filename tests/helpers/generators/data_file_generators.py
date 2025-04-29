@@ -86,10 +86,11 @@ def get_media_type_for_extension(extension: str):
             return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         case "json":
             return "application/json"
-        
+
     print(f"Could not find matching media type for extension {extension}")
 
     return "thisfiletype/wasnotfound"
+
 
 def get_media_type_for_file_name(file_name: str):
     extension = file_name.split(".")[1]
