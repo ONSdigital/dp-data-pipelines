@@ -57,6 +57,11 @@ export <ENVIRONMENT_VARIABLE_NAME>=<environment_variable_value>
 | DATASET_API_URL          |  None   | The URL of the Dataset API                              | Set **either** `SKIP_DATA_UPLOAD` **or** `DATASET_API_URL` **and** `SERVICE_TOKEN_FOR_UPLOAD` |
 | SERVICE_TOKEN_FOR_UPLOAD |  None   | The service token required to access the Upload Service and Dataset API | Set **either** `SKIP_DATA_UPLOAD` **or** `UPLOAD_SERVICE_URL` **and** `DATASET_API_URL` **and** `SERVICE_TOKEN_FOR_UPLOAD` |
 
+
+## Additional documentation
+
+Further documentation can be found in our [documentation folder](/docs/)
+
 Licence
 -------
 
