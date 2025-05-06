@@ -5,7 +5,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic_core import ValidationError
 
-from dpypelines.pipeline.models import Manifest, Metadata, SubmissionContact
+from dpypelines.pipeline.models.metadata_models import (
+    Manifest,
+    Metadata,
+    SubmissionContact,
+)
 from dpypelines.pipeline.validate_pipeline import (
     validate_manifest,
     read_json_file,

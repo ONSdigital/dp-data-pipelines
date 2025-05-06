@@ -11,7 +11,7 @@ from dpypelines.pipeline.dataset_api import (
     validate_and_upload_metadata,
 )
 from dpypelines.pipeline.errors import DatasetTypeException, DatasetNotFoundException
-from dpypelines.pipeline.models import Distribution, Metadata
+from dpypelines.pipeline.models.metadata_models import Distribution, Metadata
 
 
 @patch("dpypelines.pipeline.dataset_api.upload_metadata")

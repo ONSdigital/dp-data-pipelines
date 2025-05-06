@@ -1,0 +1,100 @@
+from bson import BSON
+import dpypelines.pipeline.models.db_models as models
+from pymongo import MongoClient
+from datetime import datetime as dt
+from insert_test_data import insert_test_data
+import crud
+from dpypelines.pipeline.models.enum_codec import EnumCodec
+from bson.codec_options import CodecOptions, TypeRegistry
+
+# podman machine start
+# docker compose up -d
+# Error response from daemon: crun: executable file `./lambda_retry_ingest.py` not found in $PATH
+
+# podman machine set --rootful
+# podman machine start
+# docker compose up -d
+# Error response from daemon: crun: open executable: Permission denied: OCI permission denied
+
+# docker run -d -p 27017:27017 --name mongo-db mongo:latest
+client = MongoClient("localhost", 27017, uuidRepresentation="standard")
+db, datasets, dataset_statuses = insert_test_data(client)
+
+all_datasets = crud.get_all_documents_list(datasets)
+all_statuses = crud.get_all_documents_list(dataset_statuses)
+
+# Dataset arrives in S3 bucket
+"""
+event = {
+    "Records": [
+        {
+            "s3": {
+                "bucket": {
+                    "name": "bucket-name",
+                },
+                "object": {
+                    "key": "input/dataset_id_10.zip",
+                },
+            },
+        }
+    ]
+}
+object_key = event["Records"][0]["s3"]["object"]["key"]
+dataset_id = object_key.split("/", 1)[-1].split(".")[0]
+"""
+object_key = "input/dataset_id_10.zip"
+dataset_id = "dataset_id_10"
+
+# TODO Send GET request to Dataset API to get latest_edition_id and latest_version_id?
+edition_id = f"edition_id_for_{dataset_id}"
+version_id = 1
+
+# Create document in `datasets` collection if not exists
+if not datasets.find_one({"dataset_id": dataset_id}):
+    dataset = models.Dataset(
+        dataset_id=dataset_id,
+        latest_edition_id=edition_id,
+        latest_version_id=version_id,
+        created_at=dt.now().isoformat(),
+    )
+    dataset_object_id = datasets.insert_one(dataset.model_dump()).inserted_id
+else:
+    dataset_document = datasets.find_one({"dataset_id": dataset_id})
+    dataset = models.Dataset.model_validate(dataset_document)
+
+# Create `dataset_event`
+dataset_event = models.DatasetEvent(
+    dataset_id=dataset_id,
+    timestamp=dt.now().isoformat(),
+    event_type=models.DatasetEventType.RECEIVED,
+    event_data=models.DatasetEventData(s3_object_key=object_key),
+    retry_count=0,
+)
+
+# Create `dataset_status` and insert into `dataset_statuses` collection
+# TODO Check for existing statuses and append `event` to `events`
+dataset_status = models.DatasetStatus(
+    dataset_id=dataset_id,
+    created_at=dt.now().isoformat(),
+    updated_at=dt.now().isoformat(),
+    file_name=object_key.split("/", 1)[-1],
+    edition_id=edition_id,
+    version_id=version_id,
+    status=models.DatasetStatusType.PENDING,
+    events=[dataset_event],
+    retry_count=dataset_event.retry_count,
+)
+
+# https://www.mongodb.com/docs/languages/python/pymongo-driver/current/data-formats/custom-types/type-codecs/
+enum_codec = EnumCodec(enum_class=models.DatasetStatusType, value_class=str)
+type_registry = TypeRegistry([enum_codec])
+codec_options = CodecOptions(type_registry=type_registry)
+db.get_collection("dataset_statuses", codec_options=codec_options)
+
+res = dataset_statuses.insert_one(
+    BSON.encode(dataset_status.model_dump(), codec_options=codec_options)
+)
+print(res)
+"""
+TypeError: document must be an instance of dict, bson.son.SON, bson.raw_bson.RawBSONDocument, or a type that inherits from collections.MutableMapping
+"""
