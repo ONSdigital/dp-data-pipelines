@@ -5,7 +5,7 @@ from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.validation.json.validation import validate_json_schema
 
-from dpypelines.pipeline.models import Distribution, Manifest, Metadata
+from dpypelines.pipeline.models.metadata_models import Distribution, Manifest, Metadata
 from dpypelines.pipeline.validation.utils import validate_file_format
 from dpypelines.pipeline.validation.models import ValidationResult
 from dpypelines.pipeline.validation.utils import validate_file_exists_and_not_empty

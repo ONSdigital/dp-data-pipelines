@@ -1,0 +1,33 @@
+name: dp-data-pipelines
+
+services:
+  mongo:
+    image: mongo
+    volumes:
+      - ./mongo-data:/data/db
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+    ports:
+      - "27017:27017"
+
+  retry_handler:
+    build:
+      context: ../
+      dockerfile: ./lambdas/lambda_retry_etl/Dockerfile
+    environment:
+      MONGO_HOST: ${MONGODB_HOST}
+      MONGO_USERNAME: ${MONGODB_USER}
+      MONGO_PASSWORD: ${MONGODB_PASSWORD}
+      MONGODB_CONNECTION_STRING: ${MONGODB_CONNECTION_STRING}
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGODB_USER}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_PASSWORD}
+      ME_CONFIG_MONGODB_URL: ${MONGODB_CONNECTION_STRING}
+      ME_CONFIG_BASICAUTH: false
