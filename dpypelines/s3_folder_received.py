@@ -1,4 +1,5 @@
 from dpytools.logging.logger import DpLogger
+from datetime import datetime
 
 from dpypelines.pipeline.config import JobConfiguration
 from dpypelines.pipeline.dataset_api import validate_and_upload_metadata
@@ -39,6 +40,9 @@ def start(s3_object_name: str, *args, **kwargs):
     notifier = None
     email_client = None
     try:
+
+        start_time = datetime.now().isoformat()
+
         # Set up clients.
         notifier, email_client = setup_clients()
 
@@ -83,6 +87,18 @@ def start(s3_object_name: str, *args, **kwargs):
                 delete_s3_processing_folder(
                     s3_object_name, decompressed_file_dir, s3_processing_folder
                 )
+
+                end_time = datetime.now().isoformat()
+
+                try:
+                    logger.info("Performance Metrics", data = {
+                        "Pipeline Start" : start_time,
+                        "Pipeline End" : end_time,
+                        "Pipeline ID" : manifest_dict['source_id']
+                    })
+                except Exception as log_err:
+                    logger.error("Performance logging failed", log_err)
+
                 return True
             else:
                 # Copy all files in S3 "processing" folder to S3 "dataset-type-not-static" folder
