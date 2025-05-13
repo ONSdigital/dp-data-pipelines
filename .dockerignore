@@ -1,0 +1,7 @@
+.git/
+.github/
+.pytest_cache/
+.ruff_cache/
+.vscode/
+tests/
+**/__pycache__/
