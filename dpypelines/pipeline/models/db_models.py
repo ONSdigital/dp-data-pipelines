@@ -3,9 +3,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from bson.objectid import ObjectId
 from enum import Enum
-
+from pydantic import BaseModel, ConfigDict, ValidationError
 from pydantic_core import PydanticUndefined
-
+from pyobjectID import PyObjectId, MongoObjectId
 
 class DatasetStatusType(Enum):
     PENDING = "pending"
@@ -23,7 +23,11 @@ class DatasetEventType(Enum):
 
 
 class Dataset(BaseModel):
-    # Rename `id` to `dataset_id` in state mgmt diagrams
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    id: PyObjectId = Field(
+        alias="_id"
+    )
+    
     dataset_id: str
     latest_edition_id: str
     # `version_id` is set as `str` in state mgmt diagram but used `int` here as this corresponds to Dataset API datatype
@@ -35,8 +39,13 @@ class Dataset(BaseModel):
     # TODO `statuses` is a dict with key `DatasetStatusWithID.id` and value `DatasetStatus`
     statuses: Optional[Dict[ObjectId, "DatasetStatus"]] = Field(default_factory=dict)
 
-
 class DatasetStatus(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    id: PyObjectId = Field(
+        alias="_id"
+    )
+
     dataset_id: str
     created_at: datetime
     # Do we need updated_at here?
@@ -55,11 +64,20 @@ class DatasetStatus(BaseModel):
 
 
 class DatasetStatusWithID(DatasetStatus):
-    id: Optional[ObjectId] = Field(default=PydanticUndefined, init=False)
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    id: PyObjectId = Field(
+        alias="_id"
+    )
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class DatasetEvent(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    id: PyObjectId = Field(
+        alias="_id"
+    )
+
     dataset_id: str
     timestamp: datetime
     event_type: str  # received|pending|processing|failed|completed

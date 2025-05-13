@@ -2,7 +2,8 @@ from pymongo import MongoClient
 import dpypelines.pipeline.models.db_models as models
 from datetime import datetime as dt
 from random import randint
-
+from pyobjectID import (generate, PyObjectId, 
+                        MongoObjectId, is_valid)
 
 def insert_test_data(client: MongoClient):
     # Set up client
@@ -23,13 +24,14 @@ def insert_test_data(client: MongoClient):
 
     # Create test `dataset` documents and insert into `datasets` collection
     test_datasets = [
-        models.Dataset(
+        dict(models.Dataset(
+            _id=generate(),
             dataset_id=f"dataset_id_{i}",
             latest_edition_id=f"edition_id_for_dataset_id_{i}",
             latest_version_id=randint(0, 9),
             created_at=dt.now().isoformat(),
             statuses={},
-        ).model_dump()
+        ))
         for i in range(10)
     ]
 
@@ -37,12 +39,13 @@ def insert_test_data(client: MongoClient):
 
     # Create test `dataset_status` documents and insert into `dataset_statuses` collection
     test_dataset_statuses = [
-        models.DatasetStatus(
+        dict(models.DatasetStatus(
+            _id=generate(),
             dataset_id=f"dataset_id_{i}",
             created_at=dt.now().isoformat(),
             updated_at=dt.now().isoformat(),
             file_name=f"dataset_id_{i}.zip",
-        ).model_dump()
+        ))
         for i in range(10)
     ]
     dataset_statuses.insert_many(test_dataset_statuses)

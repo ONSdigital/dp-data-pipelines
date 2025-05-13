@@ -16,6 +16,7 @@ dpytools = { git = "https://github.com/ONSdigital/dp-python-tools.git", tag = "v
 pydantic = "^2.11.3"
 openpyxl = "^3.1.5"
 pymongo = "^4.12.1"
+pyobjectid = "^0.1.5"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
