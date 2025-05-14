@@ -15,6 +15,7 @@ from bson.codec_options import TypeCodec
 __all__ = ["EnumCodec"]
 
 
+# https://www.mongodb.com/docs/languages/python/pymongo-driver/current/data-formats/custom-types/type-codecs/#define-a-type-codec-class
 class EnumCodec(TypeCodec):
     """Codec for encoding a generic Enum into bson
     *This assumes the Enum only contains primitive/built-in/bson-compatible
@@ -24,12 +25,12 @@ class EnumCodec(TypeCodec):
         """Specify the enum class to encode/decode
         and the type of the Enum's values.
         The value class MUST be DIRECTLY bson-compatible!"""
-        assert value_class in BSON_TYPES, (
-            "Enum values must be DIRECTLY bson-compatible."
-        )
-        assert all(isinstance(val.value, value_class) for val in enum_class), (
-            "Enum values must all have the same type, as specified."
-        )
+        assert (
+            value_class in BSON_TYPES
+        ), "Enum values must be DIRECTLY bson-compatible."
+        assert all(
+            isinstance(val.value, value_class) for val in enum_class
+        ), "Enum values must all have the same type, as specified."
 
         self.enum_class = enum_class
         self.value_class = value_class

@@ -1,5 +1,6 @@
 from random import randint
 from bson import BSON
+from bson.raw_bson import RawBSONDocument
 from bson.json_util import loads, dumps
 import dpypelines.pipeline.models.db_models as models
 from pymongo import MongoClient
@@ -8,15 +9,6 @@ from dpypelines.pipeline.models.enum_codec import EnumCodec
 from bson.codec_options import CodecOptions, TypeRegistry
 from dpytools.db.documentdb_client import DocumentDBClient
 from bson.objectid import ObjectId
-
-# podman machine start
-# docker compose up -d
-# Error response from daemon: crun: executable file `./lambda_retry_ingest.py` not found in $PATH
-
-# podman machine set --rootful
-# podman machine start
-# docker compose up -d
-# Error response from daemon: crun: open executable: Permission denied: OCI permission denied
 
 # docker run -d -p 27017:27017 --name mongo-db mongo:latest
 client = DocumentDBClient("localhost", 27017)
@@ -92,13 +84,18 @@ if not datasets_collection.read_one_document({"dataset_id": dataset_id}):
 else:
     dataset_document = datasets_collection.read_one_document({"dataset_id": dataset_id})
     dataset = models.Dataset.model_validate(dataset_document)"""
+
 status_codec = EnumCodec(enum_class=models.DatasetStatusType, value_class=str)
 event_codec = EnumCodec(enum_class=models.DatasetEventType, value_class=str)
 type_registry = TypeRegistry([status_codec, event_codec])
 codec_options = CodecOptions(type_registry=type_registry)
-dataset_statuses_collection = client.get_collection(
+
+statuses_collection = client.get_collection(
     db=state_db, collection_name="dataset_statuses", codec_options=codec_options
 )
+# statuses_collection = client.get_collection(
+#     db=state_db, collection_name="dataset_statuses"
+# )
 
 # dataset_statuses_collection = client.get_collection(
 #     db=state_db, collection_name="dataset_statuses"
@@ -126,35 +123,41 @@ dataset_statuses_collection = client.get_collection(
 # dataset_status_dict_to_model = models.DatasetStatus.model_validate(dataset_status_dict)
 
 # Create `dataset_event`
-dataset_event_model = models.DatasetEvent(
+dataset_event = models.DatasetEvent(
     dataset_id=dataset_id,
     timestamp=dt.now().isoformat(),
-    event_type=models.DatasetEventType.RECEIVED,
+    # event_type=models.DatasetEventType.RECEIVED,
+    event_type=models.DatasetEventType.RECEIVED.value,
+    # event_type="received",
     event_data=models.DatasetEventData(s3_object_key=object_key),
     retry_count=0,
 )
 # dataset_event_model_to_dict = dataset_event_model.model_dump()
 
 # Create `dataset_status` and insert into `dataset_statuses` collection
-dataset_status_model = models.DatasetStatus(
+dataset_status = models.DatasetStatus(
     dataset_id=dataset_id,
     created_at=dt.now().isoformat(),
     updated_at=dt.now().isoformat(),
     file_name=f"{dataset_id}.zip",
     edition_id=edition_id,
     version_id=version_id,
-    status=models.DatasetStatusType.PENDING,
-    events=[dataset_event_model],
-    retry_count=dataset_event_model.retry_count,
+    # status=models.DatasetStatusType.PENDING,
+    status=models.DatasetStatusType.PENDING.value,
+    # status="pending",
+    events=[dataset_event],
+    retry_count=dataset_event.retry_count,
 )
-dataset_status_model_to_dict = dataset_status_model.model_dump()
-dataset_status_model_to_json = dataset_status_model.model_dump_json()
+dataset_status_dict = dataset_status.model_dump()
+dataset_status_json = dataset_status.model_dump_json()
+# dict_dataset_status = dict(dataset_status)
 
-res = dataset_statuses_collection.create_one_document(dataset_status_model_to_dict)
-print(res.inserted_id)
-res = dataset_statuses_collection.read_one_document(
-    {"_id": ObjectId("68235138033a4346a607911a")}
+create_status_result = statuses_collection.create_one_document(dataset_status_dict)
+status_document = statuses_collection.read_one_document(
+    {"_id": create_status_result.inserted_id}
 )
+# bson.errors.InvalidBSON: 'dataset_id_1' is not a valid DatasetEventType
+
 res_dict = {
     "_id": ObjectId("68235138033a4346a607911a"),
     "dataset_id": "dataset_id_1",
