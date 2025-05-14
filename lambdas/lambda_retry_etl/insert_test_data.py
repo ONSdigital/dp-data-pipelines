@@ -24,14 +24,14 @@ def insert_test_data(client: MongoClient):
 
     # Create test `dataset` documents and insert into `datasets` collection
     test_datasets = [
-        dict(models.Dataset(
+        models.Dataset(
             _id=generate(),
             dataset_id=f"dataset_id_{i}",
             latest_edition_id=f"edition_id_for_dataset_id_{i}",
             latest_version_id=randint(0, 9),
-            created_at=dt.now().isoformat(),
+            created_at=dt.now(),
             statuses={},
-        ))
+        ).dict_for_mongodb()
         for i in range(10)
     ]
 
@@ -39,13 +39,13 @@ def insert_test_data(client: MongoClient):
 
     # Create test `dataset_status` documents and insert into `dataset_statuses` collection
     test_dataset_statuses = [
-        dict(models.DatasetStatus(
+        models.DatasetStatus(
             _id=generate(),
             dataset_id=f"dataset_id_{i}",
-            created_at=dt.now().isoformat(),
-            updated_at=dt.now().isoformat(),
+            created_at=dt.now(),
+            updated_at=dt.now(),
             file_name=f"dataset_id_{i}.zip",
-        ))
+        ).dict_for_mongodb()
         for i in range(10)
     ]
     dataset_statuses.insert_many(test_dataset_statuses)
@@ -56,6 +56,6 @@ def insert_test_data(client: MongoClient):
 statuses = {
     "status_id_1": {
         "status": models.DatasetStatusType,
-        "updated_at": dt.now().isoformat(),
+        "updated_at": dt.now(),
     }
 }

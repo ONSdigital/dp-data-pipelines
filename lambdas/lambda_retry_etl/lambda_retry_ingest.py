@@ -5,8 +5,6 @@ from pymongo import MongoClient
 from datetime import datetime as dt
 from insert_test_data import insert_test_data
 import crud
-from dpypelines.pipeline.models.enum_codec import EnumCodec
-from bson.codec_options import CodecOptions, TypeRegistry
 from pyobjectID import (generate, PyObjectId, 
                         MongoObjectId, is_valid)
 
@@ -60,13 +58,14 @@ version_id = 1
 
 # Create document in `datasets` collection if not exists
 if not datasets.find_one({"dataset_id": dataset_id}):
-    dataset = dict(models.Dataset(
+    dataset = models.Dataset(
         _id=generate(),
         dataset_id=dataset_id,
         latest_edition_id=edition_id,
         latest_version_id=version_id,
-        created_at=dt.now().isoformat(),
-    ))
+        created_at=dt.now(),
+    ).dict_for_mongodb()
+    
     dataset_object_id = datasets.insert_one(dataset).inserted_id
 else:
     dataset_document = datasets.find_one({"dataset_id": dataset_id})
@@ -76,8 +75,8 @@ else:
 dataset_event = models.DatasetEvent(
     _id=generate(),
     dataset_id=dataset_id,
-    timestamp=dt.now().isoformat(),
-    event_type=str(models.DatasetEventType.RECEIVED),
+    timestamp=dt.now(),
+    event_type=models.DatasetEventType.RECEIVED,
     event_data=models.DatasetEventData(s3_object_key=object_key),
     retry_count=0,
 )
@@ -87,23 +86,20 @@ dataset_event = models.DatasetEvent(
 dataset_status = models.DatasetStatus(
     _id=generate(),
     dataset_id=dataset_id,
-    created_at=dt.now().isoformat(),
-    updated_at=dt.now().isoformat(),
+    created_at=dt.now(),
+    updated_at=dt.now(),
     file_name=object_key.split("/", 1)[-1],
     edition_id=edition_id,
     version_id=version_id,
     status=models.DatasetStatusType.PENDING,
     events=[dataset_event],
     retry_count=dataset_event.retry_count,
-)
+).dict_for_mongodb()
 
 # https://www.mongodb.com/docs/languages/python/pymongo-driver/current/data-formats/custom-types/type-codecs/
-enum_codec = EnumCodec(enum_class=models.DatasetStatusType, value_class=str)
-type_registry = TypeRegistry([enum_codec])
-codec_options = CodecOptions(type_registry=type_registry)
-db.get_collection("dataset_statuses", codec_options=codec_options)
+db.get_collection("dataset_statuses")
 
-res = dataset_statuses.insert_one(dict(dataset_status))
+res = dataset_statuses.insert_one(dataset_status)
 
 print(res)
 """
