@@ -14,7 +14,6 @@ class DatasetStatusType(Enum):
     FAILED = 2
     COMPLETED = 4
 
-
 class DatasetEventType(Enum):
     RECEIVED = 0
     PROCESSING = 1
@@ -59,6 +58,7 @@ class Dataset(BaseModel):
     def dict_for_mongodb(self):
         # Convert to dict and handle enums
         return json.loads(json.dumps(self.dict(), cls=MongoEncoder))
+    
 class DatasetStatus(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
