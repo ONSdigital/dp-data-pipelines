@@ -1,6 +1,28 @@
 # CHANGELOG
 
 
+## v0.2.0-rc.2 (2025-05-14)
+
+### Bug Fixes
+
+- Made and required fields in models
+  ([`2b92cef`](https://github.com/ONSdigital/dp-data-pipelines/commit/2b92cefcba850bea54a5e2d70a58804b3b10b482))
+
+- **dataset**: Make release_date a str
+  ([`f20294a`](https://github.com/ONSdigital/dp-data-pipelines/commit/f20294aaaee40545f4c438de65e593cb076b78fb))
+
+chore: linting
+
+### Documentation
+
+- Update pipeline requirements
+  ([`8bed45b`](https://github.com/ONSdigital/dp-data-pipelines/commit/8bed45bbacd3926373501bdf31b16d010984efd5))
+
+chore: update readmes
+
+chore: add code notes
+
+
 ## v0.2.0-rc.1 (2025-04-29)
 
 ### Bug Fixes
