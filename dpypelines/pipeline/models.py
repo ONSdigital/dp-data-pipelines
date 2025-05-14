@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr, Field
@@ -9,7 +8,7 @@ from dpypelines.pipeline.messages.utils import get_mimetype
 class DatasetVersion(BaseModel):
     edition_title: str
     distributions: List["Distribution"]
-    release_date: datetime
+    release_date: str
     quality_designation: Optional[str] = None
     usage_notes: Optional[List["UsageNote"]] = Field(default_factory=list)
     alerts: Optional[List["Alert"]] = Field(default_factory=list)
