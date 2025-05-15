@@ -74,9 +74,13 @@ def test_validate_and_upload_metadata_fails_invalid_dataset(
 
     mock_valid_dataset.return_value = False
 
-    metadata_uploaded = validate_and_upload_metadata(metadata)
+    # metadata_uploaded = validate_and_upload_metadata(metadata)
 
-    assert not metadata_uploaded
+    with pytest.raises(Exception) as e:
+        metadata_uploaded = validate_and_upload_metadata(metadata)
+    
+    assert "Invalid dataset" in str(e.value)
+    # assert not metadata_uploaded
 
 
 @patch("dpypelines.pipeline.dataset_api.upload_metadata")
