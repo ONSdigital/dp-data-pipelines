@@ -83,6 +83,7 @@ def start(s3_object_name: str, *args, **kwargs):
                 delete_s3_processing_folder(
                     s3_object_name, decompressed_file_dir, s3_processing_folder
                 )
+
                 return True
             else:
                 # Copy all files in S3 "processing" folder to S3 "dataset-type-not-static" folder
@@ -96,7 +97,7 @@ def start(s3_object_name: str, *args, **kwargs):
                 delete_s3_processing_folder(
                     s3_object_name, decompressed_file_dir, s3_processing_folder
                 )
-                return False
+                raise ValueError("Metadata not submitted")
 
     except Exception as err:
         logger.error("ETL process failed", err)

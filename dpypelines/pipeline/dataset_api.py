@@ -27,7 +27,7 @@ def validate_and_upload_metadata(metadata: Metadata) -> bool:
     )
 
     if not is_valid_dataset(dataset_api_client):
-        return False
+        raise ValueError("Invalid dataset")
 
     return upload_metadata(metadata, dataset_api_client)
 
