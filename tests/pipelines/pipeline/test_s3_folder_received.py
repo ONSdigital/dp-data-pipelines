@@ -155,7 +155,11 @@ def test_start_fails_dataset_not_static(
     mock_job_configuration.skip_data_upload = False
     mock_job_config.return_value = mock_job_configuration
 
-    start("dummy_s3_object_name")
+    with pytest.raises(Exception) as e:
+        start("dummy_s3_object_name")
+    
+    assert "Metadata not submitted" in str(e.value)
+    # start("dummy_s3_object_name")
 
     mock_setup_clients.assert_called_once()
     mock_process_zip_file.assert_called_once_with("dummy_s3_object_name")
