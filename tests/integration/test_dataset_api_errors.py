@@ -33,10 +33,12 @@ def test_non_static_dataset(
     from dpypelines.s3_folder_received import start
 
     zip_file_object_key = zip_file_object_key_factory()
-    result = start(zip_file_object_key)
 
     # Assertions
-    assert result is False
+    with pytest.raises(Exception) as e:
+        start(zip_file_object_key)
+    
+    assert "Invalid dataset" in str(e.value)
 
     assert len(spy_notifier.instances) == 1
     spy_notifier_instance = spy_notifier.instances[0]
