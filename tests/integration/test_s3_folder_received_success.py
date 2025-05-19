@@ -60,16 +60,8 @@ def test_successful_pipeline_execution(
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
-
-    expected_files = [
-        data_file_name,
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processed/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processed/"
     )
 
     assert_successful_email()

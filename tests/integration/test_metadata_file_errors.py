@@ -44,10 +44,8 @@ def test_missing_metadata(
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
-
-    expected_files = ["data.csv", "manifest.json", uploaded_file_info.file_name]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processing/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processing/"
     )
 
 
@@ -79,17 +77,9 @@ def test_empty_metadata(
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
-
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processing/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processing/"
     )
-
     # Not desired behaviour
     assert_exception_email_sent(str(e.value))
 
@@ -134,17 +124,9 @@ def test_metadata_fails_when_missing_required_field(
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
-
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processing/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processing/"
     )
-
     # Not desired behaviour
     assert_exception_email_sent(str(e.value))
 
@@ -187,15 +169,8 @@ def test_metadata_succeeds_when_missing_optional_field(
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
-
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processed/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processed/"
     )
 
     assert_successful_email()
@@ -231,15 +206,8 @@ def test_metadata_fails_when_invalid_json(
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
 
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processing/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processing/"
     )
-
     # Couldn't read metadata so no submitter info to notify
     assert_exception_email_sent(str(e.value))

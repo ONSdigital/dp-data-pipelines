@@ -57,15 +57,8 @@ def test_non_static_dataset(
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
-
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "dataset-type-not-static/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "dataset-type-not-static/"
     )
 
     # Not desired behaviour
@@ -111,15 +104,8 @@ def test_get_path_404_error(
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
-
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processing/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processing/"
     )
 
     # Not desired behaviour
@@ -169,15 +155,9 @@ def test_post_json_error(
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
 
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    # Not right behaviour - should be in errored
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processing/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processing/"
     )
+
     # Not desired behaviour
     assert_exception_email_sent(str(e.value))

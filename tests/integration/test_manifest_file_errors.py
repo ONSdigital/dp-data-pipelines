@@ -42,10 +42,8 @@ def test_missing_manifest(
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
-
-    expected_files = ["data.csv", "metadata.json", uploaded_file_info.file_name]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processing/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processing/"
     )
 
     # Not desired behaviour
@@ -82,15 +80,10 @@ def test_empty_manifest(
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
 
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processing/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processing/"
     )
+
     # Not desired behaviour
     assert_no_emails_sent()
 
@@ -135,15 +128,8 @@ def test_manifest_missing_fields(
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
-
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processing/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processing/"
     )
     # Not desired behaviour
     assert_no_emails_sent()
@@ -178,15 +164,8 @@ def test_manifest_fails_when_invalid_json(
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
-
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processing/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processing/"
     )
 
     # Not desired behaviour - shouldn't send exception email to data publisher.

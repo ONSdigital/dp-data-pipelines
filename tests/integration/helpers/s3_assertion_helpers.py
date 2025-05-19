@@ -51,6 +51,19 @@ class S3ObjectFile:
         assert "(404)" in str(e)
 
     @mock_aws
+    def verify_s3_object_in_directory(
+        self,
+        s3_client,
+        original_s3_object_key: str,
+        key_prefix: str,
+        expected_file_count: Optional[int] = None,
+    ):
+        file_name = original_s3_object_key.split("/").pop()
+        self.verify_files_in_destination(
+            s3_client, [file_name], key_prefix, expected_file_count
+        )
+
+    @mock_aws
     def verify_files_in_destination(
         self,
         s3_client,

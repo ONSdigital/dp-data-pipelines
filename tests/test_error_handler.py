@@ -26,7 +26,7 @@ class TestErrorHandler:
         with pytest.raises(Exception) as err:
             error_handler(
                 section="1.2.1",
-                error="This is a Test Error",
+                error=Exception("This is a Test Error"),
                 data={"TestKey": "Test value"},
                 submitter_email="test@gmail.com",
                 enable_email=True,
@@ -60,7 +60,7 @@ class TestErrorHandler:
         with pytest.raises(Exception) as err:
             error_handler(
                 section="1.2.1",
-                error="This is a Test Error",
+                error=Exception("This is a Test Error"),
                 data=None,
                 submitter_email="test@gmail.com",
                 enable_email=True,
