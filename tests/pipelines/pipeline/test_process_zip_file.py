@@ -163,12 +163,9 @@ def test_decompress_zip_file_recursive(mock_zipfile, mock_path):
 
 
 @patch("dpypelines.pipeline.process_zip_file.datetime")
-@patch("dpypelines.pipeline.process_zip_file.upload_local_file_to_s3")
 @patch("dpypelines.pipeline.process_zip_file.Path")
 @patch("dpypelines.pipeline.process_zip_file._get_s3_client")
-def test_upload_to_s3_processing_folder(
-    mock_get_s3_client, mock_path, mock_upload, mock_timestamp
-):
+def test_upload_to_s3_processing_folder(mock_get_s3_client, mock_path, mock_timestamp):
     """
     Test that `upload_to_s3_processing_folder()` uploads the original zip file and the unzipped contents to the S3 "processing" folder.
     """
@@ -194,20 +191,6 @@ def test_upload_to_s3_processing_folder(
 
     assert s3_processing_folder == f"processing/{now.strftime('%y-%m-%dT%H-%M')}-file"
     mock_path.rglob.assert_called_with("*")
-    upload_calls = [
-        call(
-            f"{mock_path}/inside1.txt",
-            f"bucket/processing/{now.strftime('%y-%m-%dT%H-%M')}-file/inside1.txt",
-            None,
-        ),
-        call(
-            f"{mock_path}/inside2.txt",
-            f"bucket/processing/{now.strftime('%y-%m-%dT%H-%M')}-file/inside2.txt",
-            None,
-        ),
-    ]
-
-    mock_upload.assert_has_calls(upload_calls, any_order=True)
     mock_s3.copy_object.assert_called_once_with(
         Bucket="bucket",
         Key=f"{s3_processing_folder}/key/file.zip",
@@ -218,11 +201,10 @@ def test_upload_to_s3_processing_folder(
 
 @patch("dpypelines.pipeline.process_zip_file.os.remove")
 @patch("dpypelines.pipeline.process_zip_file.datetime")
-@patch("dpypelines.pipeline.process_zip_file.upload_local_file_to_s3")
 @patch("dpypelines.pipeline.process_zip_file.Path")
 @patch("dpypelines.pipeline.process_zip_file._get_s3_client")
 def test_upload_to_s3_processing_folder_ignore_hidden_files(
-    mock_get_s3_client, mock_path, mock_upload, mock_timestamp, mock_os_remove
+    mock_get_s3_client, mock_path, mock_timestamp, mock_os_remove
 ):
     """
     Test that `upload_to_s3_processing_folder()` uploads the original zip file and the unzipped contents to the S3 "processing" folder.
@@ -252,11 +234,6 @@ def test_upload_to_s3_processing_folder_ignore_hidden_files(
 
     mock_path.rglob.assert_called_with("*")
     # Check that `upload_local_file_to_s3()` is only called once and ignores the hidden file ".hidden.txt"
-    mock_upload.assert_called_once_with(
-        f"{mock_path}/inside.txt",
-        f"bucket/processing/{now.strftime('%y-%m-%dT%H-%M')}-file/inside.txt",
-        None,
-    )
     mock_s3.copy_object.assert_called_once_with(
         Bucket="bucket",
         Key=f"{s3_processing_folder}/key/file.zip",
@@ -296,24 +273,7 @@ def test_copy_s3_processing_folder_to_processed_folder(
     )
 
     assert s3_processed_folder == f"processed/{now.strftime('%y-%m-%dT%H-%M')}-file"
-    mock_path.rglob.assert_called_with("*")
     copy_calls = [
-        call.copy_object(
-            Bucket="bucket",
-            Key=f"{s3_processed_folder}/inside1.txt",
-            CopySource={
-                "Bucket": "bucket",
-                "Key": f"processing/{now.strftime('%y-%m-%dT%H-%M')}-file/inside1.txt",
-            },
-        ),
-        call.copy_object(
-            Bucket="bucket",
-            Key=f"{s3_processed_folder}/inside2.txt",
-            CopySource={
-                "Bucket": "bucket",
-                "Key": f"processing/{now.strftime('%y-%m-%dT%H-%M')}-file/inside2.txt",
-            },
-        ),
         call.copy_object(
             Bucket="bucket",
             Key=f"{s3_processed_folder}/key/file.zip",

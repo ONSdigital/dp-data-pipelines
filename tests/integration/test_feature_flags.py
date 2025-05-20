@@ -55,15 +55,10 @@ def test_notifications_disabled(
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
 
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processed/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processed/"
     )
+
     monkeypatch.setenv("DISABLE_NOTIFICATIONS", "False")
     assert_successful_email()
 
@@ -113,15 +108,8 @@ def test_emails_disabled(
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
-
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processed/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processed/"
     )
 
     assert_no_emails_sent()
@@ -166,17 +154,8 @@ def test_file_upload_disabled(
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
-
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-
-    # Is this desired behaviour?
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processing/"
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processing/"
     )
 
     assert_no_emails_sent()

@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Tuple
 
 from dpytools.logging.logger import DpLogger
-from dpytools.s3.basic import _get_s3_client, upload_local_file_to_s3
+from dpytools.s3.basic import _get_s3_client
 from dpytools.stores.directory.local import LocalDirectoryStore
 
 logger = DpLogger("data-ingress-pipelines")
@@ -85,15 +85,7 @@ def upload_to_s3_processing_folder(
         # Delete hidden artefacts e.g. .DS_Store
         if file_path.stem.startswith("."):
             os.remove(file_path)
-        else:
-            s3_processing_object_name = (
-                f"{bucket_name}/{s3_processing_folder}/{file_path.name}"
-            )
-            upload_local_file_to_s3(
-                f"{decompressed_file_dir}/{file_path.name}",
-                s3_processing_object_name,
-                os.environ.get("AWS_PROFILE"),
-            )
+
     logger.info("Decompressed files uploaded to S3 'processing' folder")
 
     # Copy original zip file from S3 input location to S3 "processing" folder
@@ -123,17 +115,6 @@ def copy_s3_processing_folder_to_destination_folder(
     bucket_name, object_key = s3_object_name.split("/", maxsplit=1)
     s3_destination_folder = f"{destination}/{datetime.now().strftime('%y-%m-%dT%H-%M')}-{decompressed_file_dir.parts[-1]}"
     s3_client = _get_s3_client(profile_name=os.environ.get("AWS_PROFILE"))
-
-    # Copy unzipped files from S3 "processing" folder to destination folder
-    for file_path in decompressed_file_dir.rglob("*"):
-        s3_client.copy_object(
-            Bucket=bucket_name,
-            Key=f"{s3_destination_folder}/{file_path.name}",
-            CopySource={
-                "Bucket": bucket_name,
-                "Key": f"{s3_processing_folder}/{file_path.name}",
-            },
-        )
 
     # Copy original zip file from S3 "processing" folder to destination folder
     s3_client.copy_object(

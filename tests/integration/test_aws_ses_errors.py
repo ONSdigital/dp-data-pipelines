@@ -73,20 +73,9 @@ def test_ses_sendemail_error(
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
 
-    expected_files = [
-        "data.csv",
-        "metadata.json",
-        "manifest.json",
-        uploaded_file_info.file_name,
-    ]
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processed/", 8
-    )
-
-    # Undesired behaviour
-    # Copies files -> goes to send email -> errors before deleting
-    uploaded_file_info.verify_files_in_destination(
-        s3_client, expected_files, "processing/", 8
+    # verify the 2
+    uploaded_file_info.verify_s3_object_in_directory(
+        s3_client, zip_file_object_key, "processing/", 2
     )
 
     assert_no_emails_sent()

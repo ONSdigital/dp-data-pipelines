@@ -50,21 +50,21 @@ class CSVValidator(FileFormatValidator):
             bool: True == valid, False == invalid
         """
         try:
-            csv_test_bytes = file.read(
-                1024
-            )  # Grab a sample of the CSV for format detection.
-            file.seek(0)  # Rewind
-            has_header = csv.Sniffer().has_header(
-                csv_test_bytes
-            )  # Check to see if there's a header in the file.
-            dialect = csv.Sniffer().sniff(
-                csv_test_bytes
-            )  # Check what kind of csv/tsv file we have.
+            # Grab a sample of the CSV for format detection.
+            csv_test_bytes = file.read(1024)
+            file.seek(0)
+
+            # Rewind for future reading if needed
+            has_header = csv.Sniffer().has_header(csv_test_bytes)
+
+            # Check to see if there's a header in the file.
+            dialect = csv.Sniffer().sniff(csv_test_bytes)
+
+            # Check what kind of csv/tsv file we have.
             inputreader = csv.reader(file, dialect)
             if has_header:
-                next(inputreader)  # Skip the header if we have one.
-            for row in inputreader:
-                print(row)
+                # Read next to be sure
+                next(inputreader)
             return True
         except csv.Error:
             return False
