@@ -3,6 +3,7 @@ from dpytools.logging.logger import DpLogger
 from dpypelines.pipeline.config import JobConfiguration
 from dpypelines.pipeline.dataset_api import validate_and_upload_metadata
 from dpypelines.pipeline.messages.error_handler_module import error_handler
+from dpypelines.pipeline.metadata.metadata_loader import MetadataLoader
 from dpypelines.pipeline.process_zip_file import (
     copy_s3_processing_folder_to_destination_folder,
     delete_s3_processing_folder,
@@ -15,8 +16,8 @@ from dpypelines.pipeline.utils import (
 )
 from dpypelines.pipeline.validate_pipeline import (
     validate_manifest,
-    load_and_validate_metadata,
 )
+from dpytools.http.api.dataset_api_service import DatasetAPIService
 
 logger = DpLogger("data-ingress-pipeline")
 
@@ -24,6 +25,15 @@ logger = DpLogger("data-ingress-pipeline")
 ENABLE_NOTIFICATION = True
 ENABLE_LOGS = True
 ENABLE_EMAIL = True
+
+
+def get_dataset_api_service():
+    dataset_api_url = JobConfiguration().dataset_api_url
+    if not dataset_api_url:
+        msg = "Required variable not set: DATASET_API_URL"
+        raise EnvironmentError(msg)
+    dataset_api_service = DatasetAPIService(dataset_api_url)
+    return dataset_api_service
 
 
 def start(s3_object_name: str, *args, **kwargs):
@@ -46,16 +56,21 @@ def start(s3_object_name: str, *args, **kwargs):
         local_store, decompressed_file_dir, s3_processing_folder = process_zip_file(
             s3_object_name
         )
+        dataset_api_service = get_dataset_api_service()
 
         # Validate configuration and files.
         manifest = validate_manifest(local_store)
-        metadata = load_and_validate_metadata(manifest, local_store)
+        metadata = MetadataLoader(dataset_api_service, logger).load_metadata(
+            manifest, local_store
+        )
 
         # Upload metadata to Dataset API.
         if not JobConfiguration().skip_data_upload:
             metadata_submitted = validate_and_upload_metadata(
-                metadata,
+                metadata=metadata,
+                dataset_api_service=dataset_api_service,
             )
+
             if metadata_submitted:
                 # If metadata successfully submitted, upload data files to the Upload Service
                 files_to_upload = [

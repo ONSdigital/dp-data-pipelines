@@ -10,12 +10,10 @@ from tests.integration.helpers.file_helpers import (
     FileGenerationConfig,
     create_test_zip_file,
 )
-from tests.integration.mocks.mock_dataset_api_client import (
-    MockDatasetAPIClient,
-    MockDatasetAPIClientConfig,
-)
-
+from tests.integration.constants import dataset_api_url
 import dpypelines.pipeline.utils
+
+from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
 
 
 @pytest.fixture
@@ -119,7 +117,7 @@ def ses_mock(aws_credentials, ses_client_email_validator_mock):
 def setup_secrets(secretsmanager_mock, aws_credentials):
     """Setup mock secrets in AWS Secrets Manager."""
     secret_value = {
-        "DATASET_API_URL": "http://test-dataset-api.url",
+        "DATASET_API_URL": dataset_api_url,
         "UPLOAD_SERVICE_URL": "http://test-upload-service.url",
         "DE_SLACK_WEBHOOK": "http://test-slack-webhook.url",
         "SERVICE_TOKEN_FOR_UPLOAD": "test-service-token",
@@ -204,49 +202,11 @@ def create_zip_file_factory(aws_credentials):
 
 
 @pytest.fixture
-def mock_api_config(aws_credentials):
-    mock_get_response = MagicMock()
-    mock_get_response.status_code = 200
-    mock_get_response.text = '{"current": {"type": "static"}}'
-
-    mock_post_json_response = MagicMock()
-    mock_post_json_response.status_code = 201
-
-    mock_get_path_response = MagicMock()
-    mock_get_path_response.status_code = 200
-
-    mock_config = MockDatasetAPIClientConfig(
-        mock_get_response=mock_get_response,
-        mock_get_path_response=mock_get_path_response,
-        mock_post_json_response=mock_post_json_response,
-    )
-    return mock_config
-
-
-@pytest.fixture(scope="function")
-def mock_api_service_in_utils(mock_api_config, aws_credentials):
-    """Mock HTTP services (Dataset API and Upload Service)."""
-    with patch("dpypelines.pipeline.dataset_api.DatasetAPIClient") as mock_dataset_api:
-        instances = []
-
-        def create_client_instance(
-            dataset_api_url=None, dataset_path=None, edition_path=None
-        ):
-            client = MockDatasetAPIClient(
-                dataset_api_url=dataset_api_url,
-                dataset_path=dataset_path,
-                edition_path=edition_path,
-                config=mock_api_config,
-            )
-            instances.append(client)
-            return client
-
-        # Set the mock class to return our factory output when instantiated
-        mock_dataset_api.side_effect = create_client_instance
-        mock_dataset_api.instances = instances
-        mock_dataset_api.mock_config = mock_api_config
-        # Return the mock class itself so tests can inspect calls
-        yield mock_dataset_api
+def mock_dataset_api(aws_credentials, responses):
+    """Pytest fixture that provides a configured MockDatasetApi instance"""
+    api_mock = MockDatasetApi(responses)
+    yield api_mock
+    api_mock.remove_all_mocks()
 
 
 @pytest.fixture(scope="function")

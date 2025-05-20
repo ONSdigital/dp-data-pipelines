@@ -8,6 +8,7 @@ from tests.integration.helpers.ses_assertion_helpers import (
 from tests.integration.helpers.upload_service_assertion_helpers import (
     validate_successful_upload_service_calls,
 )
+from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
 
 
 @mock_aws
@@ -17,7 +18,7 @@ def test_slack_notification_error(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -36,12 +37,7 @@ def test_slack_notification_error(
     with pytest.raises(Exception):
         start(zip_file_object_key)
 
-    assert len(mock_api_service_in_utils.instances) == 1
-
-    mock_api_client_instance = mock_api_service_in_utils.instances[0]
-    mock_api_client_instance.get.assert_called_once()
-    mock_api_client_instance.get_path.assert_called_once()
-    mock_api_client_instance.post_json.assert_called_once()
+    mock_dataset_api.assert_all_requests_made()
 
     assert len(spy_notifier.call_args_list) == 1
     spy_notifier_instance = spy_notifier.instances[0]

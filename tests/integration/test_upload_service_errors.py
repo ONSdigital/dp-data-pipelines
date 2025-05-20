@@ -16,6 +16,7 @@ from tests.integration.helpers.ses_assertion_helpers import (
 from tests.integration.helpers.upload_service_assertion_helpers import (
     validate_successful_upload_service_calls,
 )
+from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
 
 
 @mock_aws
@@ -25,7 +26,7 @@ def test_upload_service_request_exception(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -47,12 +48,7 @@ def test_upload_service_request_exception(
 
     assert_no_success_and_one_failure(spy_notifier)
 
-    assert len(mock_api_service_in_utils.instances) == 1
-
-    mock_api_client_instance = mock_api_service_in_utils.instances[0]
-    mock_api_client_instance.get.assert_called_once()
-    mock_api_client_instance.get_path.assert_called_once()
-    mock_api_client_instance.post_json.assert_called_once()
+    mock_dataset_api.assert_all_requests_made()
 
     mock_upload_service.upload_new.assert_called_once()
 
@@ -75,7 +71,7 @@ def test_upload_service_returns_error(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -100,12 +96,7 @@ def test_upload_service_returns_error(
     spy_notifier.instances[0].failure.assert_not_called()
     # END not desired behaviour
 
-    assert len(mock_api_service_in_utils.instances) == 1
-
-    mock_api_client_instance = mock_api_service_in_utils.instances[0]
-    mock_api_client_instance.get.assert_called_once()
-    mock_api_client_instance.get_path.assert_called_once()
-    mock_api_client_instance.post_json.assert_called_once()
+    mock_dataset_api.assert_all_requests_made()
 
     validate_successful_upload_service_calls(mock_upload_service)
     # Verify S3 operations - check if processing folder exists

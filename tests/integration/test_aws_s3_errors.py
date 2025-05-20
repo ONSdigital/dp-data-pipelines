@@ -7,6 +7,7 @@ from tests.integration.helpers.notification_assertion_helpers import (
 )
 from tests.integration.helpers.s3_assertion_helpers import S3ObjectFile
 from tests.integration.helpers.ses_assertion_helpers import assert_no_emails_sent
+from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
 from tests.integration.mocks.mock_s3_client import create_mock_s3_client
 from botocore.exceptions import ClientError
 
@@ -22,7 +23,7 @@ def test_s3_download_error(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -58,7 +59,7 @@ def test_s3_download_error(
     mock_s3_client.download_fileobj.assert_called()
     mock_s3_client.put_object.assert_not_called()
 
-    assert len(mock_api_service_in_utils.instances) == 0
+    mock_dataset_api.assert_no_requests()
 
     # Unexpected behaviour
     assert_no_success_and_one_failure(spy_notifier)
@@ -89,13 +90,14 @@ def test_s3_copyobject_error(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
     """
     Tests when uploading file to S3 fails
     """
+
     zip_file_object_key = zip_file_object_key_factory()
 
     error_response = {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}}
@@ -121,7 +123,7 @@ def test_s3_copyobject_error(
     with pytest.raises(ClientError) as e:
         start(zip_file_object_key)
 
-    assert len(mock_api_service_in_utils.instances) == 0
+    mock_dataset_api.assert_no_requests()
 
     assert e.value.operation_name == "CopyObject"
 
@@ -162,7 +164,7 @@ def test_s3_deleteobject_error(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -194,7 +196,7 @@ def test_s3_deleteobject_error(
     with pytest.raises(ClientError) as e:
         start(zip_file_object_key)
 
-    assert len(mock_api_service_in_utils.instances) == 0
+    mock_dataset_api.assert_no_requests()
 
     assert e.value.operation_name == "DeleteObject"
 

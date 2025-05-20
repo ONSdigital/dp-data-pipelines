@@ -1,4 +1,3 @@
-from datetime import datetime
 import json
 from pathlib import Path
 import tempfile
@@ -9,6 +8,7 @@ from tests.helpers.generators.data_file_generators import (
     generate_data_file,
     get_media_type_for_extension,
 )
+from tests.integration.constants import test_dataset_id, test_edition_id
 
 MANIFEST_FILE_NAME = "manifest.json"
 METADATA_FILE_NAME = "metadata.json"
@@ -101,6 +101,7 @@ def file_generator(file_name: str, data_dict_generator: Callable[[], dict]):
             dict_contents.pop(key)
 
         write_json_file(temp_path, dict_contents, file_name)
+        return dict_contents
 
     return create_file
 
@@ -111,6 +112,7 @@ def generate_manifest_dict():
             {"email": FILE_AUTHOR_EMAIL},
         ],
         "metadata_file": "metadata.json",
+        "use_previous_metadata": True,
     }
 
 
@@ -133,10 +135,10 @@ def generate_distribution_for_file_name(file_name: str) -> dict:
 def generate_metadata_dict(data_file_name: str) -> dict:
     distribution = generate_distribution_for_file_name(data_file_name)
     return {
-        "dataset_id": "test-dataset",
-        "edition": "time-series",
+        "dataset_id": test_dataset_id,
+        "edition": test_edition_id,
         "edition_title": "Edition title",
-        "release_date": datetime.now().isoformat(),
+        "release_date": "2025-05-01T14:01:00",
         "distributions": [distribution],
         "alerts": [{"type": "alert type", "description": "some alert"}],
         "usage_notes": [{"title": "how to use me", "note": "read"}],
@@ -177,7 +179,6 @@ def create_test_zip_file(
 ):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
-
         if manifest_config.include:
             create_manifest(temp_path, manifest_config)
 

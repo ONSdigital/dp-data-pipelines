@@ -9,13 +9,12 @@ from tests.integration.helpers.file_helpers import (
 )
 from tests.integration.helpers.notification_assertion_helpers import (
     assert_no_success_and_one_failure,
-    assert_success_notification,
 )
 from tests.integration.helpers.s3_assertion_helpers import S3ObjectFile
 from tests.integration.helpers.ses_assertion_helpers import (
     assert_exception_email_sent,
-    assert_successful_email,
 )
+from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
 
 
 @mock_aws
@@ -25,7 +24,7 @@ def test_missing_data(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -60,7 +59,7 @@ def test_empty_data(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -93,13 +92,14 @@ def test_unsupported_filetype(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
-    """Test a successful pipeline execution with mocked AWS services."""
+    """Test that an unsupported filetype errors."""
     data_contents = {"somekey": "somevalue"}
-    data_file_name = "data.json"
+    extension = "not-a-real-file"
+    data_file_name = f"data.{extension}"
     from dpypelines.s3_folder_received import start
 
     zip_file_object_key = zip_file_object_key_factory(
@@ -109,16 +109,18 @@ def test_unsupported_filetype(
         data_file_name=data_file_name,
     )
 
-    # The following assertions are likely incorrect, but match current implementation
-    result = start(zip_file_object_key)
-    assert result
-    assert_success_notification(spy_notifier)
+    with pytest.raises(ValueError) as e:
+        start(zip_file_object_key)
+
+    assert "File format validation failed for" in str(e.value)
+    assert f"Extension {extension} is not supported" in str(e.value)
+
+    assert_no_success_and_one_failure(spy_notifier)
     s3_client = boto3.client("s3", region_name="eu-west-2")
     uploaded_file_info = S3ObjectFile(zip_file_object_key)
     uploaded_file_info.verify_file_moved(s3_client)
     uploaded_file_info.verify_s3_object_in_directory(
-        s3_client, zip_file_object_key, "processed/"
+        s3_client, zip_file_object_key, "processing/"
     )
 
-    # Not desired behaviour
-    assert_successful_email()
+    assert_exception_email_sent(str(e.value))

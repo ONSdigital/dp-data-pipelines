@@ -6,6 +6,8 @@ from tests.integration.helpers.s3_assertion_helpers import S3ObjectFile
 from tests.integration.helpers.ses_assertion_helpers import assert_no_emails_sent
 from botocore.exceptions import ClientError
 
+from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
+
 actual_boto_client = boto3.client
 
 
@@ -20,7 +22,7 @@ def test_secretsmanager_error(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -52,7 +54,7 @@ def test_secretsmanager_error(
 
     assert "Failed to retrieve secrets from AWS Secrets Manager" in str(e.value)
 
-    assert len(mock_api_service_in_utils.instances) == 0
+    mock_dataset_api.assert_no_requests()
 
     # Is this what it should be?
     spy_notifier.assert_called()

@@ -1,6 +1,7 @@
 import boto3
 import pytest
 from moto import mock_aws
+from tests.integration.conftest import MockDatasetApi
 from tests.integration.helpers.notification_assertion_helpers import (
     assert_no_success_and_one_failure,
 )
@@ -18,7 +19,7 @@ def test_non_static_dataset(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -26,10 +27,8 @@ def test_non_static_dataset(
     Test dataset type that isn't static
     """
     # Run the pipeline with the S3 object name
-    mock_api_service_in_utils.mock_config.mock_get_response.text = (
-        '{"current": {"type": "not-static"}}'
-    )
 
+    mock_dataset_api.mock_get_dataset(is_static=False)
     from dpypelines.s3_folder_received import start
 
     zip_file_object_key = zip_file_object_key_factory()
@@ -43,13 +42,9 @@ def test_non_static_dataset(
     spy_notifier_instance.success.assert_not_called()
     spy_notifier_instance.failure.assert_not_called()
 
-    assert len(mock_api_service_in_utils.instances) == 1
-
-    mock_api_client_instance = mock_api_service_in_utils.instances[0]
-    mock_api_client_instance.get_path.assert_called_once()
-    mock_api_client_instance.get.assert_called_once()
-
-    mock_api_client_instance.post_json.assert_not_called()
+    mock_dataset_api.assert_get_versions_called(times=1)
+    mock_dataset_api.assert_get_dataset_called(times=1)
+    mock_dataset_api.assert_post_versions_called(times=0)
 
     mock_upload_service.upload_new.assert_not_called()
 
@@ -66,13 +61,13 @@ def test_non_static_dataset(
 
 
 @mock_aws
-def test_get_path_404_error(
+def test_get_versions_404_error(
     zip_file_object_key_factory,
     setup_secrets,
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -80,8 +75,7 @@ def test_get_path_404_error(
     Test 404 error retrieving dataset version from Dataset API
     """
     # Run the pipeline with the S3 object name
-    mock_api_service_in_utils.mock_config.mock_get_path_response.text = None
-    mock_api_service_in_utils.mock_config.mock_get_path_response.status_code = 404
+    mock_dataset_api.mock_get_versions(status_code=404)
 
     from dpypelines.s3_folder_received import start
 
@@ -91,12 +85,9 @@ def test_get_path_404_error(
 
     assert_no_success_and_one_failure(spy_notifier)
 
-    assert len(mock_api_service_in_utils.instances) == 1
-
-    mock_api_client_instance = mock_api_service_in_utils.instances[0]
-    mock_api_client_instance.get_path.assert_called_once()
-    mock_api_client_instance.get.assert_not_called()
-    mock_api_client_instance.post_json.assert_not_called()
+    mock_dataset_api.assert_get_versions_called(times=1)
+    mock_dataset_api.assert_get_dataset_called(times=0)
+    mock_dataset_api.assert_post_versions_called(times=0)
 
     mock_upload_service.upload_new.assert_not_called()
 
@@ -119,7 +110,7 @@ def test_post_json_error(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -127,8 +118,7 @@ def test_post_json_error(
     Test when dataset API has a non-success response when uploading the metadata
     """
     # Run the pipeline with the S3 object name
-    mock_api_service_in_utils.mock_config.mock_post_json_response.text = None
-    mock_api_service_in_utils.mock_config.mock_post_json_response.status_code = 500
+    mock_dataset_api.mock_post_versions(status_code=500)
 
     from dpypelines.s3_folder_received import start
 
@@ -137,16 +127,11 @@ def test_post_json_error(
     with pytest.raises(Exception) as e:
         start(zip_file_object_key)
 
-    assert "Mock error raised as mock" in str(e.value)
+    assert "POST failed with status code: 500" in str(e.value)
 
     assert_no_success_and_one_failure(spy_notifier)
 
-    assert len(mock_api_service_in_utils.instances) == 1
-
-    mock_api_client_instance = mock_api_service_in_utils.instances[0]
-    mock_api_client_instance.get.assert_called_once()
-    mock_api_client_instance.get_path.assert_called_once()
-    mock_api_client_instance.post_json.assert_called_once()
+    mock_dataset_api.assert_all_requests_made()
 
     mock_upload_service.upload_new.assert_not_called()
 

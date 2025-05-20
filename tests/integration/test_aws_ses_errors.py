@@ -9,6 +9,8 @@ from tests.integration.helpers.upload_service_assertion_helpers import (
 )
 from botocore.exceptions import ClientError
 
+from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
+
 actual_boto_client = boto3.client
 
 
@@ -21,7 +23,7 @@ def test_ses_sendemail_error(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -52,12 +54,7 @@ def test_ses_sendemail_error(
 
     assert e.value.operation_name == "SendEmail"
 
-    assert len(mock_api_service_in_utils.instances) == 1
-
-    mock_api_client_instance = mock_api_service_in_utils.instances[0]
-    mock_api_client_instance.get.assert_called_once()
-    mock_api_client_instance.get_path.assert_called_once()
-    mock_api_client_instance.post_json.assert_called_once()
+    mock_dataset_api.assert_all_requests_made()
 
     assert len(spy_notifier.call_args_list) == 1
     spy_notifier_instance = spy_notifier.instances[0]

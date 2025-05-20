@@ -4,6 +4,7 @@ from moto import mock_aws
 import pytest
 
 from tests.integration.helpers.ses_assertion_helpers import assert_no_emails_sent
+from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
 
 
 # Environment variables
@@ -14,7 +15,7 @@ def test_invalid_environment_variables(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
     monkeypatch,
@@ -45,7 +46,7 @@ def test_missing_secret(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
     reset_pipelines_module,
@@ -72,7 +73,7 @@ def test_missing_secret_keys(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
     reset_pipelines_module,

@@ -15,6 +15,7 @@ from tests.integration.helpers.ses_assertion_helpers import (
     assert_exception_email_sent,
     assert_successful_email,
 )
+from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
 
 
 @mock_aws
@@ -24,7 +25,7 @@ def test_missing_metadata(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -56,7 +57,7 @@ def test_empty_metadata(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -86,7 +87,6 @@ def test_empty_metadata(
 
 required_metadata_fields = [
     "dataset_id",
-    "edition_title",
     "release_date",
     "edition",
     "distributions",
@@ -101,7 +101,7 @@ def test_metadata_fails_when_missing_required_field(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
     field_to_remove,
@@ -135,6 +135,7 @@ metadata_optional_fields = [
     "quality_designation",
     "usage_notes",
     "alerts",
+    "edition_title",
 ]
 
 
@@ -146,7 +147,7 @@ def test_metadata_succeeds_when_missing_optional_field(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
     field_to_remove,
@@ -183,7 +184,7 @@ def test_metadata_fails_when_invalid_json(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):

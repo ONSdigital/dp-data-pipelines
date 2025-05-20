@@ -8,6 +8,7 @@ from tests.integration.helpers.ses_assertion_helpers import (
 from tests.integration.helpers.upload_service_assertion_helpers import (
     validate_successful_upload_service_calls,
 )
+from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
 
 
 @mock_aws
@@ -17,7 +18,7 @@ def test_notifications_disabled(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
     monkeypatch,
@@ -34,13 +35,7 @@ def test_notifications_disabled(
     # Assertions
     assert result is True
 
-    assert len(mock_api_service_in_utils.instances) == 1
-
-    mock_api_client_instance = mock_api_service_in_utils.instances[0]
-    mock_api_client_instance.get.assert_called_once()
-    mock_api_client_instance.get_path.assert_called_once()
-    mock_api_client_instance.post_json.assert_called_once()
-
+    mock_dataset_api.assert_all_requests_made()
     spy_notifier.assert_not_called()
     spy_notifier_instance = spy_notifier.instance
     spy_notifier_instance.success.assert_not_called()
@@ -70,7 +65,7 @@ def test_emails_disabled(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
     monkeypatch,
@@ -88,12 +83,7 @@ def test_emails_disabled(
     # Assertions
     assert result is True
 
-    assert len(mock_api_service_in_utils.instances) == 1
-
-    mock_api_client_instance = mock_api_service_in_utils.instances[0]
-    mock_api_client_instance.get.assert_called_once()
-    mock_api_client_instance.get_path.assert_called_once()
-    mock_api_client_instance.post_json.assert_called_once()
+    mock_dataset_api.assert_all_requests_made()
 
     spy_notifier.assert_called_once()
     spy_notifier_instance = spy_notifier.instances[0]
@@ -124,7 +114,7 @@ def test_file_upload_disabled(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
     monkeypatch,
@@ -141,7 +131,9 @@ def test_file_upload_disabled(
     # Assertions
     assert result is None
 
-    assert len(mock_api_service_in_utils.instances) == 0
+    mock_dataset_api.assert_get_versions_called(times=1)
+    mock_dataset_api.assert_get_dataset_called(times=0)
+    mock_dataset_api.assert_post_versions_called(times=0)
 
     spy_notifier.assert_called_once()
     spy_notifier_instance = spy_notifier.instance

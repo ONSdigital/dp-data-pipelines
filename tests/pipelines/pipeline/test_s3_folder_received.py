@@ -19,21 +19,25 @@ from dpypelines.s3_folder_received import start
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
 @patch("dpypelines.s3_folder_received.validate_and_upload_metadata")
 @patch("dpypelines.s3_folder_received.upload_files")
-@patch("dpypelines.s3_folder_received.load_and_validate_metadata")
+@patch("dpypelines.s3_folder_received.MetadataLoader")
 @patch("dpypelines.s3_folder_received.validate_manifest")
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.s3_folder_received.setup_clients")
+@patch("dpypelines.s3_folder_received.DatasetAPIService")
 def test_start_succeeds(
+    mock_dataset_api_service,
     mock_setup_clients,
     mock_process_zip_file,
     mock_manifest_validation,
-    mock_pipeline_validation,
+    mock_metadata_loader,
     mock_upload_files,
     mock_upload_metadata,
     mock_copy_s3_processing,
     mock_delete_s3_processing,
     mock_job_config,
 ):
+    mock_dataset_api_service_instance = MagicMock()
+    mock_dataset_api_service.return_value = mock_dataset_api_service_instance
     mock_notifier, mock_email_client = (
         MagicMock(name="notifier"),
         MagicMock(name="email_client"),
@@ -49,7 +53,8 @@ def test_start_succeeds(
         metadata_file="metadata.json",
         submission_contacts=[SubmissionContact(email="test@example.org")],
     )
-    mock_pipeline_validation.return_value = Metadata(
+
+    mock_metadata = Metadata(
         dataset_id="dataset-id",
         edition="edition-id",
         edition_title="Edition title",
@@ -63,6 +68,7 @@ def test_start_succeeds(
             )
         ],
     )
+    mock_metadata_loader.return_value.load_metadata.return_value = mock_metadata
     mock_upload_metadata.return_value = True
     mock_copy_s3_processing.return_value = "processed/timestamp-files"
     mock_job_configuration = MagicMock()
@@ -79,10 +85,13 @@ def test_start_succeeds(
     mock_setup_clients.assert_called_once()
     mock_process_zip_file.assert_called_once_with("dummy_s3_object_name")
     mock_manifest_validation.assert_called_once_with(mock_local_store)
-    mock_pipeline_validation.assert_called_once_with(
+    mock_metadata_loader.return_value.load_metadata.assert_called_once_with(
         mock_manifest_validation.return_value, mock_local_store
     )
-    mock_upload_metadata.assert_called_once_with(mock_pipeline_validation.return_value)
+
+    mock_upload_metadata.assert_called_once_with(
+        metadata=mock_metadata, dataset_api_service=mock_dataset_api_service_instance
+    )
     mock_upload_files.assert_called_once_with([Path("files_dir") / "distribution.csv"])
     mock_copy_s3_processing.assert_called_once_with(
         "dummy_s3_object_name",
@@ -100,20 +109,25 @@ def test_start_succeeds(
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
 @patch("dpypelines.s3_folder_received.validate_and_upload_metadata")
-@patch("dpypelines.s3_folder_received.load_and_validate_metadata")
+@patch("dpypelines.s3_folder_received.MetadataLoader")
 @patch("dpypelines.s3_folder_received.validate_manifest")
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.s3_folder_received.setup_clients")
+@patch("dpypelines.s3_folder_received.DatasetAPIService")
 def test_start_fails_dataset_not_static(
+    mock_dataset_api_service,
     mock_setup_clients,
     mock_process_zip_file,
     mock_manifest_validation,
-    mock_pipeline_validation,
+    mock_metadata_loader,
     mock_upload_metadata,
     mock_copy_s3_processing,
     mock_delete_s3_processing,
     mock_job_config,
 ):
+    mock_dataset_api_service_instance = MagicMock()
+    mock_dataset_api_service.return_value = mock_dataset_api_service_instance
+
     mock_notifier, mock_email_client = (
         MagicMock(name="notifier"),
         MagicMock(name="email_client"),
@@ -129,7 +143,12 @@ def test_start_fails_dataset_not_static(
         metadata_file="metadata.json",
         submission_contacts=[SubmissionContact(email="test@example.org")],
     )
-    mock_pipeline_validation.return_value = Metadata(
+    mock_manifest_validation.return_value = Manifest(
+        metadata_file="metadata.json",
+        submission_contacts=[SubmissionContact(email="test@example.org")],
+    )
+
+    mock_metadata = Metadata(
         dataset_id="dataset-id",
         edition="edition-id",
         edition_title="Edition title",
@@ -143,6 +162,8 @@ def test_start_fails_dataset_not_static(
             )
         ],
     )
+    mock_metadata_loader.return_value.load_metadata.return_value = mock_metadata
+
     mock_upload_metadata.return_value = False
     mock_copy_s3_processing.return_value = "processed/timestamp-files"
 
@@ -160,10 +181,13 @@ def test_start_fails_dataset_not_static(
     mock_setup_clients.assert_called_once()
     mock_process_zip_file.assert_called_once_with("dummy_s3_object_name")
     mock_manifest_validation.assert_called_once_with(mock_local_store)
-    mock_pipeline_validation.assert_called_once_with(
+    mock_metadata_loader.return_value.load_metadata.assert_called_once_with(
         mock_manifest_validation.return_value, mock_local_store
     )
-    mock_upload_metadata.assert_called_once_with(mock_pipeline_validation.return_value)
+
+    mock_upload_metadata.assert_called_once_with(
+        metadata=mock_metadata, dataset_api_service=mock_dataset_api_service_instance
+    )
     mock_copy_s3_processing.assert_called_once_with(
         "dummy_s3_object_name",
         Path("files_dir"),
@@ -179,7 +203,11 @@ def test_start_fails_dataset_not_static(
 @patch("dpypelines.s3_folder_received.validate_manifest")
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.s3_folder_received.setup_clients")
+@patch("dpypelines.s3_folder_received.DatasetAPIService")
+@patch("dpypelines.s3_folder_received.JobConfiguration")
 def test_start_fails_invalid_manifest(
+    mock_job_configuration,
+    mock_dataset_api_service,
     mock_setup_clients,
     mock_process_zip_file,
     mock_manifest_validation,

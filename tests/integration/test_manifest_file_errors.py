@@ -11,6 +11,7 @@ from tests.integration.helpers.notification_assertion_helpers import (
 )
 from tests.integration.helpers.s3_assertion_helpers import S3ObjectFile
 from tests.integration.helpers.ses_assertion_helpers import assert_no_emails_sent
+from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
 
 
 @mock_aws
@@ -20,7 +21,7 @@ def test_missing_manifest(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -57,7 +58,7 @@ def test_empty_manifest(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
@@ -102,7 +103,7 @@ def test_manifest_missing_fields(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
     field_to_remove,
@@ -142,7 +143,7 @@ def test_manifest_fails_when_invalid_json(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_api_service_in_utils,
+    mock_dataset_api: MockDatasetApi,
     mock_upload_service,
     spy_notifier,
 ):
