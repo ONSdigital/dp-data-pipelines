@@ -50,7 +50,7 @@ class DatasetStatusesCollection:
         return all_status_models
 
     def create_new_status(
-        self, s3_object_key: str, additional_data: Optional[Dict[str, Any]] = {}
+        self, s3_object_key: str, additional_data: Optional[Dict[str, Any]] = None
     ) -> models.DatasetStatus:
         """
         Create a new status document in the `dataset_statuses` collection when a new file submission arrives in the S3 ingest bucket.
@@ -63,22 +63,21 @@ class DatasetStatusesCollection:
 
         # Create a `DatasetStatus` model with `status_type` of "PENDING"
         timestamp = dt.now()
-        status_model = models.DatasetStatus(
+        status_model = models.DatasetStatusFactory.create_dataset_status(
             _id=ObjectId(),
             dataset_id=self.dataset_id,
             created_at=timestamp,
             updated_at=timestamp,
             file_name=f"{self.dataset_id}.zip",
-            status_type=models.DatasetStatusType.PENDING,
+            status=models.DatasetStatusType.PENDING,
         )
 
         # Create a `DatasetEvent` model with `event_type` "RECEIVED"
-        event_model = models.DatasetEvent(
+        event_model = models.DatasetEventFactory.create_received_dataset_event(
             _id=ObjectId(),
             dataset_id=self.dataset_id,
             timestamp=status_model.created_at,
-            event_type=models.DatasetEventType.RECEIVED,
-            event_data=models.DatasetEventData(
+            event_data=models.DatasetEventDataFactory.create_dataset_event_data(
                 s3_object_key=s3_object_key, additional_data=additional_data
             ),
             retry_count=status_model.retry_count,
@@ -99,7 +98,7 @@ class DatasetStatusesCollection:
         new_status: models.DatasetStatusType,
         s3_object_key: str,
         upload_event: Optional[bool] = None,
-        upload_location: Optional[str] = None,
+        upload_location: Optional[models.UploadLocation] = None,
         additional_data: Optional[Dict[str, Any]] = None,
         error_msg: Optional[str] = None,
         retry_count: Optional[int] = 0,
@@ -125,12 +124,12 @@ class DatasetStatusesCollection:
         current_status_model = self.get_status(status_oid)
 
         # Create new event
-        event_model = models.DatasetEvent(
+        event_model = models.DatasetEventFactory.create_dataset_event(
             _id=ObjectId(),
             dataset_id=self.dataset_id,
             timestamp=dt.now(),
             event_type=event_type,
-            event_data=models.DatasetEventData(
+            event_data=models.DatasetEventDataFactory.create_dataset_event_data(
                 s3_object_key=s3_object_key,
                 upload_location=upload_location,
                 additional_data=additional_data,
@@ -156,9 +155,9 @@ class DatasetStatusesCollection:
         }
 
         # Handle upload events
-        if upload_event and upload_location == "dataset_api":
+        if upload_event and upload_location == models.UploadLocation.DATASET_API:
             update_values["uploaded_to_dataset_api"] = True
-        elif upload_event and upload_location == "upload_service":
+        elif upload_event and upload_location == models.UploadLocation.UPLOAD_SERVICE:
             update_values["uploaded_to_upload_service"] = True
 
         # Update status document with new values

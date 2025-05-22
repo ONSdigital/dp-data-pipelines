@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 
 import mongomock
 from datetime import datetime as dt
+import dpypelines.pipeline.models.db_models as models
 
 
 class MockLocalDirectoryStore:
@@ -47,7 +48,9 @@ def create_event(
 ):
     event_oid = mongomock.ObjectId()
     err_msg = "Pipeline failed" if event_type == "FAILED" else None
-    upload_location = "dataset_api" if event_type == "UPLOADED" else None
+    upload_location = (
+        models.UploadLocation.DATASET_API if event_type == "UPLOADED" else None
+    )
     return {
         "_id": event_oid,
         "dataset_id": "dataset_id",
