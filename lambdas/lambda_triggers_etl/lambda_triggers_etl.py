@@ -21,18 +21,19 @@ logger = logging.getLogger()
 S3_OBJECT_KEY = "s3-object-name"
 ENVIRONMENT = os.environ.get("ENVIRONMENT")
 
+
 def get_env_variable(key: str) -> str:
     value = os.environ.get(key, None)
     if value is None:
-        raise ValueError(
-        f"Mandatory environment variable {key} not detected."
-    )
+        raise ValueError(f"Mandatory environment variable {key} not detected.")
     return value
+
 
 # Fail early and raise if we don't have a webhook for lambda failure notifications.
 NOTIFICATION_WEBHOOK = get_env_variable("NOTIFICATION_WEBHOOK")
 OTHER_LAMBDA_ARN = get_env_variable("OTHER_LAMBDA_ARN")
-client = boto3.client('lambda')
+client = boto3.client("lambda")
+
 
 def create_log_stream_url(context) -> str:
     """
@@ -114,8 +115,12 @@ def handle_error(context, initial_err: Exception):
 
         # Raise if the POST does not work for whatever reason
         if response.status != 200:
-            raise HTTPError(NOTIFICATION_WEBHOOK, response.status_code, 
-                f"Slack POST returned status code {response.status_code} from {NOTIFICATION_WEBHOOK}", [], None
+            raise HTTPError(
+                NOTIFICATION_WEBHOOK,
+                response.status_code,
+                f"Slack POST returned status code {response.status_code} from {NOTIFICATION_WEBHOOK}",
+                [],
+                None,
             )
         logger.info(f"Notification posted to slack, status code: {response.status}")
 
@@ -149,14 +154,14 @@ def lambda_handler(event, context):
         results.append(response)
     return {
         "statusCode": 200,
-        "body": json.dumps({ "results": results}),
+        "body": json.dumps({"results": results}),
     }
 
-def process_s3_object(context, s3_object_name:str):
-    if  s3_object_name.endswith(".zip"):
+
+def process_s3_object(context, s3_object_name: str):
+    if s3_object_name.endswith(".zip"):
         response = trigger_other_lambda(context, s3_object_name)
         return response
-
 
     msg = f"""
             Received notification of invalid file submission: {s3_object_name}
@@ -165,25 +170,29 @@ def process_s3_object(context, s3_object_name:str):
     logger.error(msg)
     handle_error(context, ValueError(msg))
 
+
 def get_s3_object_name(context, record) -> str:
     try:
         object_key = urllib.parse.unquote_plus(
-                record["s3"]["object"]["key"], encoding="utf-8"
-            )
+            record["s3"]["object"]["key"], encoding="utf-8"
+        )
         bucket_name = record["s3"]["bucket"]["name"]
 
         # Determine the folder path by taking everything before the last slash.
         if "/" not in object_key:
-            raise ValueError(f"Object key {object_key} does not appear to be in a folder structure.")
+            raise ValueError(
+                f"Object key {object_key} does not appear to be in a folder structure."
+            )
 
         object_name = f"{bucket_name}/{object_key}"
         logger.info(f"S3 object name {object_name}")
         return object_name
     except KeyError as err:
         logger.error(
-                f"KeyError when attempting to get bucket name and object key: {str(err)}"
-            )
+            f"KeyError when attempting to get bucket name and object key: {str(err)}"
+        )
         handle_error(context, err)
+
 
 def trigger_other_lambda(context, s3_object_name: str):
     try:
@@ -191,16 +200,17 @@ def trigger_other_lambda(context, s3_object_name: str):
         logger.info(f"Triggering Lambda {OTHER_LAMBDA_ARN} with payload {payload}")
         response = client.invoke(
             FunctionName=OTHER_LAMBDA_ARN,
-            InvocationType='RequestResponse',
-            Payload=payload
+            InvocationType="RequestResponse",
+            Payload=payload,
         )
 
-        responseJson = json.loads(response['Payload'])
+        responseJson = json.loads(response["Payload"])
 
         logger.info(f"Started job run of id: {responseJson}")
 
         return responseJson
     except Exception as err:
-        logger.error(f"Error encountered when trying to start Lambda function {OTHER_LAMBDA_ARN}: {str(err)}"
-)
+        logger.error(
+            f"Error encountered when trying to start Lambda function {OTHER_LAMBDA_ARN}: {str(err)}"
+        )
         handle_error(context, err)
