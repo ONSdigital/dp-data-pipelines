@@ -43,7 +43,7 @@ def test_non_static_dataset(
     assert len(spy_notifier.instances) == 1
     spy_notifier_instance = spy_notifier.instances[0]
     spy_notifier_instance.success.assert_not_called()
-    spy_notifier_instance.failure.assert_not_called()
+    spy_notifier_instance.failure.assert_called_once()
 
     assert len(mock_api_service_in_utils.instances) == 1
 
