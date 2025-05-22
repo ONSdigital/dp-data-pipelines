@@ -1374,6 +1374,24 @@ pytest = ">=6.2.5"
 dev = ["pre-commit", "pytest-asyncio", "tox"]
 
 [[package]]
+name = "pytest-responses"
+version = "0.5.1"
+description = "py.test integration for responses"
+optional = false
+python-versions = "*"
+groups = ["dev"]
+files = [
+    {file = "pytest_responses-0.5.1-py2.py3-none-any.whl", hash = "sha256:4172e565b94ac1ea3b10aba6e40855ad60cd7f141476b2d8a47e4b5f250be734"},
+]
+
+[package.dependencies]
+pytest = ">=2.5"
+responses = "*"
+
+[package.extras]
+tests = ["flake8"]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 description = "Extensions to the standard Python datetime module"
