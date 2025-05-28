@@ -1,6 +1,68 @@
 # CHANGELOG
 
 
+## v0.2.0-rc.4 (2025-05-28)
+
+### Chores
+
+- Use v0.10.0 of dp-python-tools
+  ([`7ff50a2`](https://github.com/ONSdigital/dp-data-pipelines/commit/7ff50a2268c5fc85b8db0f73af23532d70ddb96a))
+
+### Features
+
+- Add responses + pytest-responses packages
+  ([`0ecfbb3`](https://github.com/ONSdigital/dp-data-pipelines/commit/0ecfbb36cf5b33c81528400b0e04e6ad540c6a61))
+
+- Add use_previous_metadata field, refactor metadata loading, update to match DatasetAPIClient
+  changes
+  ([`e7d7c62`](https://github.com/ONSdigital/dp-data-pipelines/commit/e7d7c6249a6fcec730aae21a7e625ae042def25b))
+
+- Datasetstatuscollection class implemented
+  ([`ca9b7fa`](https://github.com/ONSdigital/dp-data-pipelines/commit/ca9b7fabcc85af2ca8c3cb0a8a411ed683cb0354))
+
+feat: fix Dockerfile, tidy up file locations, tidy up compose file, add .dockerignore, add .env
+
+feat: add pyobjectid, change from json do dict
+
+json encoder
+
+.
+
+add missing connection string
+
+feat: DatasetStatusCollection class added
+
+feat(test): Tests added for DatasetStatusesCollection methods
+
+tests: fix read one document + update one document
+
+feat(test): Tests working
+
+- Move Docker files + Lambda code to this repository
+  ([`8423d59`](https://github.com/ONSdigital/dp-data-pipelines/commit/8423d59b7a7a53153c43cd66b1a587c6543e0f83))
+
+- Pr comments addressed
+  ([`32f779f`](https://github.com/ONSdigital/dp-data-pipelines/commit/32f779f9f1fe0bb43a43e3085cdc8a977bfa5261))
+
+
+## v0.2.0-rc.3 (2025-05-20)
+
+### Refactoring
+
+- Don't upload files + don't print CSV contents
+  ([`3500283`](https://github.com/ONSdigital/dp-data-pipelines/commit/35002835c84f81766403da9005be3438d585e170))
+
+tests: update tests
+
+chore: fix test references
+
+tests: updat eto match changes
+
+linting = formatting
+
+fix: furth3r unit tests
+
+
 ## v0.2.0-rc.2 (2025-05-14)
 
 ### Bug Fixes
