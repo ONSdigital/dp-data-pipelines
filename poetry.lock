@@ -541,8 +541,8 @@ structlog = "^25.3.0"
 [package.source]
 type = "git"
 url = "https://github.com/ONSdigital/dp-python-tools.git"
-reference = "fix/remove-encoding"
-resolved_reference = "bd531ee40fd395f505744b576b96d64401700530"
+reference = "v0.10.1"
+resolved_reference = "291d4e968ccf672565586708f41995215d920201"
 
 [[package]]
 name = "email-validator"
@@ -1922,4 +1922,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "=3.13.*"
-content-hash = "c1ec41e1fe197122554991b64554e6a8ecfd5059c88563eb16647bd126925aa1"
+content-hash = "551671feef5ed86579563c702767e8c0b3e01b803a954451fe6dc773564693f9"
