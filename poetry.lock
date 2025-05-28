@@ -537,8 +537,8 @@ structlog = "^25.3.0"
 [package.source]
 type = "git"
 url = "https://github.com/ONSdigital/dp-python-tools.git"
-reference = "chore/update-python-to-3.13"
-resolved_reference = "32516c322534401f065c1e0f58ffb2c1f9a0dc30"
+reference = "v0.10.0"
+resolved_reference = "96e98756073e2470ef274d6ff760f6af4b0a5d33"
 
 [[package]]
 name = "email-validator"
@@ -1900,4 +1900,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "=3.13.*"
-content-hash = "0cd1ee67cf34b33ee90b3e02ddfffc971db226195c04436d47ed32451a33c212"
+content-hash = "314077ff79e7faaaf043d8a061b6651c629cf5d29026443c983dbe34b9cad009"
