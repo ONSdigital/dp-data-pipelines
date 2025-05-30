@@ -75,7 +75,8 @@ def upload_files(files_to_upload):
             err_msg = f"Uploading file type {Path(required_file_path).suffix} not supported for file: {required_file_path}."
             raise NotImplementedError(err_msg)
 
-        upload_client.upload_new(required_file_path, mimetype)
+        response = upload_client.upload_new(required_file_path, mimetype)
+        response.raise_for_status()
         logger.info(
             "File uploaded",
             data={"file_path": required_file_path, "upload_url": upload_url},
