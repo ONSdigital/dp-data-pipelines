@@ -120,6 +120,26 @@ def handle_error(context, initial_err: Exception):
     # Notification to slack worked. Just raise the error to stop processing.
     raise initial_err
 
+def get_s3_object_name(context, record) -> str:
+    try:
+        object_key = urllib.parse.unquote_plus(
+                record["s3"]["object"]["key"], encoding="utf-8"
+            )
+        bucket_name = record["s3"]["bucket"]["name"]
+
+        # Determine the folder path by taking everything before the last slash.
+        if "/" not in object_key:
+            raise ValueError(f"Object key {object_key} does not appear to be in a folder structure.")
+
+        object_name = f"{bucket_name}/{object_key}"
+        logger.info(f"S3 object name {object_name}")
+        return object_name
+    except KeyError as err:
+        logger.error(
+                f"KeyError when attempting to get bucket name and object key: {str(err)}"
+            )
+        handle_error(context, err)
+
 def trigger_other_lambda(context, s3_object_name: str, client, other_lambda_arn):
     try:
         payload = json.dumps({"S3_OBJECT_KEY": s3_object_name})

@@ -8,13 +8,19 @@ import json
 import logging
 import os
 
-from lambdas.lambda_triggers_etl import lambda_triggers_etl
+import boto3
+
+from dpypelines.pipeline.shared.shared_lambda import lambda_utils
 
 logger = logging.getLogger()
 logger.setLevel("INFO")
 
 MAXIMUM_RETRY_ATTEMPTS = 5
 BACKOFF_TIMING_SCHEDULE = None
+
+OTHER_LAMBDA_ARN = lambda_utils.get_env_variable("OTHER_LAMBDA_ARN")
+
+client = boto3.client('lambda')
 
 def lambda_handler(event: dict, context):
     """
@@ -28,11 +34,15 @@ def lambda_handler(event: dict, context):
 
         event_status = get_event_status_type(event)
         if event_status == "FAILED":
-            # invoke etl lambda again
-            logger.info(f"ETL process failure detected, retrying")
+            for record in event["Records"]:
+                # invoke etl lambda again
+                logger.info(f"ETL process failure detected, retrying")
+
+                s3_object_name = lambda_utils.get_s3_object_name(context, record)
+
+                lambda_utils.trigger_other_lambda(context, s3_object_name, client, OTHER_LAMBDA_ARN)
 
 
-            
         else:
             # ETL process did not fail, do nothing
             logger.info("ETL process status normal, continuing")
