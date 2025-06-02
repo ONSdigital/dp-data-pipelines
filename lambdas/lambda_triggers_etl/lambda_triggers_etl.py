@@ -10,10 +10,13 @@ import json
 import logging
 import os
 import urllib
-
 import boto3
 
-from dpypelines.pipeline.shared.shared_lambda.lambda_utils import get_env_variable, handle_error, trigger_other_lambda
+from dpypelines.pipeline.shared.shared_lambda.lambda_utils import (
+    get_env_variable,
+    handle_error,
+    trigger_other_lambda
+)
 
 logger = logging.getLogger()
 
