@@ -35,7 +35,7 @@ def lambda_handler(event: dict, context):
         if event_status == "FAILED":
             for record in event["Records"]:
                 # invoke etl lambda again
-                logger.info(f"ETL process failure detected, retrying")
+                logger.info("ETL process failure detected, retrying")
 
                 s3_object_name = lambda_utils.get_s3_object_name(context, record)
 
