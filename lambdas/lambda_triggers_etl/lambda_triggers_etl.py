@@ -15,7 +15,7 @@ from dpypelines.pipeline.shared.shared_lambda.lambda_utils import (
     get_env_variable,
     get_s3_object_name,
     handle_error,
-    trigger_other_lambda
+    trigger_other_lambda,
 )
 
 logger = logging.getLogger()
@@ -27,7 +27,8 @@ ENVIRONMENT = os.environ.get("ENVIRONMENT")
 
 OTHER_LAMBDA_ARN = get_env_variable("OTHER_LAMBDA_ARN")
 
-client = boto3.client('lambda')
+client = boto3.client("lambda")
+
 
 def lambda_handler(event, context):
     """
@@ -42,14 +43,16 @@ def lambda_handler(event, context):
         results.append(response)
     return {
         "statusCode": 200,
-        "body": json.dumps({ "results": results}),
+        "body": json.dumps({"results": results}),
     }
 
-def process_s3_object(context, s3_object_name:str):
-    if  s3_object_name.endswith(".zip"):
-        response = trigger_other_lambda(context, s3_object_name, client, OTHER_LAMBDA_ARN)
-        return response
 
+def process_s3_object(context, s3_object_name: str):
+    if s3_object_name.endswith(".zip"):
+        response = trigger_other_lambda(
+            context, s3_object_name, client, OTHER_LAMBDA_ARN
+        )
+        return response
 
     msg = f"""
             Received notification of invalid file submission: {s3_object_name}

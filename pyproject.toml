@@ -66,6 +66,3 @@ tag_format = "v{version}"
 version_toml = [
     "pyproject.toml:tool.poetry.version",
 ]
-
-[tool.poetry.requires-plugins]
-poetry-plugin-export = ">=1.8"

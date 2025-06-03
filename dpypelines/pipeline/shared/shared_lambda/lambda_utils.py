@@ -8,16 +8,17 @@ import boto3
 
 logger = logging.getLogger()
 
+
 def get_env_variable(key: str) -> str:
     value = os.environ.get(key, None)
     if value is None:
-        raise ValueError(
-        f"Mandatory environment variable {key} not detected."
-    )
+        raise ValueError(f"Mandatory environment variable {key} not detected.")
     return value
+
 
 # Fail early and raise if we don't have a webhook for lambda failure notifications.
 NOTIFICATION_WEBHOOK = get_env_variable("NOTIFICATION_WEBHOOK")
+
 
 def create_log_stream_url(context) -> str:
     """
@@ -99,8 +100,12 @@ def handle_error(context, initial_err: Exception):
 
         # Raise if the POST does not work for whatever reason
         if response.status != 200:
-            raise HTTPError(NOTIFICATION_WEBHOOK, response.status_code, 
-                f"Slack POST returned status code {response.status_code} from {NOTIFICATION_WEBHOOK}", [], None
+            raise HTTPError(
+                NOTIFICATION_WEBHOOK,
+                response.status_code,
+                f"Slack POST returned status code {response.status_code} from {NOTIFICATION_WEBHOOK}",
+                [],
+                None,
             )
         logger.info(f"Notification posted to slack, status code: {response.status}")
 
@@ -120,25 +125,29 @@ def handle_error(context, initial_err: Exception):
     # Notification to slack worked. Just raise the error to stop processing.
     raise initial_err
 
+
 def get_s3_object_name(context, record) -> str:
     try:
         object_key = urllib.parse.unquote_plus(
-                record["s3"]["object"]["key"], encoding="utf-8"
-            )
+            record["s3"]["object"]["key"], encoding="utf-8"
+        )
         bucket_name = record["s3"]["bucket"]["name"]
 
         # Determine the folder path by taking everything before the last slash.
         if "/" not in object_key:
-            raise ValueError(f"Object key {object_key} does not appear to be in a folder structure.")
+            raise ValueError(
+                f"Object key {object_key} does not appear to be in a folder structure."
+            )
 
         object_name = f"{bucket_name}/{object_key}"
         logger.info(f"S3 object name {object_name}")
         return object_name
     except KeyError as err:
         logger.error(
-                f"KeyError when attempting to get bucket name and object key: {str(err)}"
-            )
+            f"KeyError when attempting to get bucket name and object key: {str(err)}"
+        )
         handle_error(context, err)
+
 
 def trigger_other_lambda(context, s3_object_name: str, client, other_lambda_arn):
     try:
@@ -146,16 +155,17 @@ def trigger_other_lambda(context, s3_object_name: str, client, other_lambda_arn)
         logger.info(f"Triggering Lambda {other_lambda_arn} with payload {payload}")
         response = client.invoke(
             FunctionName=other_lambda_arn,
-            InvocationType='RequestResponse',
-            Payload=payload
+            InvocationType="RequestResponse",
+            Payload=payload,
         )
 
-        responseJson = json.loads(response['Payload'])
+        responseJson = json.loads(response["Payload"])
 
         logger.info(f"Started job run of id: {responseJson}")
 
         return responseJson
     except Exception as err:
-        logger.error(f"Error encountered when trying to start Lambda function {other_lambda_arn}: {str(err)}"
-)
+        logger.error(
+            f"Error encountered when trying to start Lambda function {other_lambda_arn}: {str(err)}"
+        )
         handle_error(context, err)
