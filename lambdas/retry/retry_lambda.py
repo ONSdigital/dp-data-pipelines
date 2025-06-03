@@ -6,7 +6,6 @@ maximum retry attempts (default: 5) or backoff timing.
 
 import json
 import logging
-import os
 
 import boto3
 
