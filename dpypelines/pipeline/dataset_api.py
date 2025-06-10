@@ -1,12 +1,14 @@
-from dpytools.http.api.dataset_api_service import DatasetAPIService
+from dpytools.http.api import DatasetAPIService, GetDatasetResponse
+
 from dpytools.logging.logger import DpLogger
 
 from dpypelines.pipeline.errors import (
     DatasetNotFoundException,
 )
-from dpypelines.pipeline.errors.dataset_type_exception import DatasetTypeException
+from dpypelines.pipeline.errors.dataset_not_found_exception import (
+    CurrentDatasetNotFoundException,
+)
 from dpypelines.pipeline.models.metadata_models import DatasetVersion, Metadata
-from dpytools.http.api.models.dataset import DatasetType
 
 logger = DpLogger("data-ingress-pipelines")
 
@@ -51,32 +53,27 @@ def is_valid_dataset(dataset_id: str, dataset_api_service: DatasetAPIService) ->
     """
     Verify that the `datasets/{dataset_id}/editions/{edition_id}/versions` endpoint exists and that the dataset type is `static`.
     """
-    return dataset_type_is_static(dataset_id, dataset_api_service)
+    dataset_response = get_dataset(dataset_id, dataset_api_service)
+
+    validate_dataset_has_current_version(
+        dataset_id=dataset_id, dataset_response=dataset_response
+    )
+
+    return True
 
 
-def dataset_type_is_static(
-    dataset_id: str, dataset_api_service: DatasetAPIService
-) -> bool:
-    """
-    Return a boolean specifying whether the dataset type is `static` (True) or not (False).
+def validate_dataset_has_current_version(
+    dataset_id: str, dataset_response: GetDatasetResponse
+):
+    if dataset_response.current is None:
+        raise CurrentDatasetNotFoundException(dataset_id=dataset_id)
 
-    If either `get_dataset_id_path_response` or `get_current_dataset_type` fail to generate the required values, raise an error.
-    """
+
+def get_dataset(dataset_id: str, dataset_api_service: DatasetAPIService):
     dataset = dataset_api_service.datasets.get_dataset(dataset_id)
     if not dataset:
         raise DatasetNotFoundException(
-            "Dataset not found",
+            dataset_id=dataset_id,
             dataset_path=dataset_api_service.datasets._build_full_url(dataset_id),
         )
-
-    if dataset.current is None:
-        raise KeyError("'current' not found in dataset_result keys")
-
-    dataset_type = dataset.current.type
-
-    if dataset_type is None:
-        raise DatasetTypeException(
-            f"No dataset type found in dataset {dataset_id}", dataset_type
-        )
-
-    return dataset_type == DatasetType.STATIC or dataset_type == "static"
+    return dataset
