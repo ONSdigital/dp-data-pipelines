@@ -7,8 +7,13 @@ class DatasetNotFoundException(DataException):
         data = {"dataset_path": dataset_path, dataset_id: dataset_id}
         super().__init__(f"Dataset {dataset_id} not found", data=data, *args)
 
+
 class CurrentDatasetNotFoundException(DataException):
     def __init__(self, dataset_id: str, *args: object):
         self.dataset_id = dataset_id
         self.data = {"dataset_id": dataset_id}
-        super().__init__(f"Dataset {dataset_id} does not have a 'current' version", data=self.data, *args)
+        super().__init__(
+            f"Dataset {dataset_id} does not have a 'current' version",
+            data=self.data,
+            *args,
+        )

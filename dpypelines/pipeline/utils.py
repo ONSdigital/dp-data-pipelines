@@ -70,14 +70,17 @@ def upload_files(files_to_upload):
 
     upload_client = UploadServiceClient(upload_url)
     for required_file_path in files_to_upload:
-        logger.info("Uploading file to Upload Service API", data={"file_path": required_file_path, "upload_url": upload_url})
+        logger.info(
+            "Uploading file to Upload Service API",
+            data={"file_path": required_file_path, "upload_url": upload_url},
+        )
         mimetype = get_mimetype(Path(required_file_path).suffix)
         if not mimetype:
             err_msg = f"Uploading file type {Path(required_file_path).suffix} not supported for file: {required_file_path}."
             raise NotImplementedError(err_msg)
 
         upload_client.upload_new(required_file_path, mimetype)
-        
+
         logger.info(
             "File uploaded",
             data={"file_path": required_file_path, "upload_url": upload_url},

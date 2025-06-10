@@ -1,11 +1,13 @@
-from dpytools.http.api import DatasetAPIService, Dataset, GetDatasetResponse
+from dpytools.http.api import DatasetAPIService, GetDatasetResponse
 
 from dpytools.logging.logger import DpLogger
 
 from dpypelines.pipeline.errors import (
     DatasetNotFoundException,
 )
-from dpypelines.pipeline.errors.dataset_not_found_exception import CurrentDatasetNotFoundException
+from dpypelines.pipeline.errors.dataset_not_found_exception import (
+    CurrentDatasetNotFoundException,
+)
 from dpypelines.pipeline.models.metadata_models import DatasetVersion, Metadata
 
 logger = DpLogger("data-ingress-pipelines")
@@ -52,14 +54,20 @@ def is_valid_dataset(dataset_id: str, dataset_api_service: DatasetAPIService) ->
     Verify that the `datasets/{dataset_id}/editions/{edition_id}/versions` endpoint exists and that the dataset type is `static`.
     """
     dataset_response = get_dataset(dataset_id, dataset_api_service)
-    
-    validate_dataset_has_current_version(dataset_id=dataset_id, dataset_response=dataset_response)
-    
+
+    validate_dataset_has_current_version(
+        dataset_id=dataset_id, dataset_response=dataset_response
+    )
+
     return True
 
-def validate_dataset_has_current_version(dataset_id: str, dataset_response: GetDatasetResponse):
+
+def validate_dataset_has_current_version(
+    dataset_id: str, dataset_response: GetDatasetResponse
+):
     if dataset_response.current is None:
         raise CurrentDatasetNotFoundException(dataset_id=dataset_id)
+
 
 def get_dataset(dataset_id: str, dataset_api_service: DatasetAPIService):
     dataset = dataset_api_service.datasets.get_dataset(dataset_id)

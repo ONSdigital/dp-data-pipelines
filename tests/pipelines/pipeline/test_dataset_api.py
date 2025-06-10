@@ -4,12 +4,14 @@ import pytest
 from requests import HTTPError
 from dpytools.http.api import DatasetType
 from dpypelines.pipeline.dataset_api import (
-    get_dataset,
     is_valid_dataset,
     upload_metadata,
     validate_and_upload_metadata,
 )
-from dpypelines.pipeline.errors import DatasetNotFoundException, CurrentDatasetNotFoundException
+from dpypelines.pipeline.errors import (
+    DatasetNotFoundException,
+    CurrentDatasetNotFoundException,
+)
 from dpypelines.pipeline.models.metadata_models import Distribution, Metadata
 
 
@@ -139,6 +141,7 @@ def test_upload_metadata_succeeds(mock_dataset_api_service):
         edition_id="edition-id",
     )
 
+
 @patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
 def test_upload_metadata_fails_http_error(mock_dataset_api_service):
     mock_dataset_api_client = MagicMock(name="DatasetAPIService")
@@ -157,13 +160,14 @@ def test_upload_metadata_fails_http_error(mock_dataset_api_service):
         upload_metadata(metadata, mock_dataset_api_client)
 
 
-test_dataset_types = [
-   dataset_type for dataset_type in DatasetType.__members__
-]
+test_dataset_types = [dataset_type for dataset_type in DatasetType.__members__]
+
 
 @patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
 @pytest.mark.parametrize("dataset_type", test_dataset_types)
-def test_is_valid_dataset_passes_valid_dataset(mock_dataset_api_service, dataset_type:DatasetType):
+def test_is_valid_dataset_passes_valid_dataset(
+    mock_dataset_api_service, dataset_type: DatasetType
+):
     mock_dataset_api_client = MagicMock(name="DatasetAPIService")
     mock_dataset_api_service.return_value = mock_dataset_api_client
     mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
@@ -175,11 +179,12 @@ def test_is_valid_dataset_passes_valid_dataset(mock_dataset_api_service, dataset
     is_valid = is_valid_dataset("dataset_id", mock_dataset_api_client)
 
     assert is_valid
-    
+
+
 @patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
 def test_dataset_with_missing_current_dataset_fails(mock_dataset_api_service):
     testing_dataset_id = "dataset_id"
-    
+
     mock_dataset_api_client = MagicMock(name="DatasetAPIService")
     mock_dataset_api_service.return_value = mock_dataset_api_client
     mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
@@ -195,6 +200,7 @@ def test_dataset_with_missing_current_dataset_fails(mock_dataset_api_service):
 
     assert e.value.dataset_id == testing_dataset_id
     assert "current" in str(e.value)
+
 
 @patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
 def test_check_dataset_type_404(mock_dataset_api_service):
