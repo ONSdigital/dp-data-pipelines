@@ -30,7 +30,7 @@ class JSONValidator(FileFormatValidator):
                 file_path, f"Unhandled JSON validation error: {str(e)}"
             )
 
-    def _try_load_json_file(self, file_path: Path) -> ValidationResult:
+    def _try_load_json_file(self, file_path: Path):
         """
         Read file and load as JSON.
         """

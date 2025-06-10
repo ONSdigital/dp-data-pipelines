@@ -56,14 +56,14 @@ class JobConfiguration:
     """
 
     loaded: bool = False
-    error: Optional[str] = None
+    error: str = ""
 
-    dataset_api_url: Optional[str] = None
-    upload_service_url: Optional[str] = None
-    de_slack_webhook: Optional[str] = None
-    service_token_for_upload: Optional[str] = None
-    ses_email_identity: Optional[str] = None
-    lambda_failure_slack_webhook: Optional[str] = None
+    dataset_api_url: str = ""
+    upload_service_url: str = ""
+    de_slack_webhook: str = ""
+    service_token_for_upload: str = ""
+    ses_email_identity: str = ""
+    lambda_failure_slack_webhook: str = ""
 
     skip_data_upload: Optional[bool] = None
     disable_notifications: Optional[bool] = None
@@ -204,7 +204,7 @@ class JobConfiguration:
             self._set_values_from_secret(response, secret_config.mappings)
 
     def _load_environment_variable(
-        self, variable_name: str, class_attribute: str, default_value: Optional[str]
+        self, variable_name: str, class_attribute: str, default_value: Optional[str| bool]
     ):
         """
         Load a variable from the OS env settings and set the appropriate attribute of the
@@ -219,8 +219,8 @@ class JobConfiguration:
 
         value = os.environ.get(variable_name, default)
 
-        if default is not None:
+        if default is not None and default_value is not None:
             if isinstance(default_value, bool):
-                value = str_to_bool(value)
+                value = str_to_bool(should_be_bool=default)
 
         self.__setattr__(class_attribute, value)

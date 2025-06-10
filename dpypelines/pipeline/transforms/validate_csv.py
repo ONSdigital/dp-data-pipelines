@@ -84,7 +84,7 @@ def _dataframe_has_no_duplicates(df: pd.DataFrame):
     )
 
 
-def generated_dataframe_slices(csv_path: Path, chunk_size: Optional[int] = 5000):
+def generated_dataframe_slices(csv_path: Path, chunk_size: int = 5000):
     """
     is a generator function - can iterate through slices of the dataframe
     this way only one slice at a time will be in the memory

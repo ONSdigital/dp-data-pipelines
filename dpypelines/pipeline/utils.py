@@ -5,7 +5,7 @@ from dpytools.logging.logger import DpLogger
 
 from dpypelines.pipeline.config import JobConfiguration
 from dpypelines.pipeline.messages.email_templates import submission_processed_email
-from dpypelines.pipeline.messages.notification import NopNotifier, PipelineNotifier
+from dpypelines.pipeline.messages.notification import BasePipelineNotifier, NopNotifier, PipelineNotifier
 from dpypelines.pipeline.messages.utils import (
     get_email_client,
     get_local_time,
@@ -15,7 +15,7 @@ from dpypelines.pipeline.messages.utils import (
 logger = DpLogger("data-ingress-pipelines")
 
 
-def create_notifier(webhook: str, process_start_time=None):
+def create_notifier(webhook: str, process_start_time=None) -> BasePipelineNotifier:
     """
     Create a variant of BasePipelineMessenger by passing in a webhook.
     Enables use of webhooks from the AWS secrets manager rather than env vars.
@@ -33,7 +33,7 @@ def get_notifier():
     # Create notifier from webhook env var
     try:
         process_start_time = get_local_time()
-        notifier: PipelineNotifier = create_notifier(
+        notifier: BasePipelineNotifier = create_notifier(
             JobConfiguration().de_slack_webhook,
             process_start_time=process_start_time,
         )

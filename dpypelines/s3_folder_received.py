@@ -60,58 +60,75 @@ def start(s3_object_name: str, *args, **kwargs):
 
         # Validate configuration and files.
         manifest = validate_manifest(local_store)
+    except Exception as err:
+        logger.error("ETL process failed", err)
+        error_handler(
+            section="ETL",
+            error=err,
+            data={"s3_object_name": s3_object_name},
+            submitter_email=(""),
+            enable_email=ENABLE_EMAIL,
+            enable_logs=ENABLE_LOGS,
+            enable_notification=ENABLE_NOTIFICATION,
+            notifier=notifier,
+        )
+        raise
+    try:
         metadata = MetadataLoader(dataset_api_service, logger).load_metadata(
             manifest, local_store
         )
 
         # Upload metadata to Dataset API.
-        if not JobConfiguration().skip_data_upload:
-            metadata_submitted = validate_and_upload_metadata(
-                metadata=metadata,
-                dataset_api_service=dataset_api_service,
+        if  JobConfiguration().skip_data_upload:
+            # todo: log
+            return
+        
+        metadata_submitted = validate_and_upload_metadata(
+            metadata=metadata,
+            dataset_api_service=dataset_api_service,
+        )
+
+        if metadata_submitted:
+            # If metadata successfully submitted, upload data files to the Upload Service
+            files_to_upload = [
+                decompressed_file_dir / distribution.file
+                for distribution in metadata.distributions
+            ]
+            upload_files(files_to_upload)
+
+            # Copy all files in S3 "processing" folder to S3 "processed" folder
+            copy_s3_processing_folder_to_destination_folder(
+                s3_object_name,
+                decompressed_file_dir,
+                s3_processing_folder,
+                "processed",
             )
 
-            if metadata_submitted:
-                # If metadata successfully submitted, upload data files to the Upload Service
-                files_to_upload = [
-                    decompressed_file_dir / distribution.file
-                    for distribution in metadata.distributions
-                ]
-                upload_files(files_to_upload)
+            send_submission_confirmation(
+                email_client, manifest.submission_contacts[0].email
+            )
 
-                # Copy all files in S3 "processing" folder to S3 "processed" folder
-                copy_s3_processing_folder_to_destination_folder(
-                    s3_object_name,
-                    decompressed_file_dir,
-                    s3_processing_folder,
-                    "processed",
-                )
+            notifier.success()
+            logger.info("ETL process completed successfully")
 
-                send_submission_confirmation(
-                    email_client, manifest.submission_contacts[0].email
-                )
-
-                notifier.success()
-                logger.info("ETL process completed successfully")
-
-                # Delete files from S3 "processing" folder
-                delete_s3_processing_folder(
-                    s3_object_name, decompressed_file_dir, s3_processing_folder
-                )
-                return True
-            else:
-                # Copy all files in S3 "processing" folder to S3 "dataset-type-not-static" folder
-                copy_s3_processing_folder_to_destination_folder(
-                    s3_object_name,
-                    decompressed_file_dir,
-                    s3_processing_folder,
-                    "dataset-type-not-static",
-                )
-                # Delete files from S3 "processing" folder
-                delete_s3_processing_folder(
-                    s3_object_name, decompressed_file_dir, s3_processing_folder
-                )
-                return False
+            # Delete files from S3 "processing" folder
+            delete_s3_processing_folder(
+                s3_object_name, decompressed_file_dir, s3_processing_folder
+            )
+            return True
+        else:
+            # Copy all files in S3 "processing" folder to S3 "dataset-type-not-static" folder
+            copy_s3_processing_folder_to_destination_folder(
+                s3_object_name,
+                decompressed_file_dir,
+                s3_processing_folder,
+                "dataset-type-not-static",
+            )
+            # Delete files from S3 "processing" folder
+            delete_s3_processing_folder(
+                s3_object_name, decompressed_file_dir, s3_processing_folder
+            )
+            return False
 
     except Exception as err:
         logger.error("ETL process failed", err)
