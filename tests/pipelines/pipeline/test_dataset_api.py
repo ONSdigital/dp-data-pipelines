@@ -2,13 +2,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from requests import HTTPError
-
+from dpytools.http.api import DatasetType
 from dpypelines.pipeline.dataset_api import (
-    dataset_type_is_static,
+    get_dataset,
+    is_valid_dataset,
     upload_metadata,
     validate_and_upload_metadata,
 )
-from dpypelines.pipeline.errors import DatasetTypeException, DatasetNotFoundException
+from dpypelines.pipeline.errors import DatasetNotFoundException, CurrentDatasetNotFoundException
 from dpypelines.pipeline.models.metadata_models import Distribution, Metadata
 
 
@@ -138,7 +139,6 @@ def test_upload_metadata_succeeds(mock_dataset_api_service):
         edition_id="edition-id",
     )
 
-
 @patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
 def test_upload_metadata_fails_http_error(mock_dataset_api_service):
     mock_dataset_api_client = MagicMock(name="DatasetAPIService")
@@ -157,82 +157,57 @@ def test_upload_metadata_fails_http_error(mock_dataset_api_service):
         upload_metadata(metadata, mock_dataset_api_client)
 
 
+test_dataset_types = [
+   dataset_type for dataset_type in DatasetType.__members__
+]
+
 @patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
-def test_dataset_type_is_static(mock_dataset_api_service):
+@pytest.mark.parametrize("dataset_type", test_dataset_types)
+def test_is_valid_dataset_passes_valid_dataset(mock_dataset_api_service, dataset_type:DatasetType):
     mock_dataset_api_client = MagicMock(name="DatasetAPIService")
     mock_dataset_api_service.return_value = mock_dataset_api_client
     mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
 
     get_datasets_response = MagicMock()
-    get_datasets_response.current.type = "static"
+    get_datasets_response.current.type = dataset_type
     mock_dataset_api_client.datasets.get_dataset.return_value = get_datasets_response
 
-    dataset_is_static = dataset_type_is_static("dataset_id", mock_dataset_api_client)
+    is_valid = is_valid_dataset("dataset_id", mock_dataset_api_client)
 
-    assert dataset_is_static
-
-
+    assert is_valid
+    
 @patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
-def test_dataset_type_is_not_static(mock_dataset_api_service):
+def test_dataset_with_missing_current_dataset_fails(mock_dataset_api_service):
+    testing_dataset_id = "dataset_id"
+    
     mock_dataset_api_client = MagicMock(name="DatasetAPIService")
     mock_dataset_api_service.return_value = mock_dataset_api_client
     mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
-
-    get_datasets_response = MagicMock()
-    get_datasets_response.current.type = "not-static"
-    mock_dataset_api_client.datasets.get_dataset.return_value = get_datasets_response
-
-    dataset_is_static = dataset_type_is_static("dataset_id", mock_dataset_api_client)
-
-    assert not dataset_is_static
-
-
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
-def test_dataset_type_is_missing(mock_dataset_api_service):
-    mock_dataset_api_client = MagicMock(name="DatasetAPIService")
-    mock_dataset_api_service.return_value = mock_dataset_api_client
-    mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
-    mock_dataset_api_client.dataset_path = "dataset_id"
-
-    get_datasets_response = MagicMock()
-    get_datasets_response.current.type = None
-    get_datasets_response.next.type = None
-    mock_dataset_api_client.datasets.get_dataset.return_value = get_datasets_response
-
-    with pytest.raises(DatasetTypeException) as e:
-        dataset_type_is_static("dataset_id", mock_dataset_api_client)
-
-    assert "DatasetTypeException" in str(e)
-
-
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
-def test_check_dataset_type_current_key_missing(mock_dataset_api_service):
-    mock_dataset_api_client = MagicMock(name="DatasetAPIService")
-    mock_dataset_api_service.return_value = mock_dataset_api_client
-    mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
-    mock_dataset_api_client.dataset_path = "dataset_id"
+    mock_dataset_api_client.dataset_path = testing_dataset_id
 
     get_datasets_response = MagicMock()
     get_datasets_response.current = None
     get_datasets_response.next = None
     mock_dataset_api_client.datasets.get_dataset.return_value = get_datasets_response
 
-    with pytest.raises(KeyError) as e:
-        dataset_type_is_static("dataset_id", mock_dataset_api_client)
+    with pytest.raises(CurrentDatasetNotFoundException) as e:
+        is_valid_dataset(testing_dataset_id, mock_dataset_api_client)
 
-    assert "'current' not found in dataset_result keys" in str(e)
-
+    assert e.value.dataset_id == testing_dataset_id
+    assert "current" in str(e.value)
 
 @patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
 def test_check_dataset_type_404(mock_dataset_api_service):
+    testing_dataset_id = "dataset_id"
     mock_dataset_api_client = MagicMock(name="DatasetAPIService")
     mock_dataset_api_service.return_value = mock_dataset_api_client
     mock_dataset_api_client.dataset_api_url = "http://dataset-api.url"
-    mock_dataset_api_client.dataset_path = "dataset_id"
+    mock_dataset_api_client.dataset_path = testing_dataset_id
 
     mock_dataset_api_client.datasets.get_dataset.return_value = None
 
     with pytest.raises(DatasetNotFoundException) as e:
-        dataset_type_is_static("dataset_id", mock_dataset_api_client)
+        is_valid_dataset(testing_dataset_id, mock_dataset_api_client)
 
-    assert "DatasetNotFoundException" in str(e)
+    assert e.value.dataset_id == testing_dataset_id
+    assert "not found" in str(e.value)
