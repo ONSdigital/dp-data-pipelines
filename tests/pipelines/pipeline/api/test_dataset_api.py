@@ -3,7 +3,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from requests import HTTPError
 from dpytools.http.api import DatasetType
-from dpypelines.pipeline.dataset_api import (
+from dpypelines.pipeline.api.dataset_api import (
+    create_dataset_api_service,
     is_valid_dataset,
     upload_metadata,
     validate_and_upload_metadata,
@@ -15,9 +16,18 @@ from dpypelines.pipeline.errors import (
 from dpypelines.pipeline.models.metadata_models import Distribution, Metadata
 
 
-@patch("dpypelines.pipeline.dataset_api.upload_metadata")
-@patch("dpypelines.pipeline.dataset_api.is_valid_dataset")
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
+def test_create_dataset_api_service(monkeypatch):
+    monkeypatch.setenv("SERVICE_TOKEN_FOR_UPLOAD", "test-token")
+    job_config = MagicMock()
+    dataset_api_service = create_dataset_api_service(job_config)
+
+    assert dataset_api_service is not None
+    monkeypatch.delenv("SERVICE_TOKEN_FOR_UPLOAD", "test-token")
+
+
+@patch("dpypelines.pipeline.api.dataset_api.upload_metadata")
+@patch("dpypelines.pipeline.api.dataset_api.is_valid_dataset")
+@patch("dpypelines.pipeline.api.dataset_api.DatasetAPIService")
 def test_validate_and_upload_metadata_succeeds(
     mock_dataset_api_service, mock_valid_dataset, mock_upload_metadata
 ):
@@ -41,15 +51,14 @@ def test_validate_and_upload_metadata_succeeds(
     mock_upload_metadata.return_value = True
 
     metadata_uploaded = validate_and_upload_metadata(
-        metadata,
-        dataset_api_service=mock_dataset_api_client,
+        metadata, dataset_api_service=mock_dataset_api_client
     )
 
     assert metadata_uploaded
 
 
-@patch("dpypelines.pipeline.dataset_api.is_valid_dataset")
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
+@patch("dpypelines.pipeline.api.dataset_api.is_valid_dataset")
+@patch("dpypelines.pipeline.api.dataset_api.DatasetAPIService")
 def test_validate_and_upload_metadata_fails_invalid_dataset(
     mock_dataset_api_service, mock_valid_dataset
 ):
@@ -69,16 +78,15 @@ def test_validate_and_upload_metadata_fails_invalid_dataset(
     mock_valid_dataset.return_value = False
 
     metadata_uploaded = validate_and_upload_metadata(
-        metadata,
-        dataset_api_service=mock_dataset_api_client,
+        metadata, dataset_api_service=mock_dataset_api_client
     )
 
     assert not metadata_uploaded
 
 
-@patch("dpypelines.pipeline.dataset_api.upload_metadata")
-@patch("dpypelines.pipeline.dataset_api.is_valid_dataset")
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
+@patch("dpypelines.pipeline.api.dataset_api.upload_metadata")
+@patch("dpypelines.pipeline.api.dataset_api.is_valid_dataset")
+@patch("dpypelines.pipeline.api.dataset_api.DatasetAPIService")
 def test_validate_and_upload_metadata_fails_upload_error(
     mock_dataset_api_service, mock_valid_dataset, mock_upload_metadata
 ):
@@ -103,7 +111,7 @@ def test_validate_and_upload_metadata_fails_upload_error(
     assert not metadata_uploaded
 
 
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
+@patch("dpypelines.pipeline.api.dataset_api.DatasetAPIService")
 def test_upload_metadata_succeeds(mock_dataset_api_service):
     mock_dataset_api_client = MagicMock(name="DatasetAPIService")
     mock_dataset_api_service.return_value = mock_dataset_api_client
@@ -117,6 +125,7 @@ def test_upload_metadata_succeeds(mock_dataset_api_service):
         dataset_id="dataset-id",
         edition="edition-id",
     )
+
     metadata_uploaded = upload_metadata(metadata, mock_dataset_api_client)
 
     assert metadata_uploaded
@@ -142,7 +151,7 @@ def test_upload_metadata_succeeds(mock_dataset_api_service):
     )
 
 
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
+@patch("dpypelines.pipeline.api.dataset_api.DatasetAPIService")
 def test_upload_metadata_fails_http_error(mock_dataset_api_service):
     mock_dataset_api_client = MagicMock(name="DatasetAPIService")
     mock_dataset_api_service.return_value = mock_dataset_api_client
@@ -156,6 +165,7 @@ def test_upload_metadata_fails_http_error(mock_dataset_api_service):
         dataset_id="dataset-id",
         edition="edition-id",
     )
+
     with pytest.raises(HTTPError):
         upload_metadata(metadata, mock_dataset_api_client)
 
@@ -163,7 +173,7 @@ def test_upload_metadata_fails_http_error(mock_dataset_api_service):
 test_dataset_types = [dataset_type for dataset_type in DatasetType.__members__]
 
 
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
+@patch("dpypelines.pipeline.api.dataset_api.DatasetAPIService")
 @pytest.mark.parametrize("dataset_type", test_dataset_types)
 def test_is_valid_dataset_passes_valid_dataset(
     mock_dataset_api_service, dataset_type: DatasetType
@@ -181,7 +191,7 @@ def test_is_valid_dataset_passes_valid_dataset(
     assert is_valid
 
 
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
+@patch("dpypelines.pipeline.api.dataset_api.DatasetAPIService")
 def test_dataset_with_missing_current_dataset_fails(mock_dataset_api_service):
     testing_dataset_id = "dataset_id"
 
@@ -202,7 +212,7 @@ def test_dataset_with_missing_current_dataset_fails(mock_dataset_api_service):
     assert "current" in str(e.value)
 
 
-@patch("dpypelines.pipeline.dataset_api.DatasetAPIService")
+@patch("dpypelines.pipeline.api.dataset_api.DatasetAPIService")
 def test_check_dataset_type_404(mock_dataset_api_service):
     testing_dataset_id = "dataset_id"
     mock_dataset_api_client = MagicMock(name="DatasetAPIService")

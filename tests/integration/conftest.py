@@ -6,12 +6,12 @@ import boto3
 import pytest
 from moto import mock_aws
 from unittest.mock import MagicMock, patch
+from dpypelines.pipeline.messages.notification import PipelineNotifier
 from tests.integration.helpers.file_helpers import (
     FileGenerationConfig,
     create_test_zip_file,
 )
 from tests.integration.constants import dataset_api_url
-import dpypelines.pipeline.utils
 
 from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
 
@@ -23,8 +23,10 @@ def reset_pipelines_module():
             del sys.modules[key]
 
 
+TESTING_ENVIRONMENT = "test"
+SECRET_ID = f"dp-{TESTING_ENVIRONMENT}-pipeline-secrets"
 DEFAULT_ENV_VARS = {
-    "ENVIRONMENT": "test",
+    "ENVIRONMENT": TESTING_ENVIRONMENT,
     "DISABLE_NOTIFICATIONS": "False",
     "DISABLE_EMAILS": "False",
     "COMMIT_SHA": "some-git-commit",
@@ -78,7 +80,7 @@ def s3_mock(aws_credentials):
 def secretsmanager_mock(aws_credentials):
     """Fixture to set up moto Secrets Manager mock."""
     with mock_aws():
-        yield boto3.client("secretsmanager", region_name="eu-west-2")
+        yield boto3.client("secretsmanager")
 
 
 def email_validation_mock_implementation(email: str):
@@ -126,8 +128,9 @@ def setup_secrets(secretsmanager_mock, aws_credentials):
     }
 
     secretsmanager_mock.create_secret(
-        Name="dp-test-secrets", SecretString=json.dumps(secret_value)
+        Name=SECRET_ID, SecretString=json.dumps(secret_value)
     )
+    yield secretsmanager_mock
 
 
 def generate_random_file_name():
@@ -211,7 +214,9 @@ def mock_dataset_api(aws_credentials, responses):
 
 @pytest.fixture(scope="function")
 def mock_upload_service(aws_credentials):
-    with patch("dpypelines.pipeline.utils.UploadServiceClient") as mock_upload_service:
+    with patch(
+        "dpypelines.pipeline.api.upload.UploadServiceClient"
+    ) as mock_upload_service:
         mock = MagicMock()
         mock_upload_service.return_value = mock
         yield mock
@@ -220,7 +225,7 @@ def mock_upload_service(aws_credentials):
 @pytest.fixture(scope="function")
 def spy_notifier(mocker, reset_pipelines_module, aws_credentials, mock_slack):
     # Save the original class before patching
-    original_notifier_class = dpypelines.pipeline.utils.PipelineNotifier
+    original_notifier_class = PipelineNotifier
 
     # Create a class that inherits from the original but lets us spy on methods
     class SpyPipelineNotifier(original_notifier_class):
@@ -236,7 +241,7 @@ def spy_notifier(mocker, reset_pipelines_module, aws_credentials, mock_slack):
             failure_mock.side_effect = super().failure
             self.failure = failure_mock
 
-    with patch("dpypelines.pipeline.utils.PipelineNotifier") as e:
+    with patch("dpypelines.pipeline.messages.notification.PipelineNotifier") as e:
         instances = []
 
         def create_notifier(*args, **kwargs):
@@ -257,3 +262,11 @@ def mock_slack(aws_credentials):
     ) as mock_get_notifier:
         mock_get_notifier.msg_str.return_value = None
         yield mock_get_notifier
+
+
+@pytest.fixture(scope="function")
+def mock_job_config():
+    with patch("dpypelines.pipeline.config.get_job_config") as mock_get_job_config:
+        mock_config = MagicMock()
+        mock_get_job_config.return_value = mock_get_job_config
+        yield mock_config

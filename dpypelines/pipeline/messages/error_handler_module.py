@@ -3,10 +3,9 @@ from typing import Optional
 from dpytools.logging.logger import DpLogger
 
 from dpypelines.pipeline.messages.notification import BasePipelineNotifier
-from dpypelines.pipeline.messages.utils import get_email_client
-from dpypelines.pipeline.utils import get_notifier
+from dpypelines.pipeline.messages.utils import EmailClient
 
-logger = DpLogger("data-ingress-pipelines")
+logger = DpLogger("data-ingress-pipeline")
 
 
 def error_handler(
@@ -18,6 +17,7 @@ def error_handler(
     enable_email: bool = True,
     enable_notification: bool = True,
     notifier: Optional[BasePipelineNotifier] = None,
+    email_client: Optional[EmailClient] = None,
 ):
     """
     This function handles the errors.
@@ -40,14 +40,14 @@ def error_handler(
             logger.info(f"Error in section: {section} {error}")
 
     # Send email notification if `surpress_email` is set to false
-    if submitter_email and enable_email:
-        send_error_email(section, str(error), submitter_email, data)
+    if submitter_email and submitter_email != "" and enable_email and email_client:
+        send_error_email(section, str(error), submitter_email, data, email_client)
 
     # Send system notifiations if `surpress_notification` is set to false
     if enable_notification:
         try:
             if notifier is None:
-                notifier = get_notifier()
+                raise Exception("notifier is None")
             notifier.failure()
         except Exception as notification_err:
             logger.error(
@@ -58,10 +58,13 @@ def error_handler(
 
 
 def send_error_email(
-    section: str, error: str, submitter_email: str, data: Optional[dict]
+    section: str,
+    error: str,
+    submitter_email: str,
+    data: Optional[dict],
+    email_client: EmailClient,
 ):
     try:
-        email_client = get_email_client()
         email_subject = f"ETL Pipeline error has occurred in Section: {section}"
         email_message = f"An error has occurred in section: {section} \n\n{error}"
         if data:

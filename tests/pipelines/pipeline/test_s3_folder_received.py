@@ -14,7 +14,7 @@ from dpypelines.pipeline.models.metadata_models import (
 from dpypelines.s3_folder_received import start
 
 
-@patch("dpypelines.s3_folder_received.JobConfiguration")
+@patch("dpypelines.s3_folder_received.get_job_config")
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
 @patch("dpypelines.s3_folder_received.validate_and_upload_metadata")
@@ -23,8 +23,10 @@ from dpypelines.s3_folder_received import start
 @patch("dpypelines.s3_folder_received.validate_manifest")
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.s3_folder_received.setup_clients")
-@patch("dpypelines.s3_folder_received.DatasetAPIService")
+@patch("dpypelines.s3_folder_received.create_dataset_api_service")
+@patch("dpypelines.s3_folder_received.create_upload_service_client")
 def test_start_succeeds(
+    mock_create_upload_service_client,
     mock_dataset_api_service,
     mock_setup_clients,
     mock_process_zip_file,
@@ -36,6 +38,7 @@ def test_start_succeeds(
     mock_delete_s3_processing,
     mock_job_config,
 ):
+    mock_create_upload_service_client.return_value = MagicMock()
     mock_dataset_api_service_instance = MagicMock()
     mock_dataset_api_service.return_value = mock_dataset_api_service_instance
     mock_notifier, mock_email_client = (
@@ -92,7 +95,12 @@ def test_start_succeeds(
     mock_upload_metadata.assert_called_once_with(
         metadata=mock_metadata, dataset_api_service=mock_dataset_api_service_instance
     )
-    mock_upload_files.assert_called_once_with([Path("files_dir") / "distribution.csv"])
+
+    mock_upload_files.assert_called_once_with(
+        [Path("files_dir") / "distribution.csv"],
+        mock_job_configuration,
+        mock_create_upload_service_client.return_value,
+    )
     mock_copy_s3_processing.assert_called_once_with(
         "dummy_s3_object_name",
         Path("files_dir"),
@@ -105,21 +113,25 @@ def test_start_succeeds(
     )
 
 
-@patch("dpypelines.s3_folder_received.JobConfiguration")
+@patch("dpypelines.s3_folder_received.get_job_config")
 @patch("dpypelines.s3_folder_received.delete_s3_processing_folder")
 @patch("dpypelines.s3_folder_received.copy_s3_processing_folder_to_destination_folder")
 @patch("dpypelines.s3_folder_received.validate_and_upload_metadata")
+@patch("dpypelines.s3_folder_received.upload_files")
 @patch("dpypelines.s3_folder_received.MetadataLoader")
 @patch("dpypelines.s3_folder_received.validate_manifest")
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.s3_folder_received.setup_clients")
-@patch("dpypelines.s3_folder_received.DatasetAPIService")
-def test_start_fails_dataset_not_static(
+@patch("dpypelines.s3_folder_received.create_dataset_api_service")
+@patch("dpypelines.s3_folder_received.create_upload_service_client")
+def test_start_fails_invalid_dataset(
+    mock_create_upload_service_client,
     mock_dataset_api_service,
     mock_setup_clients,
     mock_process_zip_file,
     mock_manifest_validation,
     mock_metadata_loader,
+    mock_upload_files,
     mock_upload_metadata,
     mock_copy_s3_processing,
     mock_delete_s3_processing,
@@ -203,10 +215,12 @@ def test_start_fails_dataset_not_static(
 @patch("dpypelines.s3_folder_received.validate_manifest")
 @patch("dpypelines.s3_folder_received.process_zip_file")
 @patch("dpypelines.s3_folder_received.setup_clients")
-@patch("dpypelines.s3_folder_received.DatasetAPIService")
-@patch("dpypelines.s3_folder_received.JobConfiguration")
+@patch("dpypelines.s3_folder_received.create_dataset_api_service")
+@patch("dpypelines.s3_folder_received.get_job_config")
+@patch("dpypelines.s3_folder_received.create_upload_service_client")
 def test_start_fails_invalid_manifest(
-    mock_job_configuration,
+    mock_create_upload_service_client,
+    mock_get_job_config,
     mock_dataset_api_service,
     mock_setup_clients,
     mock_process_zip_file,

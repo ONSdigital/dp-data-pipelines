@@ -1,7 +1,7 @@
-from dpytools.http.api import DatasetAPIService, GetDatasetResponse
-
+from dpypelines.pipeline.config.job_config import JobConfig
+from dpytools.http.api.dataset_api_service import DatasetAPIService
 from dpytools.logging.logger import DpLogger
-
+from dpytools.http.api import GetDatasetResponse
 from dpypelines.pipeline.errors import (
     DatasetNotFoundException,
 )
@@ -10,12 +10,16 @@ from dpypelines.pipeline.errors.dataset_not_found_exception import (
 )
 from dpypelines.pipeline.models.metadata_models import DatasetVersion, Metadata
 
-logger = DpLogger("data-ingress-pipelines")
+logger = DpLogger("data-ingress-pipeline")
+
+
+def create_dataset_api_service(job_config: JobConfig):
+    dataset_api_service = DatasetAPIService(job_config.dataset_api_url)
+    return dataset_api_service
 
 
 def validate_and_upload_metadata(
-    metadata: Metadata,
-    dataset_api_service: DatasetAPIService,
+    metadata: Metadata, dataset_api_service: DatasetAPIService
 ) -> bool:
     """
     Verify that the required conditions are met for the metadata to be uploaded the the Dataset API and submit the `POST` request with the required parameters.
@@ -26,10 +30,7 @@ def validate_and_upload_metadata(
     return upload_metadata(metadata, dataset_api_service)
 
 
-def upload_metadata(
-    metadata: Metadata,
-    dataset_api_service: DatasetAPIService,
-) -> bool:
+def upload_metadata(metadata: Metadata, dataset_api_service: DatasetAPIService) -> bool:
     """
     Send a `POST` request to the `datasets/{dataset_id}/editions/{edition_id}/versions` endpoint to submit the metadata.
     """

@@ -1,9 +1,24 @@
 from unittest.mock import MagicMock, patch
+from dpypelines.pipeline.messages.notification import (
+    send_submission_confirmation,
+    PipelineNotifier,
+)
+from pytest import MonkeyPatch, raises
 
-import pytest
-from _pytest.monkeypatch import MonkeyPatch
 
-from dpypelines.pipeline.messages.notification import PipelineNotifier
+@patch("dpypelines.pipeline.messages.notification.submission_processed_email")
+def test_send_submission_confirmation(mock_submission_processed_email):
+    """Test that `send_submission_confirmation()` sends the submission confirmation email."""
+    mock_email_client = MagicMock()
+    mock_submitter_email = "test@example.com"
+    mock_email_content = MagicMock()
+    mock_submission_processed_email.return_value = mock_email_content
+
+    send_submission_confirmation(mock_email_client, mock_submitter_email)
+
+    mock_email_client.send.assert_called_once_with(
+        mock_submitter_email, mock_email_content.subject, mock_email_content.message
+    )
 
 
 def test_notification_raises_for_missing_webhook():
@@ -15,7 +30,7 @@ def test_notification_raises_for_missing_webhook():
     mp = MonkeyPatch()
     mp.setenv("DISABLE_NOTIFICATIONS", "False")
 
-    with pytest.raises(AssertionError) as e:
+    with raises(AssertionError) as e:
         PipelineNotifier(None)
 
     assert (

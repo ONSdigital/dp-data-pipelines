@@ -1,5 +1,3 @@
-from .job_configuration import JobConfiguration
-from .secret_config import SecretConfig
-from .secret_mapping import SecretMapping
+from dpypelines.pipeline.config.job_config import JobConfig, get_job_config
 
-__ALL__ = [JobConfiguration, SecretConfig, SecretMapping]
+__all__ = ["JobConfig", "get_job_config"]

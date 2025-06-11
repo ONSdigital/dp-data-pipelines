@@ -1,8 +1,9 @@
 import json
-import sys
 from moto import mock_aws
+from pydantic import ValidationError
 import pytest
 
+from tests.integration.conftest import SECRET_ID
 from tests.integration.helpers.ses_assertion_helpers import assert_no_emails_sent
 from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
 
@@ -33,7 +34,9 @@ def test_invalid_environment_variables(
     with pytest.raises(ValueError) as e:
         start(zip_file_object_key)
 
-    assert "A str value representing a boolean" in str(e)
+    error_string = str(e)
+    assert "Input should be a valid boolean" in str(e)
+    assert "DISABLE_NOTIFICATIONS" in error_string
     monkeypatch.setenv("DISABLE_NOTIFICATIONS", "False")
     # Not desired behaviour
     assert_no_emails_sent()
@@ -61,7 +64,7 @@ def test_missing_secret(
     with pytest.raises(Exception) as e:
         start(zip_file_object_key)
 
-    assert "Failed to retrieve secrets from AWS Secrets Manager" in str(e)
+    assert "Secrets Manager can't find the specified secret" in str(e)
     # Not desired behaviour
     assert_no_emails_sent()
 
@@ -87,21 +90,14 @@ def test_missing_secret_keys(
     }
 
     secretsmanager_mock.create_secret(
-        Name="dp-test-secrets", SecretString=json.dumps(secret_value)
+        Name=SECRET_ID, SecretString=json.dumps(secret_value)
     )
-
-    for key in list(sys.modules.keys()):
-        if key.startswith("JobConfiguration") or key.endswith("JobConfiguration"):
-            del sys.modules[key]
 
     from dpypelines.s3_folder_received import start
 
     zip_file_object_key = zip_file_object_key_factory()
 
-    with pytest.raises(AttributeError) as e:
+    with pytest.raises(ValidationError) as e:
         start(zip_file_object_key)
 
-    assert "Secret key '" in str(e)
-    assert "missing" in str(e)
-    # Not desired behaviour
-    assert_no_emails_sent()
+    assert "validation errors for JobConfig" in str(e)

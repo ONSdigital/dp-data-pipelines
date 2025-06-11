@@ -16,6 +16,8 @@ pandas = "^2.2.3"
 unidecode = "^1.4.0"
 xmltodict = "^0.14.2"
 python-dotenv = "^1.1.0"
+pydantic-settings = {extras = ["aws-secrets-manager"], version = "^2.9.1"}
+requests = "^2.32.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"

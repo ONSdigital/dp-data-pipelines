@@ -6,7 +6,7 @@ import pytz
 from dpytools.email.ses.client import SesClient
 from email_validator import EmailNotValidError, validate_email
 
-from dpypelines.pipeline.config import JobConfiguration
+from dpypelines.pipeline.config.job_config import JobConfig
 
 MIMETYPES = {
     ".csv": "text/csv",
@@ -23,16 +23,19 @@ class NopEmailClient:
         print("Email feature is turned off. No email was sent.")
 
 
-def get_email_client():
+type EmailClient = NopEmailClient | SesClient
+
+
+def get_email_client(config: JobConfig) -> EmailClient:
     """
     Creates an email client object to be used for sending notification/error report emails.
     """
-    emails_disabled = JobConfiguration().disable_emails
+    emails_disabled = config.disable_emails
 
     if emails_disabled:
         return NopEmailClient()
 
-    ses_email_identity = JobConfiguration().ses_email_identity
+    ses_email_identity = config.ses_email_identity
     if ses_email_identity:
         email_client = SesClient(ses_email_identity, "eu-west-2")
 

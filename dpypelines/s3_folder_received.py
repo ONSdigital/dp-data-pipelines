@@ -1,23 +1,23 @@
 from dpytools.logging.logger import DpLogger
 
-from dpypelines.pipeline.config import JobConfiguration
-from dpypelines.pipeline.dataset_api import validate_and_upload_metadata
+from dpypelines.pipeline.api.dataset_api import (
+    create_dataset_api_service,
+    validate_and_upload_metadata,
+)
+from dpypelines.pipeline.api.upload import create_upload_service_client, upload_files
+from dpypelines.pipeline.config import get_job_config
 from dpypelines.pipeline.messages.error_handler_module import error_handler
+from dpypelines.pipeline.messages.notification import send_submission_confirmation
+from dpypelines.pipeline.messages.setup import setup_clients
 from dpypelines.pipeline.metadata.metadata_loader import MetadataLoader
 from dpypelines.pipeline.process_zip_file import (
     copy_s3_processing_folder_to_destination_folder,
     delete_s3_processing_folder,
     process_zip_file,
 )
-from dpypelines.pipeline.utils import (
-    send_submission_confirmation,
-    setup_clients,
-    upload_files,
-)
 from dpypelines.pipeline.validate_pipeline import (
     validate_manifest,
 )
-from dpytools.http.api.dataset_api_service import DatasetAPIService
 
 logger = DpLogger("data-ingress-pipeline")
 
@@ -25,15 +25,6 @@ logger = DpLogger("data-ingress-pipeline")
 ENABLE_NOTIFICATION = True
 ENABLE_LOGS = True
 ENABLE_EMAIL = True
-
-
-def get_dataset_api_service():
-    dataset_api_url = JobConfiguration().dataset_api_url
-    if not dataset_api_url:
-        msg = "Required variable not set: DATASET_API_URL"
-        raise EnvironmentError(msg)
-    dataset_api_service = DatasetAPIService(dataset_api_url)
-    return dataset_api_service
 
 
 def start(s3_object_name: str, *args, **kwargs):
@@ -49,14 +40,17 @@ def start(s3_object_name: str, *args, **kwargs):
     notifier = None
     email_client = None
     try:
+        job_config = get_job_config()
+
         # Set up clients.
-        notifier, email_client = setup_clients()
+        notifier, email_client = setup_clients(config=job_config)
 
         # Create local directory store from decompressed zip file and move files to S3 `processing` folder
         local_store, decompressed_file_dir, s3_processing_folder = process_zip_file(
             s3_object_name
         )
-        dataset_api_service = get_dataset_api_service()
+        dataset_api_service = create_dataset_api_service(job_config)
+        upload_client = create_upload_service_client(job_config)
 
         # Validate configuration and files.
         manifest = validate_manifest(local_store)
@@ -65,10 +59,9 @@ def start(s3_object_name: str, *args, **kwargs):
         )
 
         # Upload metadata to Dataset API.
-        if not JobConfiguration().skip_data_upload:
+        if not job_config.skip_data_upload:
             metadata_submitted = validate_and_upload_metadata(
-                metadata=metadata,
-                dataset_api_service=dataset_api_service,
+                metadata=metadata, dataset_api_service=dataset_api_service
             )
 
             if metadata_submitted:
@@ -77,7 +70,7 @@ def start(s3_object_name: str, *args, **kwargs):
                     decompressed_file_dir / distribution.file
                     for distribution in metadata.distributions
                 ]
-                upload_files(files_to_upload)
+                upload_files(files_to_upload, job_config, upload_client)
 
                 # Copy all files in S3 "processing" folder to S3 "processed" folder
                 copy_s3_processing_folder_to_destination_folder(
@@ -126,5 +119,6 @@ def start(s3_object_name: str, *args, **kwargs):
             enable_logs=ENABLE_LOGS,
             enable_notification=ENABLE_NOTIFICATION,
             notifier=notifier,
+            email_client=email_client,
         )
         raise

@@ -2,12 +2,16 @@ import os
 from abc import ABC, abstractmethod
 
 from dpytools.slack.slack import SlackMessenger
-
+from dpytools.logging.logger import DpLogger
+from dpypelines.pipeline.messages.email_templates import submission_processed_email
 from dpypelines.pipeline.messages.utils import (
+    EmailClient,
     get_commit_id,
     get_environment,
     get_local_time,
 )
+
+logger = DpLogger("data-ingress-pipeline")
 
 
 class BasePipelineNotifier(ABC):
@@ -71,3 +75,14 @@ class PipelineNotifier(BasePipelineNotifier):
     # only present while we're using the temporary "everything worked" message
     def msg_str(self, msg: str):
         self.client.msg_str(msg)
+
+
+def send_submission_confirmation(email_client: EmailClient, submitter_email: str):
+    """Send submission confirmation email."""
+    email_content = submission_processed_email()
+    if not email_content:
+        err_msg = "Submission email content is empty."
+        raise ValueError(err_msg)
+
+    email_client.send(submitter_email, email_content.subject, email_content.message)
+    logger.info("Confirmation email sent", data={"submitter_email": submitter_email})

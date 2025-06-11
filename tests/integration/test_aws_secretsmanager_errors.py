@@ -27,7 +27,7 @@ def test_secretsmanager_error(
     spy_notifier,
 ):
     """
-    Tests when S3 download object fails
+    Tests when secrets manager errors
     """
     zip_file_object_key = zip_file_object_key_factory()
 
@@ -52,12 +52,15 @@ def test_secretsmanager_error(
     with pytest.raises(Exception) as e:
         start(zip_file_object_key)
 
-    assert "Failed to retrieve secrets from AWS Secrets Manager" in str(e.value)
+    assert (
+        "An error occurred (AccessDenied) when calling the GetSecretValue operation"
+        in str(e.value)
+    )
 
     mock_dataset_api.assert_no_requests()
 
     # Is this what it should be?
-    spy_notifier.assert_called()
+    spy_notifier.assert_not_called()
     assert len(spy_notifier.instances) == 0
 
     mock_upload_service.upload_new.assert_not_called()
