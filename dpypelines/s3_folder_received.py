@@ -111,7 +111,7 @@ def start(s3_object_name: str, *args, **kwargs):
                 delete_s3_processing_folder(
                     s3_object_name, decompressed_file_dir, s3_processing_folder
                 )
-                return False
+                raise ValueError("Metadata not submitted")
 
     except Exception as err:
         logger.error("ETL process failed", err)
