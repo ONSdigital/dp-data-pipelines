@@ -38,3 +38,8 @@ def test_get_dataset(mock_datasets_collection, mock_dataset_db_collection):
     assert status.status == models.DatasetStatusType.PENDING
     assert len(status.events) == 1
     assert status.events[0].event_type == models.DatasetEventType.RECEIVED
+
+
+def test_dataset_exists(mock_datasets_collection, mock_dataset_db_collection):
+    assert mock_datasets_collection.dataset_exists("dataset_id_1")
+    assert not mock_datasets_collection.dataset_exists("not_a_dataset")

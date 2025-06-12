@@ -17,12 +17,16 @@ class JobConfig(BaseSettings):
     )
 
     environment: str = Field(default=DEFAULT_ENVIRONMENT)
+
     dataset_api_url: str = Field(alias="DATASET_API_URL")
     upload_service_url: str = Field(alias="UPLOAD_SERVICE_URL")
     de_slack_webhook: str = Field(alias="DE_SLACK_WEBHOOK")
     service_token_for_upload: str = Field(alias="SERVICE_TOKEN_FOR_UPLOAD")
     ses_email_identity: str = Field(alias="SES_EMAIL_IDENTITY")
     lambda_failure_slack_webhook: str = Field(alias="LAMBDA_FAILURE_SLACK_WEBHOOK")
+
+    database_connection_string: str = Field(alias="DATABASE_CONNECTION_STRING")
+    database_name: str = Field(alias="DATABASE_NAME")
 
     skip_data_upload: bool = Field(alias="SKIP_DATA_UPLOAD", default=False)
     disable_notifications: bool = Field(alias="DISABLE_NOTIFICATIONS", default=False)
@@ -56,4 +60,4 @@ class JobConfig(BaseSettings):
 
 
 def get_job_config() -> JobConfig:
-    return JobConfig()  # type: ignore
+    return JobConfig.model_validate({})

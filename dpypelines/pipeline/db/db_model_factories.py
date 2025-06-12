@@ -263,11 +263,11 @@ class DatasetFactory:
     @staticmethod
     def create_dataset(
         dataset_id: str,
-        created_at: datetime,
-        updated_at: datetime,
-        latest_edition_id: Optional[str],
-        latest_version_id: Optional[int],
-        statuses: Optional[Dict[str, models.DatasetStatus]],
+        created_at: datetime = datetime.now(),
+        updated_at: datetime = datetime.now(),
+        latest_edition_id: Optional[str] = None,
+        latest_version_id: Optional[int] = None,
+        statuses: Dict[str, models.DatasetStatus] = {},
     ) -> models.Dataset:
         """
         Create a new Dataset model.

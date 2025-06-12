@@ -6,7 +6,7 @@ from dpypelines.pipeline.db.datasets_service import DatasetsService
 
 class DatasetsServiceFactory:
     @staticmethod
-    def create_datasets_service(client: DocumentDBClient) -> DatasetsService:
+    def create_db_datasets_service(client: DocumentDBClient) -> DatasetsService:
         """
         Create a new DatasetsService object with datasets and statuses collections.
 

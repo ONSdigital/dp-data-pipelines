@@ -1,8 +1,8 @@
 import json
-import boto3
 import pytest
 from moto import mock_aws
 
+from dpypelines.pipeline.process_zip_file import S3Object
 from tests.integration.helpers.file_helpers import (
     DATA_FILE_NAME,
     FileGenerationConfig,
@@ -10,11 +10,11 @@ from tests.integration.helpers.file_helpers import (
 from tests.integration.helpers.notification_assertion_helpers import (
     assert_no_success_and_one_failure,
 )
-from tests.integration.helpers.s3_assertion_helpers import S3ObjectFile
 from tests.integration.helpers.ses_assertion_helpers import (
-    assert_exception_email_sent,
+    assert_email_sent,
 )
-from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
+from tests.integration.mocks.mock_api_responses import MockAPIResponses
+from tests.integration.mocks.mock_db_operations import MockDBOperations
 
 
 @mock_aws
@@ -24,32 +24,46 @@ def test_missing_data(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_dataset_api: MockDatasetApi,
-    mock_upload_service,
+    mock_api_responses: MockAPIResponses,
+    mock_db_operations: MockDBOperations,
     spy_notifier,
 ):
     """Test a successful pipeline execution with mocked AWS services."""
-    from dpypelines.s3_folder_received import start
+    from dpypelines.s3_zip_received import start
 
-    zip_file_object_key = zip_file_object_key_factory(
+    zip_file_object_key, _ = zip_file_object_key_factory(
         data_config=FileGenerationConfig(include=False)
     )
+    s3_object = S3Object(zip_file_object_key)
 
     with pytest.raises(Exception) as e:
         start(zip_file_object_key)
 
     assert DATA_FILE_NAME in str(e)
 
+    dataset = mock_db_operations.datasets_collection.find_one(
+        {"dataset_id": s3_object.dataset_id}
+    )
+    status = list(dataset["statuses"].values())[0]  # type:ignore
+    assert status["status"] == "FAILED"
+    assert len(status["events"]) == 3
+    assert status["error_message"] == "Required file not found: data.csv"
+
     assert_no_success_and_one_failure(spy_notifier)
 
-    s3_client = boto3.client("s3", region_name="eu-west-2")
-    uploaded_file_info = S3ObjectFile(zip_file_object_key)
-    uploaded_file_info.verify_file_moved(s3_client)
+    mock_api_responses.assert_get_versions_called(times=1)
+    mock_api_responses.assert_get_dataset_called(times=0)
+    mock_api_responses.assert_post_versions_called(times=0)
+    mock_api_responses.assert_upload_service_called(times=0)
 
-    uploaded_file_info.verify_s3_object_in_directory(
-        s3_client, zip_file_object_key, "processing"
+    assert_email_sent(
+        expected_content_parts=[
+            "An error has occurred:",
+            "Required file not found: data.csv",
+            f"Additional Data: {{'s3_object_name': '{s3_object.name}', 'level': 'INFO'}}",
+        ],
+        expected_subject="ETL Pipeline error has occurred",
     )
-    assert_exception_email_sent(str(e.value))
 
 
 @mock_aws
@@ -59,30 +73,46 @@ def test_empty_data(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_dataset_api: MockDatasetApi,
-    mock_upload_service,
+    mock_api_responses: MockAPIResponses,
+    mock_db_operations: MockDBOperations,
     spy_notifier,
 ):
     """Test a successful pipeline execution with mocked AWS services."""
-    from dpypelines.s3_folder_received import start
+    from dpypelines.s3_zip_received import start
 
-    zip_file_object_key = zip_file_object_key_factory(
+    zip_file_object_key, _ = zip_file_object_key_factory(
         data_config=FileGenerationConfig(include=True, empty=True)
     )
+    s3_object = S3Object(zip_file_object_key)
 
     with pytest.raises(Exception) as e:
         start(zip_file_object_key)
 
-    assert_no_success_and_one_failure(spy_notifier)
-    s3_client = boto3.client("s3", region_name="eu-west-2")
-    uploaded_file_info = S3ObjectFile(zip_file_object_key)
-    uploaded_file_info.verify_file_moved(s3_client)
+    assert "File is empty: data.csv" in str(e)
 
-    uploaded_file_info.verify_s3_object_in_directory(
-        s3_client, zip_file_object_key, "processing"
+    dataset = mock_db_operations.datasets_collection.find_one(
+        {"dataset_id": s3_object.dataset_id}
     )
+    status = list(dataset["statuses"].values())[0]  # type:ignore
+    assert status["status"] == "FAILED"
+    assert len(status["events"]) == 3
+    assert status["error_message"] == "File is empty: data.csv"
 
-    assert_exception_email_sent(str(e.value))
+    assert_no_success_and_one_failure(spy_notifier)
+
+    mock_api_responses.assert_get_versions_called(times=1)
+    mock_api_responses.assert_get_dataset_called(times=0)
+    mock_api_responses.assert_post_versions_called(times=0)
+    mock_api_responses.assert_upload_service_called(times=0)
+
+    assert_email_sent(
+        expected_content_parts=[
+            "An error has occurred:",
+            "File is empty: data.csv",
+            f"Additional Data: {{'s3_object_name': '{s3_object.name}', 'level': 'INFO'}}",
+        ],
+        expected_subject="ETL Pipeline error has occurred",
+    )
 
 
 @mock_aws
@@ -92,22 +122,23 @@ def test_unsupported_filetype(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_dataset_api: MockDatasetApi,
-    mock_upload_service,
+    mock_api_responses: MockAPIResponses,
+    mock_db_operations: MockDBOperations,
     spy_notifier,
 ):
     """Test that an unsupported filetype errors."""
     data_contents = {"somekey": "somevalue"}
     extension = "not-a-real-file"
     data_file_name = f"data.{extension}"
-    from dpypelines.s3_folder_received import start
+    from dpypelines.s3_zip_received import start
 
-    zip_file_object_key = zip_file_object_key_factory(
+    zip_file_object_key, _ = zip_file_object_key_factory(
         data_config=FileGenerationConfig(
             include=True, content=json.dumps(data_contents)
         ),
         data_file_name=data_file_name,
     )
+    s3_object = S3Object(zip_file_object_key)
 
     with pytest.raises(ValueError) as e:
         start(zip_file_object_key)
@@ -115,12 +146,29 @@ def test_unsupported_filetype(
     assert "File format validation failed for" in str(e.value)
     assert f"Extension {extension} is not supported" in str(e.value)
 
-    assert_no_success_and_one_failure(spy_notifier)
-    s3_client = boto3.client("s3", region_name="eu-west-2")
-    uploaded_file_info = S3ObjectFile(zip_file_object_key)
-    uploaded_file_info.verify_file_moved(s3_client)
-    uploaded_file_info.verify_s3_object_in_directory(
-        s3_client, zip_file_object_key, "processing/"
+    dataset = mock_db_operations.datasets_collection.find_one(
+        {"dataset_id": s3_object.dataset_id}
+    )
+    status = list(dataset["statuses"].values())[0]  # type:ignore
+    assert status["status"] == "FAILED"
+    assert len(status["events"]) == 3
+    assert (
+        status["error_message"]
+        == "File format validation failed for data.not-a-real-file: Extension not-a-real-file is not supported"
     )
 
-    assert_exception_email_sent(str(e.value))
+    assert_no_success_and_one_failure(spy_notifier)
+
+    mock_api_responses.assert_get_versions_called(times=1)
+    mock_api_responses.assert_get_dataset_called(times=0)
+    mock_api_responses.assert_post_versions_called(times=0)
+    mock_api_responses.assert_upload_service_called(times=0)
+
+    assert_email_sent(
+        expected_content_parts=[
+            "An error has occurred:",
+            "File format validation failed for data.not-a-real-file: Extension not-a-real-file is not supported",
+            f"Additional Data: {{'s3_object_name': '{s3_object.name}', 'level': 'INFO'}}",
+        ],
+        expected_subject="ETL Pipeline error has occurred",
+    )

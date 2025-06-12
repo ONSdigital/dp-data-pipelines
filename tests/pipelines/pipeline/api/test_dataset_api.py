@@ -13,7 +13,7 @@ from dpypelines.pipeline.errors import (
     DatasetNotFoundException,
     CurrentDatasetNotFoundException,
 )
-from dpypelines.pipeline.models.metadata_models import Distribution, Metadata
+from dpypelines.pipeline.metadata.metadata_models import Distribution, Metadata
 
 
 def test_create_dataset_api_service(monkeypatch):

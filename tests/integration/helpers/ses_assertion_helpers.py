@@ -1,5 +1,5 @@
-from moto.core import DEFAULT_ACCOUNT_ID
-from moto.ses import ses_backends
+from moto.core.models import DEFAULT_ACCOUNT_ID
+from moto.ses.models import ses_backends
 
 from tests.integration.helpers.file_helpers import FILE_AUTHOR_EMAIL
 
@@ -43,5 +43,5 @@ def assert_exception_email_sent(exception_message: str):
 
     assert sent_email.source == FILE_AUTHOR_EMAIL
     assert "ETL Pipeline error has occurred" in sent_email.subject
-    assert "An error has occurred in section" in sent_email.body
+    assert "An error has occurred:" in sent_email.body
     assert exception_message in sent_email.body

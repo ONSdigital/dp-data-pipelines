@@ -85,8 +85,9 @@ class DatasetStatusesCollection(BaseCollection):
 
     def create_new_status(
         self,
-        s3_object_key: str,
         dataset_id: str,
+        s3_object_key: str,
+        filename: str,
         edition_id: Optional[str] = None,
         version_id: Optional[int] = None,
         additional_data: Optional[Dict[str, Any]] = None,
@@ -115,7 +116,7 @@ class DatasetStatusesCollection(BaseCollection):
             dataset_id=dataset_id,
             created_at=event_model.timestamp,
             updated_at=event_model.timestamp,
-            file_name=s3_object_key.split("/")[-1],
+            file_name=filename,
             edition_id=edition_id,
             version_id=version_id,
             events=[event_model],

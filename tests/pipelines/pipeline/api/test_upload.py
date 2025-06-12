@@ -23,6 +23,7 @@ def test_upload_files(mock_get_mimetype):
     expected_upload_client_calls = [
         call(path, mock_mimetype) for path in mock_validation_results
     ]
-    mock_upload_client.upload_new.assert_has_calls(expected_upload_client_calls)
     mock_get_mimetype.assert_called()
-    mock_upload_client.upload_new.assert_called()
+    mock_upload_client.upload_new.assert_has_calls(
+        expected_upload_client_calls, any_order=True
+    )

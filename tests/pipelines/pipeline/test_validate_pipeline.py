@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from dpypelines.pipeline.models.metadata_models import (
+from dpypelines.pipeline.metadata.metadata_models import (
     Manifest,
 )
 from dpypelines.pipeline.validate_pipeline import (

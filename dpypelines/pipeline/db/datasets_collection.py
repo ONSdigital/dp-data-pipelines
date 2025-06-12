@@ -91,6 +91,12 @@ class DatasetsCollection(BaseCollection):
                 data={"dataset_id": dataset_model.dataset_id},
             )
 
+    def dataset_exists(self, dataset_id: str):
+        dataset = self.__collection.read_one_document({"dataset_id": dataset_id})
+        if dataset is not None:
+            return True
+        return False
+
     def update_dataset(
         self, dataset_model: models.Dataset, update_values: Dict[str, Any]
     ) -> models.Dataset:

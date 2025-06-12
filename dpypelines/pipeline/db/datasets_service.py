@@ -1,12 +1,14 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from bson.objectid import ObjectId
+
 
 from dpypelines.pipeline.db.dataset_statuses_collection import DatasetStatusesCollection
 from dpypelines.pipeline.db.datasets_collection import DatasetsCollection
 import dpypelines.pipeline.db.db_models as models
 from dpypelines.pipeline.db.db_utils import _get_statuses_key_with_dot_notation
 from dpypelines.pipeline.db.db_model_factories import DatasetFactory
+from dpypelines.pipeline.process_zip_file import S3Object
 
 
 class DatasetsService:
@@ -26,10 +28,11 @@ class DatasetsService:
         self,
         dataset_id: str,
         s3_object_key: str,
+        filename: str,
         additional_data: Optional[Dict[str, Any]] = None,
         latest_edition_id: Optional[str] = None,
         latest_version_id: Optional[int] = None,
-    ) -> models.Dataset:
+    ) -> Tuple[models.Dataset, ObjectId]:
         """
         Create a new dataset document in the datasets collection.
 
@@ -44,12 +47,12 @@ class DatasetsService:
         # Create new DatasetStatus model and add to statuses collection
         status_model = self.statuses_collection.create_new_status(
             dataset_id=dataset_id,
+            s3_object_key=s3_object_key,
+            filename=filename,
             edition_id=latest_edition_id,
             version_id=latest_version_id,
-            s3_object_key=s3_object_key,
             additional_data=additional_data,
         )
-        status_dict = {str(status_model.id): status_model}
 
         # Create new Dataset model
         dataset_model = DatasetFactory.create_dataset(
@@ -58,13 +61,51 @@ class DatasetsService:
             updated_at=status_model.events[0].timestamp,
             latest_edition_id=latest_edition_id,
             latest_version_id=latest_version_id,
-            statuses=status_dict,
+            statuses={str(status_model.id): status_model},
         )
 
         # Create dataset document in datasets collection
         self.datasets_collection.create_dataset(dataset_model=dataset_model)
 
-        return dataset_model
+        return dataset_model, status_model.id
+
+    def create_dataset_if_not_exists(
+        self,
+        s3_object: S3Object,
+    ) -> Tuple[models.Dataset, ObjectId]:
+        """
+        Check if dataset exists in datasets collection; get dataset document if it exists or create new dataset document if not.
+
+        :param s3_object_key: The object key of the zip file submitted to the S3 ingest bucket.
+        :param filename: The filename of the zip file submitted to the S3 ingest bucket
+        :param dataset_id: The dataset ID associated with the submitted file.
+
+        :return: Tuple[models.Dataset, ObjectId]
+        """
+        if self.datasets_collection.dataset_exists(dataset_id=s3_object.dataset_id):
+            # Get dataset document from collection and convert to Dataset model
+            dataset_model = self.datasets_collection.get_dataset(
+                dataset_id=s3_object.dataset_id
+            )
+
+            # Create new status document in collection and convert to DatasetStatus model
+            status_model = self.statuses_collection.create_new_status(
+                dataset_id=s3_object.dataset_id,
+                s3_object_key=s3_object.key,
+                filename=s3_object.filename,
+            )
+            dataset_model.statuses[str(status_model.id)] = status_model
+
+            # Update dataset document with new status details and get updated Dataset model
+            updated_dataset_model = self.update_dataset_new_status(
+                dataset_id=s3_object.dataset_id, new_status=status_model
+            )
+            return updated_dataset_model, status_model.id
+        return self.create_new_dataset(
+            dataset_id=s3_object.dataset_id,
+            s3_object_key=s3_object.key,
+            filename=s3_object.filename,
+        )
 
     def update_dataset_existing_status(
         self,
@@ -105,15 +146,13 @@ class DatasetsService:
             )
             update_values["updated_at"] = updated_status_model.updated_at.isoformat()
 
-            # Update dataset in datasets collection
-            self.datasets_collection.update_dataset(dataset_model, update_values)
+            # Update dataset in datasets collection and convert to Dataset model
+            updated_dataset_model = self.datasets_collection.update_dataset(
+                dataset_model, update_values
+            )
         except Exception as err:
             raise err
 
-        # Get updated dataset document and convert to Dataset model
-        updated_dataset_model = self.datasets_collection.get_dataset(
-            dataset_id=dataset_id
-        )
         return updated_dataset_model
 
     def update_dataset_new_status(
@@ -136,6 +175,7 @@ class DatasetsService:
                 new_status.id
             ): new_status.dict_for_mongodb()
         }
+        update_values["updated_at"] = new_status.updated_at.isoformat()
 
         # Update the dataset document with the new status
         self.datasets_collection.update_dataset(

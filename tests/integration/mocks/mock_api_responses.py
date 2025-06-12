@@ -1,12 +1,18 @@
 from datetime import datetime
 import json
-from typing import Dict, List, Optional, Any
+from math import ceil
+import re
+from typing import Callable, Dict, List, Optional, Any, Tuple
+
+from requests import PreparedRequest
+from dpypelines.pipeline.messages.utils import get_mimetype
 from tests.integration.constants import (
     dataset_api_url,
+    upload_service_url,
     test_dataset_id,
     test_edition_id,
 )
-from responses import matchers
+from responses import CallList, matchers, RequestsMock
 
 mock_versions = [
     {
@@ -20,6 +26,58 @@ mock_versions = [
         "version": 1,
     }
 ]
+
+
+def custom_matcher(
+    params: Optional[Dict], *, strict_match: bool = True
+) -> Callable[..., Any]:
+    """Matcher to match 'params' argument in request.
+
+    Parameters
+    ----------
+    params : dict
+        The same as provided to request or a part of it if used in
+        conjunction with ``strict_match=False``.
+    strict_match : bool, default=True
+        If set to ``True``, validates that all parameters match.
+        If set to ``False``, original request may contain additional parameters.
+
+
+    Returns
+    -------
+    Callable
+        Matcher function.
+    """
+    params_dict = params or {}
+
+    for k, v in params_dict.items():
+        if isinstance(v, (int, float)):
+            params_dict[k] = str(v)
+
+    def match(request: PreparedRequest) -> Tuple[bool, str]:
+        reason = ""
+        request_params = request.params  # type: ignore[attr-defined]
+        request_params_dict = request_params or {}
+
+        if not strict_match:
+            # filter down to just the params specified in the matcher
+            request_params_dict = {
+                k: v for k, v in request_params_dict.items() if k in params_dict
+            }
+
+        valid = sorted(params_dict.keys()) == sorted(request_params_dict.keys())
+
+        if not valid:
+            reason = (
+                f"Keys do not match. {request_params_dict} doesn't match {params_dict}"
+            )
+            if not strict_match:
+                reason += (
+                    "\nYou can use `strict_match=True` to do a strict parameters check."
+                )
+        return valid, reason
+
+    return match
 
 
 class DatasetApiUrlBuilder:
@@ -74,13 +132,14 @@ class DatasetApiResponseBuilder:
         return {"Date": datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT")}
 
 
-class MockDatasetApi:
-    """Main class for managing dataset API mocks"""
+class MockAPIResponses:
+    """Main class for managing Dataset API and Upload Service mock responses"""
 
-    def __init__(self, responses):
+    def __init__(self, responses: RequestsMock):
         self.responses = responses
-        self.url_builder = DatasetApiUrlBuilder()
-        self.response_builder = DatasetApiResponseBuilder()
+        self.upload_service_url = upload_service_url
+        self.dataset_api_url_builder = DatasetApiUrlBuilder()
+        self.dataset_api_response_builder = DatasetApiResponseBuilder()
         self._active_mocks = {}
 
         # Set up default mocks
@@ -91,17 +150,70 @@ class MockDatasetApi:
         mock_get_dataset: bool = True,
         mock_get_versions: bool = True,
         mock_post_versions: bool = True,
+        mock_upload_service: bool = True,
     ):
         """Set up default mocks for common scenarios"""
+        # Add passthru for Docker container
+        self.responses.add_passthru(prefix=re.compile(pattern=r"http\+docker://"))
         self.remove_all_mocks()
         if mock_get_dataset:
             self.mock_get_dataset()
-
         if mock_get_versions:
             self.mock_get_versions()
-
         if mock_post_versions:
             self.mock_post_versions()
+        if mock_upload_service:
+            self.mock_upload_service()
+
+    def mock_upload_service(
+        self,
+        filename: str = "data.csv",
+        file_size: int = 0,
+        dataset_id: str = "dataset_id",
+        status_code: int = 201,
+    ) -> Any:
+        mock_key = "upload_service"
+        self._remove_existing_mock(mock_key)
+
+        if status_code == 404:
+            return self._mock_404_response(self.upload_service_url, mock_key, "post")
+
+        response_body = b""
+        mimetype = get_mimetype(f".{filename.split('.')[-1]}")
+        chunks = ceil(file_size / 5242880)
+        timestamp = datetime.now().strftime("%d%m%y%H%M%S")
+        identifier = f"{timestamp}-{filename.replace('.', '-')}"
+        params = {
+            "resumableFilename": filename,
+            "resumableType": mimetype,
+            "resumableTotalChunks": chunks,
+            "resumableChunkSize": 5242880,
+            "aliasName": filename,
+            "resumableTotalSize": file_size,
+            "resumableIdentifier": identifier,
+            "resumableRelativePath": f"/tmp/{dataset_id}/{filename}",
+            "LicenceUrl": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+            "isPublishable": "False",
+            "Title": f"{filename.split('.')[0]}",
+            "SizeInBytes": file_size,
+            "Type": mimetype,
+            "Licence": "Open Government Licence v3.0",
+            "Path": f"datasets/{identifier}",
+            "collectionId": "collection-id",
+            "resumableChunkNumber": 1,
+            "resumableCurrentChunkSize": file_size,
+        }
+
+        mock_response = self.responses.post(
+            self.upload_service_url,
+            body=response_body,
+            status=status_code,
+            content_type="multipart/form-data",
+            headers=self.dataset_api_response_builder.create_headers(),
+            match=[custom_matcher(params=params, strict_match=False)],
+        )
+        self._active_mocks[mock_key] = mock_response
+        return mock_response
 
     def mock_get_dataset(
         self,
@@ -115,24 +227,28 @@ class MockDatasetApi:
         self._remove_existing_mock(mock_key)
 
         if status_code == 404:
-            return self._mock_404_response(self.url_builder.datasets_url, mock_key)
+            return self._mock_404_response(
+                self.dataset_api_url_builder.datasets_url, mock_key, "get"
+            )
 
         if custom_response:
             response_body = custom_response
         else:
             version_type = "static" if is_static else "filterable"
-            response_body = self.response_builder.dataset_response(version_type, state)
+            response_body = self.dataset_api_response_builder.dataset_response(
+                version_type, state
+            )
 
-        mock = self.responses.get(
-            self.url_builder.datasets_url,
+        mock_response = self.responses.get(
+            self.dataset_api_url_builder.datasets_url,
             body=json.dumps(response_body),
             status=status_code,
             content_type="application/json",
-            headers=self.response_builder.create_headers(),
+            headers=self.dataset_api_response_builder.create_headers(),
         )
 
-        self._active_mocks[mock_key] = mock
-        return mock
+        self._active_mocks[mock_key] = mock_response
+        return mock_response
 
     def mock_get_versions(
         self,
@@ -145,25 +261,27 @@ class MockDatasetApi:
         self._remove_existing_mock(mock_key)
 
         if status_code == 404:
-            return self._mock_404_response(self.url_builder.datasets_url, mock_key)
+            return self._mock_404_response(
+                self.dataset_api_url_builder.versions_url, mock_key, "get"
+            )
 
         if custom_response:
             response_body = custom_response
         else:
             if items is None:
                 items = [mock_versions[0]]
-            response_body = self.response_builder.versions_response(items)
+            response_body = self.dataset_api_response_builder.versions_response(items)
 
-        mock = self.responses.get(
-            self.url_builder.versions_url,
+        mock_response = self.responses.get(
+            self.dataset_api_url_builder.versions_url,
             body=json.dumps(response_body),
             status=status_code,
             content_type="application/json",
-            headers=self.response_builder.create_headers(),
+            headers=self.dataset_api_response_builder.create_headers(),
         )
 
-        self._active_mocks[mock_key] = mock
-        return mock
+        self._active_mocks[mock_key] = mock_response
+        return mock_response
 
     def mock_post_versions(
         self,
@@ -175,23 +293,24 @@ class MockDatasetApi:
         self._remove_existing_mock(mock_key)
 
         if status_code == 404:
-            return self._mock_404_response(self.url_builder.datasets_url, mock_key)
+            return self._mock_404_response(
+                self.dataset_api_url_builder.versions_url, mock_key, "post"
+            )
 
         response_matchers = (
             [] if request_body is None else [matchers.json_params_matcher(request_body)]
         )
-
-        mock = self.responses.post(
-            self.url_builder.versions_url,
+        mock_response = self.responses.post(
+            self.dataset_api_url_builder.versions_url,
             body=None if response_body is None else json.dumps(response_body),
             status=status_code,
             content_type="application/json",
-            headers=self.response_builder.create_headers(),
+            headers=self.dataset_api_response_builder.create_headers(),
             match=response_matchers,
         )
 
-        self._active_mocks[mock_key] = mock
-        return mock
+        self._active_mocks[mock_key] = mock_response
+        return mock_response
 
     def mock_custom_endpoint(
         self,
@@ -208,22 +327,22 @@ class MockDatasetApi:
         self._remove_existing_mock(mock_key)
 
         method_func = getattr(self.responses, method.lower())
-        mock = method_func(
+        mock_response = method_func(
             url,
             body=json.dumps(response_body),
             status=status_code,
             content_type="application/json",
-            headers=self.response_builder.create_headers(),
+            headers=self.dataset_api_response_builder.create_headers(),
         )
 
-        self._active_mocks[mock_key] = mock
-        return mock
+        self._active_mocks[mock_key] = mock_response
+        return mock_response
 
     def mock_dataset_error(
         self, status_code: int = 500, message: str = "Internal Server Error"
     ):
         """Mock dataset endpoint to return an error"""
-        error_response = self.response_builder.error_response(message)
+        error_response = self.dataset_api_response_builder.error_response(message)
         return self.mock_get_dataset(
             custom_response=error_response, status_code=status_code
         )
@@ -232,7 +351,7 @@ class MockDatasetApi:
         self, status_code: int = 500, message: str = "Internal Server Error"
     ):
         """Mock versions endpoint to return an error"""
-        error_response = self.response_builder.error_response(message)
+        error_response = self.dataset_api_response_builder.error_response(message)
         return self.mock_get_versions(
             custom_response=error_response, status_code=status_code
         )
@@ -291,6 +410,12 @@ class MockDatasetApi:
 
         self._active_mocks.clear()
 
+    def assert_upload_service_called(self, times: Optional[int] = None):
+        matches = self.get_requests_to_url_regex(
+            re.compile(r"^http://test-upload-service.url/upload-new")
+        )
+        assert len(matches) == times
+
     def assert_get_dataset_called(self, times: Optional[int] = None):
         """Assert that the dataset endpoint was called with a GET request"""
         self._assert_url_called(self.datasets_url, times, "get")
@@ -320,6 +445,13 @@ class MockDatasetApi:
         self.assert_get_dataset_called(times=1)
         self.assert_get_versions_called(times=1)
         self.assert_post_versions_called(times=1)
+        self.assert_upload_service_called(times=1)
+
+    def assert_all_dataset_api_requests_made(self):
+        """Assert that all expected Dataset API requests were made"""
+        self.assert_get_dataset_called(times=1)
+        self.assert_get_versions_called(times=1)
+        self.assert_post_versions_called(times=1)
 
     def get_requests(
         self, url: Optional[str] = None, method: Optional[str] = None
@@ -336,13 +468,20 @@ class MockDatasetApi:
 
         return matching
 
-    def get_all_requests(self) -> List[Any]:
+    def get_all_requests(self) -> CallList:
         """Get all requests that were made"""
         return self.responses.calls
 
     def get_requests_to_url(self, url: str) -> List[Any]:
         """Get all requests made to a specific URL"""
         return [call for call in self.responses.calls if call.request.url == url]
+
+    def get_requests_to_url_regex(self, url_pattern) -> List[Any]:
+        return [
+            call
+            for call in self.responses.calls
+            if re.match(url_pattern, call.request.url)  # type:ignore
+        ]
 
     def get_dataset_requests(self) -> List[Any]:
         """Get all requests made to the dataset endpoint"""
@@ -383,19 +522,26 @@ class MockDatasetApi:
                 f"Expected {url}  {method} to be called {times} times, but it was called {actual_calls} times. Requests: \n{self.print_request_summary()}"
             )
 
-    def _mock_404_response(self, url: str, mock_key: str):
-        mock = self.responses.get(
-            self.url_builder.datasets_url,
-            status=404,
-            headers=self.response_builder.create_headers(),
-        )
-        self._active_mocks[mock_key] = mock
-        return mock
+    def _mock_404_response(self, url: str, mock_key: str, method: str):
+        if method == "get":
+            mock = self.responses.get(
+                url,
+                status=404,
+                headers=self.dataset_api_response_builder.create_headers(),
+            )
+        elif method == "post":
+            mock = self.responses.post(
+                url,
+                status=404,
+                headers=self.dataset_api_response_builder.create_headers(),
+            )
+        self._active_mocks[mock_key] = mock  # type:ignore
+        return mock  # type:ignore
 
     @property
     def datasets_url(self) -> str:
-        return self.url_builder.datasets_url
+        return self.dataset_api_url_builder.datasets_url
 
     @property
     def versions_url(self) -> str:
-        return self.url_builder.versions_url
+        return self.dataset_api_url_builder.versions_url

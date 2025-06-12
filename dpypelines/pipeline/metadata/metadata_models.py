@@ -56,3 +56,9 @@ class Manifest(BaseModel):
     metadata_file: str
     submission_contacts: List[SubmissionContact]
     use_previous_metadata: bool = False
+
+    def get_submission_contact_email(self):
+        if len(self.submission_contacts) == 0:
+            return ""
+
+        return self.submission_contacts[0].email

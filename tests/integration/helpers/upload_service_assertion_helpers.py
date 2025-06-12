@@ -31,7 +31,7 @@ def validate_successful_upload_service_calls(
 
     assert len(upload_service_calls) == 1
 
-    for expected_call in expected_calls:
+    for expected_call in expected_calls:  # type:ignore
         found = False
         for actual_call in upload_service_calls:
             found = call_matches(expected_call, actual_call)

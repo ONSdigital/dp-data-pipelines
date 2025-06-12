@@ -1,112 +1,103 @@
-from unittest.mock import MagicMock
-import boto3
 import pytest
 from moto import mock_aws
-from requests.exceptions import RequestException
+from dpypelines.pipeline.process_zip_file import S3Object
+from tests.integration.helpers.file_helpers import FileGenerationConfig
 from tests.integration.helpers.notification_assertion_helpers import (
     assert_no_success_and_one_failure,
 )
-from tests.integration.helpers.s3_assertion_helpers import (
-    S3ObjectFile,
-)
 from tests.integration.helpers.ses_assertion_helpers import (
     assert_exception_email_sent,
-    assert_successful_email,
 )
-from tests.integration.helpers.upload_service_assertion_helpers import (
-    validate_successful_upload_service_calls,
-)
-from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
+from tests.integration.mocks.mock_api_responses import MockAPIResponses
+from tests.integration.mocks.mock_db_operations import MockDBOperations
 
 
 @mock_aws
-def test_upload_service_request_exception(
+def test_upload_service_request_unsupported_filetype(
     zip_file_object_key_factory,
     setup_secrets,
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_dataset_api: MockDatasetApi,
-    mock_upload_service,
+    mock_api_responses: MockAPIResponses,
+    mock_db_operations: MockDBOperations,
     spy_notifier,
 ):
     """
-    Test dataset type that isn't static
+    Test upload error due to unsupported mimetype.
     """
+    from dpypelines.s3_zip_received import start
 
-    def throw_error(required_file_path, mimetype):
-        raise RequestException()
+    zip_file_object_key, _ = zip_file_object_key_factory(
+        data_config=FileGenerationConfig(content="Mimetype unsupported"),
+        data_file_name="data.txt",
+    )
+    s3_object = S3Object(zip_file_object_key)
 
-    mock_upload_service.upload_new.side_effect = throw_error
-
-    from dpypelines.s3_folder_received import start
-
-    zip_file_object_key = zip_file_object_key_factory()
-
-    with pytest.raises(RequestException) as e:
+    with pytest.raises(NotImplementedError) as e:
         start(zip_file_object_key)
+
+    assert "Uploading file type .txt not supported for file" in str(e)
 
     assert_no_success_and_one_failure(spy_notifier)
 
-    mock_dataset_api.assert_all_requests_made()
+    mock_api_responses.assert_all_dataset_api_requests_made()
+    mock_api_responses.assert_upload_service_called(times=0)
 
-    mock_upload_service.upload_new.assert_called_once()
-
-    # Verify S3 operations - check if processing folder exists
-    s3_client = boto3.client("s3", region_name="eu-west-2")
-    uploaded_file_info = S3ObjectFile(zip_file_object_key)
-    uploaded_file_info.verify_file_moved(s3_client)
-    uploaded_file_info.verify_s3_object_in_directory(
-        s3_client, zip_file_object_key, "processing/"
+    dataset = mock_db_operations.datasets_collection.find_one(
+        {"dataset_id": s3_object.dataset_id}
     )
+    status = list(dataset["statuses"].values())[0]  # type:ignore
+    assert status["status"] == "FAILED"
+    assert len(status["events"]) == 4
+    assert "Uploading file type .txt not supported for file" in status["error_message"]
 
     # Not desired behaviour
     assert_exception_email_sent(str(e.value))
 
 
 @mock_aws
-def test_upload_service_returns_error(
+def test_upload_service_returns_404_error(
     zip_file_object_key_factory,
     setup_secrets,
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_dataset_api: MockDatasetApi,
-    mock_upload_service,
+    mock_api_responses: MockAPIResponses,
+    mock_db_operations: MockDBOperations,
     spy_notifier,
 ):
     """
-    Test dataset type that isn't static
+    Test error raise when endpoint not found
     """
-    response_mock = MagicMock()
-    response_mock.status_code = 500
-    response_mock.text = "Some failure message here"
-    mock_upload_service.upload_new.return_value = response_mock
+    zip_file_object_key, data_file_size = zip_file_object_key_factory()
+    s3_object = S3Object(zip_file_object_key)
 
-    from dpypelines.s3_folder_received import start
-
-    zip_file_object_key = zip_file_object_key_factory()
-
-    result = start(zip_file_object_key)
-
-    # Not desired behaviour but is current behaviour
-    assert result
-
-    spy_notifier.instances[0].success.assert_called_once()
-    spy_notifier.instances[0].failure.assert_not_called()
-    # END not desired behaviour
-
-    mock_dataset_api.assert_all_requests_made()
-
-    validate_successful_upload_service_calls(mock_upload_service)
-    # Verify S3 operations - check if processing folder exists
-    s3_client = boto3.client("s3", region_name="eu-west-2")
-    uploaded_file_info = S3ObjectFile(zip_file_object_key)
-    uploaded_file_info.verify_file_moved(s3_client)
-
-    uploaded_file_info.verify_s3_object_in_directory(
-        s3_client, zip_file_object_key, "processed/"
+    mock_api_responses.mock_upload_service(
+        file_size=data_file_size,
+        status_code=404,
     )
 
-    # Not desired behaviour
-    assert_successful_email()
+    from dpypelines.s3_zip_received import start
+
+    with pytest.raises(Exception) as e:
+        start(zip_file_object_key)
+
+    assert "404 Client Error: Not Found for url" in str(e)
+
+    assert_no_success_and_one_failure(spy_notifier)
+
+    mock_api_responses.assert_all_requests_made()
+
+    dataset = mock_db_operations.datasets_collection.find_one(
+        {"dataset_id": s3_object.dataset_id}
+    )
+    status = list(dataset["statuses"].values())[0]  # type:ignore
+    assert status["status"] == "FAILED"
+    assert len(status["events"]) == 4
+    assert (
+        "404 Client Error: Not Found for url: http://test-upload-service.url/upload-new"
+        in status["error_message"]
+    )
+
+    assert_exception_email_sent(str(e.value))

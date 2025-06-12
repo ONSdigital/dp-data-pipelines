@@ -27,7 +27,9 @@ def test_create_new_dataset_status(mock_statuses_collection, mock_status_db_coll
     Test that a new status can be added to the statuses collection.
     """
     new_status = mock_statuses_collection.create_new_status(
-        s3_object_key="input/dataset_id.zip", dataset_id="dataset_id"
+        s3_object_key="input/dataset_id.zip",
+        filename="dataset_id.zip",
+        dataset_id="dataset_id",
     )
     events = new_status.events
     assert isinstance(new_status, models.DatasetStatus)

@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from dpypelines.pipeline.models.metadata_models import (
+from dpypelines.pipeline.metadata.metadata_models import (
     Distribution,
     Manifest,
     Metadata,

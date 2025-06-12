@@ -8,7 +8,7 @@ from dpypelines.pipeline.errors import (
 from dpypelines.pipeline.errors.dataset_not_found_exception import (
     CurrentDatasetNotFoundException,
 )
-from dpypelines.pipeline.models.metadata_models import DatasetVersion, Metadata
+from dpypelines.pipeline.metadata.metadata_models import DatasetVersion, Metadata
 
 logger = DpLogger("data-ingress-pipeline")
 

@@ -69,7 +69,7 @@ def mock_dataset_db_collection(mock_datasets_collection):
 
 
 @pytest.fixture
-def mock_datasets_service(
+def mock_datasets_service_unit(
     mock_datasets_collection,
     mock_dataset_db_collection,
     mock_statuses_collection,

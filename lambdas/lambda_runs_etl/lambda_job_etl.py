@@ -55,10 +55,10 @@ def lambda_handler(event: dict, context):
 
         _set_env_label_and_glue_job_url()
 
-        from dpypelines import s3_folder_received
+        from dpypelines import s3_zip_received
 
         # Call the pipeline code for processing zip file
-        s3_folder_received.start(s3_object_key)
+        s3_zip_received.start(s3_object_key)
     except Exception as e:
         logger.error(
             f'Error processing received S3 object. Error: "{e}"', exc_info=True

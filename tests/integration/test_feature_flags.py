@@ -1,14 +1,11 @@
-import boto3
 from moto import mock_aws
-from tests.integration.helpers.s3_assertion_helpers import S3ObjectFile
+from dpypelines.pipeline.process_zip_file import S3Object
 from tests.integration.helpers.ses_assertion_helpers import (
     assert_no_emails_sent,
     assert_successful_email,
 )
-from tests.integration.helpers.upload_service_assertion_helpers import (
-    validate_successful_upload_service_calls,
-)
-from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
+from tests.integration.mocks.mock_api_responses import MockAPIResponses
+from tests.integration.mocks.mock_db_operations import MockDBOperations
 
 
 @mock_aws
@@ -18,8 +15,8 @@ def test_notifications_disabled(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_dataset_api: MockDatasetApi,
-    mock_upload_service,
+    mock_api_responses: MockAPIResponses,
+    mock_db_operations: MockDBOperations,
     spy_notifier,
     monkeypatch,
 ):
@@ -27,32 +24,29 @@ def test_notifications_disabled(
     Test notifications are not sent if disabled
     """
     monkeypatch.setenv("DISABLE_NOTIFICATIONS", "True")
-    from dpypelines.s3_folder_received import start
+    from dpypelines.s3_zip_received import start
 
-    zip_file_object_key = zip_file_object_key_factory()
+    zip_file_object_key, _ = zip_file_object_key_factory()
+    s3_object = S3Object(zip_file_object_key)
+
     result = start(zip_file_object_key)
 
     # Assertions
-    assert result is True
+    assert result
 
-    mock_dataset_api.assert_all_requests_made()
+    mock_api_responses.assert_all_requests_made()
+
+    dataset = mock_db_operations.datasets_collection.find_one(
+        {"dataset_id": s3_object.dataset_id}
+    )
+    status = list(dataset["statuses"].values())[0]  # type:ignore
+    assert status["status"] == "COMPLETED"
+    assert len(status["events"]) == 5
+
     spy_notifier.assert_not_called()
     spy_notifier_instance = spy_notifier.instance
     spy_notifier_instance.success.assert_not_called()
     spy_notifier_instance.failure.assert_not_called()
-
-    mock_upload_service.upload_new.assert_called()
-
-    validate_successful_upload_service_calls(mock_upload_service)
-
-    # Verify S3 operations - check if processing folder exists
-    s3_client = boto3.client("s3", region_name="eu-west-2")
-    uploaded_file_info = S3ObjectFile(zip_file_object_key)
-    uploaded_file_info.verify_file_moved(s3_client)
-
-    uploaded_file_info.verify_s3_object_in_directory(
-        s3_client, zip_file_object_key, "processed/"
-    )
 
     monkeypatch.setenv("DISABLE_NOTIFICATIONS", "False")
     assert_successful_email()
@@ -65,8 +59,8 @@ def test_emails_disabled(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_dataset_api: MockDatasetApi,
-    mock_upload_service,
+    mock_api_responses: MockAPIResponses,
+    mock_db_operations: MockDBOperations,
     spy_notifier,
     monkeypatch,
 ):
@@ -75,32 +69,29 @@ def test_emails_disabled(
     """
     monkeypatch.setenv("DISABLE_EMAILS", "True")
 
-    from dpypelines.s3_folder_received import start
+    from dpypelines.s3_zip_received import start
 
-    zip_file_object_key = zip_file_object_key_factory()
+    zip_file_object_key, _ = zip_file_object_key_factory()
+    s3_object = S3Object(zip_file_object_key)
+
     result = start(zip_file_object_key)
 
     # Assertions
     assert result is True
 
-    mock_dataset_api.assert_all_requests_made()
+    mock_api_responses.assert_all_requests_made()
+
+    dataset = mock_db_operations.datasets_collection.find_one(
+        {"dataset_id": s3_object.dataset_id}
+    )
+    status = list(dataset["statuses"].values())[0]  # type:ignore
+    assert status["status"] == "COMPLETED"
+    assert len(status["events"]) == 5
 
     spy_notifier.assert_called_once()
     spy_notifier_instance = spy_notifier.instances[0]
     spy_notifier_instance.success.assert_called_once()
     spy_notifier_instance.failure.assert_not_called()
-
-    mock_upload_service.upload_new.assert_called()
-
-    validate_successful_upload_service_calls(mock_upload_service)
-
-    # Verify S3 operations - check if processing folder exists
-    s3_client = boto3.client("s3", region_name="eu-west-2")
-    uploaded_file_info = S3ObjectFile(zip_file_object_key)
-    uploaded_file_info.verify_file_moved(s3_client)
-    uploaded_file_info.verify_s3_object_in_directory(
-        s3_client, zip_file_object_key, "processed/"
-    )
 
     assert_no_emails_sent()
     monkeypatch.setenv("DISABLE_EMAILS", "False")
@@ -114,8 +105,8 @@ def test_file_upload_disabled(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_dataset_api: MockDatasetApi,
-    mock_upload_service,
+    mock_api_responses: MockAPIResponses,
+    mock_db_operations: MockDBOperations,
     spy_notifier,
     monkeypatch,
 ):
@@ -123,32 +114,35 @@ def test_file_upload_disabled(
     Tests uploads do not happen if disabled
     """
     monkeypatch.setenv("SKIP_DATA_UPLOAD", "True")
-    from dpypelines.s3_folder_received import start
+    from dpypelines.s3_zip_received import start
 
-    zip_file_object_key = zip_file_object_key_factory()
+    zip_file_object_key, _ = zip_file_object_key_factory()
+    s3_object = S3Object(zip_file_object_key)
+
     result = start(zip_file_object_key)
 
     # Assertions
-    assert result is None
+    assert not result
 
-    mock_dataset_api.assert_get_versions_called(times=1)
-    mock_dataset_api.assert_get_dataset_called(times=0)
-    mock_dataset_api.assert_post_versions_called(times=0)
+    mock_api_responses.assert_get_versions_called(times=1)
+    mock_api_responses.assert_get_dataset_called(times=0)
+    mock_api_responses.assert_post_versions_called(times=0)
+    mock_api_responses.assert_upload_service_called(times=0)
+
+    dataset = mock_db_operations.datasets_collection.find_one(
+        {"dataset_id": s3_object.dataset_id}
+    )
+    status = list(dataset["statuses"].values())[0]  # type:ignore
+    assert status["status"] == "COMPLETED"
+    assert len(status["events"]) == 3
+    assert status["events"][-1]["event_data"]["additional_data"] == {
+        "Info": "Data upload skipped"
+    }
 
     spy_notifier.assert_called_once()
     spy_notifier_instance = spy_notifier.instance
     spy_notifier_instance.success.assert_not_called()
     spy_notifier_instance.failure.assert_not_called()
 
-    mock_upload_service.upload_new.assert_not_called()
-
-    # Verify S3 operations - check if processing folder exists
-    s3_client = boto3.client("s3", region_name="eu-west-2")
-    uploaded_file_info = S3ObjectFile(zip_file_object_key)
-    uploaded_file_info.verify_file_moved(s3_client)
-    uploaded_file_info.verify_s3_object_in_directory(
-        s3_client, zip_file_object_key, "processing/"
-    )
-
     assert_no_emails_sent()
-    monkeypatch.setenv("DISABLE_EMAILS", "False")
+    monkeypatch.setenv("SKIP_DATA_UPLOAD", "False")

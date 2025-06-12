@@ -2,7 +2,7 @@ from pathlib import Path
 from dpytools.logging.logger import DpLogger
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.validation.json.validation import validate_json_schema
-from dpypelines.pipeline.models.metadata_models import Manifest
+from dpypelines.pipeline.metadata.metadata_models import Manifest
 
 logger = DpLogger("data-ingress-pipeline")
 

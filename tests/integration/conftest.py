@@ -1,7 +1,11 @@
 import json
+import os
 import random
+import re
 import string
 import sys
+from typing import Optional
+import zipfile
 import boto3
 import pytest
 from moto import mock_aws
@@ -13,10 +17,14 @@ from tests.integration.helpers.file_helpers import (
 )
 from tests.integration.constants import dataset_api_url
 
-from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
+from tests.integration.mocks.mock_api_responses import MockAPIResponses
+from testcontainers.mongodb import MongoDbContainer
+import responses
+
+from tests.integration.mocks.mock_db_operations import MockDBOperations
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def reset_pipelines_module():
     for key in list(sys.modules.keys()):
         if key.startswith("dpypelines"):
@@ -30,10 +38,16 @@ DEFAULT_ENV_VARS = {
     "DISABLE_NOTIFICATIONS": "False",
     "DISABLE_EMAILS": "False",
     "COMMIT_SHA": "some-git-commit",
+    "DATASET_API_URL": "http://test-dataset-api.url",
+    "UPLOAD_SERVICE_URL": "http://test-upload-service.url/upload-new",
+    "DE_SLACK_WEBHOOK": "http://test-slack-webhook.url",
+    "SERVICE_TOKEN_FOR_UPLOAD": "test-service-token",
+    "SES_EMAIL_IDENTITY": "test@example.com",
+    "LAMBDA_FAILURE_SLACK_WEBHOOK": "http://test-lambda-webhook.url",
 }
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def configure_env_vars(monkeypatch, reset_pipelines_module):
     def _configure(**kwargs):
         # Set default values
@@ -73,14 +87,14 @@ def aws_credentials(configure_env_vars, monkeypatch):
 def s3_mock(aws_credentials):
     """Fixture to set up moto S3 mock."""
     with mock_aws():
-        yield boto3.client("s3", region_name="eu-west-2")
+        yield boto3.client("s3", region_name="eu-west-2")  # type:ignore
 
 
 @pytest.fixture(scope="function")
 def secretsmanager_mock(aws_credentials):
     """Fixture to set up moto Secrets Manager mock."""
     with mock_aws():
-        yield boto3.client("secretsmanager")
+        yield boto3.client("secretsmanager")  # type:ignore
 
 
 def email_validation_mock_implementation(email: str):
@@ -110,7 +124,7 @@ def utils_email_validator_mock(monkeypatch, aws_credentials):
 def ses_mock(aws_credentials, ses_client_email_validator_mock):
     """Fixture to set up moto SES mock."""
     with mock_aws():
-        ses_client = boto3.client("ses", region_name="eu-west-2")
+        ses_client = boto3.client("ses", region_name="eu-west-2")  # type:ignore
         ses_client.verify_email_identity(EmailAddress="test@example.com")
         yield ses_client
 
@@ -125,6 +139,8 @@ def setup_secrets(secretsmanager_mock, aws_credentials):
         "SERVICE_TOKEN_FOR_UPLOAD": "test-service-token",
         "SES_EMAIL_IDENTITY": "test@example.com",
         "LAMBDA_FAILURE_SLACK_WEBHOOK": "http://test-lambda-webhook.url",
+        "DATABASE_CONNECTION_STRING": "mongodb://test_document_db_connection_string",
+        "DATABASE_NAME": "statuses",
     }
 
     secretsmanager_mock.create_secret(
@@ -152,9 +168,13 @@ def zip_file_object_key_factory(s3_mock, create_zip_file_factory, aws_credential
         metadata_config: FileGenerationConfig = valid_file_config,
         data_config: FileGenerationConfig = valid_file_config,
         data_file_name: str = "data.csv",
+        dataset_id: Optional[str] = None,
     ):
         bucket_name = "test-pipeline-bucket"
-        zip_key = f"input/{generate_random_file_name()}.zip"
+        if dataset_id:
+            zip_key = f"input/{dataset_id}.zip"
+        else:
+            zip_key = f"input/{generate_random_file_name()}.zip"
 
         # Create the S3 bucket
         s3_mock.create_bucket(
@@ -168,11 +188,17 @@ def zip_file_object_key_factory(s3_mock, create_zip_file_factory, aws_credential
             data_config=data_config,
             data_file_name=data_file_name,
         )
+
+        # Get data file size for Upload Service request parameters
+        if data_config.include:
+            data_file_size = zipfile.ZipFile(zip_file).getinfo(data_file_name).file_size
+        else:
+            data_file_size = 0
+
         # Upload the zip file
         with open(zip_file, "rb") as f:
             s3_mock.put_object(Bucket=bucket_name, Key=zip_key, Body=f.read())
-
-        return f"{bucket_name}/{zip_key}"
+        return f"{bucket_name}/{zip_key}", data_file_size
 
     return factory
 
@@ -204,10 +230,10 @@ def create_zip_file_factory(aws_credentials):
             zip_path.unlink()
 
 
-@pytest.fixture
-def mock_dataset_api(aws_credentials, responses):
+@pytest.fixture(scope="function")
+def mock_api_responses(aws_credentials, responses):
     """Pytest fixture that provides a configured MockDatasetApi instance"""
-    api_mock = MockDatasetApi(responses)
+    api_mock = MockAPIResponses(responses)
     yield api_mock
     api_mock.remove_all_mocks()
 
@@ -270,3 +296,31 @@ def mock_job_config():
         mock_config = MagicMock()
         mock_get_job_config.return_value = mock_get_job_config
         yield mock_config
+
+
+mongo = MongoDbContainer("mongo:7.0.7")
+
+
+@responses.activate
+@pytest.fixture(scope="session", autouse=True)
+def setup_mongodb(request):
+    responses.add_passthru(prefix=re.compile(pattern=r"http\+docker://"))
+    mongo.start()
+
+    def remove_container():
+        responses.add_passthru(prefix=re.compile(pattern=r"http\+docker://"))
+
+        mongo.stop()
+
+    request.addfinalizer(remove_container)
+
+    os.environ["DATABASE_CONNECTION_STRING"] = mongo.get_connection_url()
+    os.environ["DATABASE_NAME"] = mongo.dbname
+    return mongo
+
+
+@pytest.fixture(scope="function")
+def mock_db_operations():
+    db_mock = MockDBOperations(mongo)
+    yield db_mock
+    db_mock.delete_data()

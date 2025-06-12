@@ -2,11 +2,12 @@ from unittest.mock import MagicMock, patch
 import boto3
 from moto import mock_aws
 import pytest
-from tests.integration.helpers.s3_assertion_helpers import S3ObjectFile
+from dpypelines.pipeline.process_zip_file import S3Object
 from tests.integration.helpers.ses_assertion_helpers import assert_no_emails_sent
 from botocore.exceptions import ClientError
 
-from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
+from tests.integration.mocks.mock_api_responses import MockAPIResponses
+from tests.integration.mocks.mock_db_operations import MockDBOperations
 
 actual_boto_client = boto3.client
 
@@ -22,19 +23,20 @@ def test_secretsmanager_error(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_dataset_api: MockDatasetApi,
-    mock_upload_service,
+    mock_api_responses: MockAPIResponses,
+    mock_db_operations: MockDBOperations,
     spy_notifier,
 ):
     """
     Tests when secrets manager errors
     """
-    zip_file_object_key = zip_file_object_key_factory()
+    zip_file_object_key, _ = zip_file_object_key_factory()
+    s3_object = S3Object(zip_file_object_key)
 
     error_response = {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}}
 
     def raise_exception(*args, **kwargs):
-        raise ClientError(error_response, "GetSecretValue")
+        raise ClientError(error_response, "GetSecretValue")  # type:ignore
 
     secrets_manager_mock = MagicMock()
     secrets_manager_mock.get_secret_value.side_effect = raise_exception
@@ -46,7 +48,7 @@ def test_secretsmanager_error(
 
     mock_boto.side_effect = get_moto_client_mock
 
-    from dpypelines.s3_folder_received import start
+    from dpypelines.s3_zip_received import start
 
     # Not desired behviour - should raise custom exception
     with pytest.raises(Exception) as e:
@@ -57,22 +59,17 @@ def test_secretsmanager_error(
         in str(e.value)
     )
 
-    mock_dataset_api.assert_no_requests()
+    mock_api_responses.assert_no_requests()
+
+    dataset = mock_db_operations.datasets_collection.find_one(
+        {"dataset_id": s3_object.dataset_id}
+    )
+    # Pipeline failed before first database operation
+    assert dataset is None
 
     # Is this what it should be?
     spy_notifier.assert_not_called()
     assert len(spy_notifier.instances) == 0
-
-    mock_upload_service.upload_new.assert_not_called()
-
-    # File should still be in processing
-    uploaded_file_info = S3ObjectFile(zip_file_object_key)
-    head_object_result = mock_boto.head_object(
-        Bucket=uploaded_file_info.bucket_name,
-        Key=uploaded_file_info.initial_key_without_bucket,
-    )
-
-    assert "Error" not in head_object_result
 
     # Not desired behaviour
     assert_no_emails_sent()

@@ -4,4 +4,4 @@ Available pipelines are listed in the table below. Click on the link in the "Pip
 
 | Pipeline                                | Scenario                          |
 |:----------------------------------------|:----------------------------------|
-| [`s3_tar_received`](s3_tar_received.md) | `.tar` file received in S3 bucket |
+| [`s3_zip_received`](s3_zip_received.md) | `.zip` file received in S3 bucket |

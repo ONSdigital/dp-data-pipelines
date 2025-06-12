@@ -153,7 +153,19 @@ def generate_test_datasets() -> List[Dict[str, Any]]:
     return datasets
 
 
-def get_matching_element(
+def get_matching_dataset_element(
+    dict_list: List[Dict[str, Any]], filter_by: Dict[str, Any]
+) -> Tuple[int, Optional[Dict[str, Any]]]:
+    for index, status in enumerate(dict_list):
+        for k, v in filter_by.items():
+            if k in status.keys() and status[k] == v:
+                return (index, status)
+            else:
+                continue
+    return (-1, None)
+
+
+def get_matching_status_element(
     dict_list: List[Dict[str, Any]], filter_by: Dict[str, Any]
 ) -> Tuple[int, Optional[Dict[str, Any]]]:
     for index, status in enumerate(dict_list):
@@ -174,7 +186,7 @@ def update_test_status(
     """
     Update a test status.
     """
-    matching_element = get_matching_element(test_statuses, filter_by)
+    matching_element = get_matching_status_element(test_statuses, filter_by)
     if matching_element[1] is None:
         raise Exception(f"Could not find matching test status for {filter_by}")
 
@@ -193,7 +205,7 @@ def update_test_dataset(
     """
     Update a test dataset.
     """
-    matching_element = get_matching_element(test_datasets, filter_by)
+    matching_element = get_matching_dataset_element(test_datasets, filter_by)
     if matching_element[1] is None:
         raise Exception(f"Could not find matching test dataset for {filter_by}")
     element_to_update = matching_element[1]
@@ -218,7 +230,7 @@ class MockStatusDBCollection:
         return InsertOneResult(status_dict["id"], True)
 
     def read_one_document(self, filter_by: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        matching_element = get_matching_element(self.test_statuses, filter_by)  # type:ignore
+        matching_element = get_matching_status_element(self.test_statuses, filter_by)  # type:ignore
         return matching_element[1]
 
     def update_one_document(
@@ -250,7 +262,7 @@ class MockDatasetDBCollection:
         return InsertOneResult(inserted_id=dataset_dict["id"], acknowledged=True)
 
     def read_one_document(self, filter_by: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        matching_element = get_matching_element(self.test_datasets, filter_by)
+        matching_element = get_matching_dataset_element(self.test_datasets, filter_by)
         return matching_element[1]
 
     def read_many_documents(self) -> List[Dict[str, Any]]:

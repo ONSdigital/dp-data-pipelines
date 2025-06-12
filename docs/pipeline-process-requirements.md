@@ -1,10 +1,10 @@
 # Data Transformation and Validation Pipeline input requirements
 
-This document outlines the [input requirements](#inputs) for files to be submitted to the Data Transformation and Validation (DTV) pipeline. All pipeline submissions **must** include a `manifest.json` file for configuring the pipeline, and a `metadata.json` for metadata about the included dataset. Details of the fields that should be included in `manifest.json` are [outlined below](#manifestjson-structure).
+This document outlines the [input requirements](#inputs) for files to be submitted to the Data Transformation and Validation (DTV) pipeline. All pipeline submissions **must** include a `manifest.json` file for configuring the pipeline, and a `metadata.json` for metadata about the included dataset.
 
 ## Inputs
 
-The DTV pipeline is triggered when one or more .zip files are uploaded to the designated AWS S3 bucket. Each .zip file should contain the file(s) to be transformed, a `metadata.json` with necessary relevant information about the dataset, and a `manifest.json` file for configuring the pipeline.
+The DTV pipeline is triggered when one or more .zip files are uploaded to the designated AWS S3 bucket. Each .zip file should contain the data file(s) to be published, a `metadata.json` with necessary relevant information about the dataset, and a `manifest.json` file for configuring the pipeline.
 
 ### Manifest + Metadata file specifications
 

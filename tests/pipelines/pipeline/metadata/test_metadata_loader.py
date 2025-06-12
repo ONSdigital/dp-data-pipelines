@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock, patch, call
 from pathlib import Path
 from dpytools.http.api.versions.dataset_versions_service import DatasetVersionsService
-from dpypelines.pipeline.models.metadata_models import (
+from dpypelines.pipeline.metadata.metadata_models import (
     Distribution,
     Manifest,
     Metadata,

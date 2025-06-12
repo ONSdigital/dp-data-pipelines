@@ -107,10 +107,10 @@ class Dataset(BaseModel):
     id: ObjectId = Field(alias="_id")
     dataset_id: str
     created_at: datetime = datetime.now()
+    updated_at: datetime = datetime.now()
     latest_edition_id: Optional[str] = None
     latest_version_id: Optional[int] = None
-    updated_at: Optional[datetime] = None
-    statuses: Optional[Dict[str, DatasetStatus]] = Field(default_factory=dict)
+    statuses: Dict[str, DatasetStatus] = Field(default_factory=dict)
 
     def dict_for_mongodb(self):
         # Convert to dict and handle enums

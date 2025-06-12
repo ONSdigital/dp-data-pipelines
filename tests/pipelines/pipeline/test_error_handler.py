@@ -2,18 +2,18 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from dpypelines.pipeline.messages.error_handler_module import (
+from dpypelines.pipeline.messages.error_handler import (
     error_handler,
     send_error_email,
 )
 
 
-@patch("dpypelines.pipeline.messages.error_handler_module.logger")
+@patch("dpypelines.pipeline.messages.error_handler.logger")
 class TestErrorHandler:
     def test_error_handler_fail(self, mock_logger):
         """Testing that `error handler` raises a `TypeError` when argument/arguments are missing"""
         with pytest.raises(TypeError):
-            error_handler(section="1.1")  # type: ignore
+            error_handler()  # type: ignore
 
     def test_error_handler_success_with_data(self, mock_logger):
         """Testing if all arguments provided the then the function works as intended."""
@@ -23,7 +23,6 @@ class TestErrorHandler:
 
         with pytest.raises(Exception) as err:
             error_handler(
-                section="1.2.1",
                 error=Exception("This is a Test Error"),
                 data={"TestKey": "Test value"},
                 submitter_email="test@gmail.com",
@@ -38,15 +37,15 @@ class TestErrorHandler:
 
         # Test logger usage
         mock_logger.info.assert_called_once_with(
-            "Error in section: 1.2.1 This is a Test Error",
+            "Error in ETL pipeline: This is a Test Error",
             data={"TestKey": "Test value"},
         )
 
         # Test email client usage
         mock_email_client.send.assert_called_once_with(
             "test@gmail.com",
-            "ETL Pipeline error has occurred in Section: 1.2.1",
-            "An error has occurred in section: 1.2.1 \n\nThis is a Test Error\n\n Additional Data: {'TestKey': 'Test value'}",
+            "ETL Pipeline error has occurred",
+            "An error has occurred:\n\nThis is a Test Error\n\n Additional Data: {'TestKey': 'Test value'}",
         )
 
         # Test notifier usage
@@ -59,7 +58,6 @@ class TestErrorHandler:
 
         with pytest.raises(Exception) as err:
             error_handler(
-                section="1.2.1",
                 error=Exception("This is a Test Error"),
                 data=None,
                 submitter_email="test@gmail.com",
@@ -74,14 +72,14 @@ class TestErrorHandler:
 
         # Test logger usage
         mock_logger.info.assert_called_once_with(
-            "Error in section: 1.2.1 This is a Test Error"
+            "Error in ETL pipeline: This is a Test Error"
         )
 
         # Test email client usage
         mock_email_client.send.assert_called_once_with(
             "test@gmail.com",
-            "ETL Pipeline error has occurred in Section: 1.2.1",
-            "An error has occurred in section: 1.2.1 \n\nThis is a Test Error",
+            "ETL Pipeline error has occurred",
+            "An error has occurred:\n\nThis is a Test Error",
         )
 
         # Test failure method to valide error notification was triggered once
@@ -112,7 +110,6 @@ class TestErrorHandler:
         )
         with pytest.raises(Exception) as err:
             error_handler(
-                section="1.2.1",
                 error=Exception("This is a Test Error"),
                 data={"TestKey": "Test value"},
                 submitter_email=submitter_email,
@@ -127,7 +124,7 @@ class TestErrorHandler:
 
         # Test logger usage
         mock_logger.info.assert_called_once_with(
-            "Error in section: 1.2.1 This is a Test Error",
+            "Error in ETL pipeline: This is a Test Error",
             data={"TestKey": "Test value"},
         )
 
@@ -143,7 +140,6 @@ class TestErrorHandler:
 
         # Call the function with proper arguments
         send_error_email(
-            section="1.2.1",
             error="Test email error",
             submitter_email="test@gmail.com",
             data={"extra": "details"},
@@ -153,8 +149,8 @@ class TestErrorHandler:
         # Validate email client usage
         mock_email_client.send.assert_called_once_with(
             "test@gmail.com",
-            "ETL Pipeline error has occurred in Section: 1.2.1",
-            "An error has occurred in section: 1.2.1 \n\nTest email error\n\n Additional Data: {'extra': 'details'}",
+            "ETL Pipeline error has occurred",
+            "An error has occurred:\n\nTest email error\n\n Additional Data: {'extra': 'details'}",
         )
 
     def test_send_error_email_failure(self, mock_logger):
@@ -167,7 +163,6 @@ class TestErrorHandler:
 
         # Call the function with proper arguments
         send_error_email(
-            section="2.2",
             error="Test email failure",
             submitter_email="test@gmail.com",
             data={"info": "test"},
@@ -205,7 +200,6 @@ class TestErrorHandler:
 
         # Call the function with proper arguments
         send_error_email(
-            section="2.2",
             error="Test email failure",
             submitter_email="test@gmail.com",
             data={"info": "test"},

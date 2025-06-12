@@ -2,14 +2,12 @@ from unittest.mock import MagicMock, patch
 import boto3
 from moto import mock_aws
 import pytest
-from tests.integration.helpers.s3_assertion_helpers import S3ObjectFile
+from dpypelines.pipeline.process_zip_file import S3Object
 from tests.integration.helpers.ses_assertion_helpers import assert_no_emails_sent
-from tests.integration.helpers.upload_service_assertion_helpers import (
-    validate_successful_upload_service_calls,
-)
 from botocore.exceptions import ClientError
 
-from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
+from tests.integration.mocks.mock_api_responses import MockAPIResponses
+from tests.integration.mocks.mock_db_operations import MockDBOperations
 
 actual_boto_client = boto3.client
 
@@ -23,8 +21,8 @@ def test_ses_sendemail_error(
     ses_mock,
     mock_slack,
     utils_email_validator_mock,
-    mock_dataset_api: MockDatasetApi,
-    mock_upload_service,
+    mock_api_responses: MockAPIResponses,
+    mock_db_operations: MockDBOperations,
     spy_notifier,
 ):
     """
@@ -34,7 +32,7 @@ def test_ses_sendemail_error(
     error_response = {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}}
 
     def raise_exception(*args, **kwargs):
-        raise ClientError(error_response, "SendEmail")
+        raise ClientError(error_response, "SendEmail")  # type:ignore
 
     ses_mock = MagicMock()
     ses_mock.send_email.side_effect = raise_exception
@@ -45,34 +43,28 @@ def test_ses_sendemail_error(
         return actual_boto_client(*args, **kwargs)
 
     mock_boto.side_effect = get_moto_client_mock
-    zip_file_object_key = zip_file_object_key_factory()
+    zip_file_object_key, _ = zip_file_object_key_factory()
+    s3_object = S3Object(zip_file_object_key)
 
-    from dpypelines.s3_folder_received import start
+    from dpypelines.s3_zip_received import start
 
     with pytest.raises(ClientError) as e:
         start(zip_file_object_key)
 
     assert e.value.operation_name == "SendEmail"
 
-    mock_dataset_api.assert_all_requests_made()
+    mock_api_responses.assert_all_requests_made()
+
+    dataset = mock_db_operations.datasets_collection.find_one(
+        {"dataset_id": s3_object.dataset_id}
+    )
+    status = list(dataset["statuses"].values())[0]  # type:ignore
+    assert status["status"] == "COMPLETED"
+    assert len(status["events"]) == 5
 
     assert len(spy_notifier.call_args_list) == 1
     spy_notifier_instance = spy_notifier.instances[0]
     spy_notifier_instance.success.assert_not_called()
     spy_notifier_instance.failure.assert_called_once()
-
-    mock_upload_service.upload_new.assert_called()
-
-    validate_successful_upload_service_calls(mock_upload_service)
-
-    # Verify S3 operations - check if processing folder exists
-    s3_client = boto3.client("s3", region_name="eu-west-2")
-    uploaded_file_info = S3ObjectFile(zip_file_object_key)
-    uploaded_file_info.verify_file_moved(s3_client)
-
-    # verify the 2
-    uploaded_file_info.verify_s3_object_in_directory(
-        s3_client, zip_file_object_key, "processing/", 2
-    )
 
     assert_no_emails_sent()
