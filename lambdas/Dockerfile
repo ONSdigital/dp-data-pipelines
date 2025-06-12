@@ -22,6 +22,6 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 COPY --from=lambda-base /var/lang/lib/python3.13/site-packages /var/lang/lib/python3.13/site-packages
 COPY --from=lambda-base ${LAMBDA_TASK_ROOT} ${LAMBDA_TASK_ROOT}
 
-COPY lambdas/lambda_runs_etl/lambda_job_etl.py ${LAMBDA_TASK_ROOT}
+COPY lambda.py ${LAMBDA_TASK_ROOT}
 
-CMD [ "lambda_job_etl.lambda_handler" ]
+CMD [ "lambda.lambda_handler" ]
