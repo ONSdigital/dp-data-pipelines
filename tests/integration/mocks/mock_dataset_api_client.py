@@ -2,20 +2,26 @@ from datetime import datetime
 import json
 from typing import Dict, List, Optional, Any
 from tests.integration.constants import (
+    MockDistributionDateTimeValue,
     dataset_api_url,
     test_dataset_id,
     test_edition_id,
 )
 from responses import matchers
 
+from tests.integration.helpers.file_helpers import generate_distribution_for_file_name
+from tests.integration.helpers.upload_service_assertion_helpers import (
+    remove_date_time_from_identifier,
+)
+
 mock_versions = [
     {
         "release_date": datetime.now().isoformat(),
         "state": "published",
         "distributions": [
-            {"title": "Test distribution", "format": "csv", "file": "data.csv"}
+            generate_distribution_for_file_name("data.csv"),
         ],
-        "quality_designation": "quality",
+        "quality_designation": "accredited-official",
         "usage_notes": [{"title": "Test title", "note": "Test usage note"}],
         "version": 1,
     }
@@ -180,6 +186,12 @@ class MockDatasetApi:
         response_matchers = (
             [] if request_body is None else [matchers.json_params_matcher(request_body)]
         )
+
+        if request_body is not None and "distributions" in request_body:
+            for distribution in request_body["distributions"]:
+                distribution["download_url"] = remove_date_time_from_identifier(
+                    distribution["download_url"], MockDistributionDateTimeValue
+                )
 
         mock = self.responses.post(
             self.url_builder.versions_url,

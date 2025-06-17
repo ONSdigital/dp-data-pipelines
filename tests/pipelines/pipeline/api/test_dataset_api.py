@@ -124,6 +124,7 @@ def test_upload_metadata_succeeds(mock_dataset_api_service):
         release_date="2025-01-01T00:00:00",
         dataset_id="dataset-id",
         edition="edition-id",
+        quality_designation="accredited-official",
     )
 
     metadata_uploaded = upload_metadata(metadata, mock_dataset_api_client)
@@ -132,17 +133,17 @@ def test_upload_metadata_succeeds(mock_dataset_api_service):
     mock_dataset_api_client.versions.create_version.assert_called_once_with(
         {
             "edition_title": "Edition title",
+            "quality_designation": "accredited-official",
             "distributions": [
                 {
                     "title": "Distribution title",
                     "format": "csv",
                     "file": "data.csv",
-                    "download_url": "https://download.ons.gov.uk/data.csv",
+                    "download_url": metadata.distributions[0].download_url,
                     "media_type": "text/csv",
                 }
             ],
             "release_date": "2025-01-01T00:00:00",
-            "quality_designation": None,
             "usage_notes": [],
             "alerts": [],
         },

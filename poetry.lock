@@ -971,7 +971,7 @@ optional = false
 python-versions = "=3.13.*"
 groups = ["main"]
 files = []
-develop = false
+develop = true
 
 [package.dependencies]
 backoff = "^2.2.1"
@@ -984,10 +984,8 @@ requests = "^2.32.4"
 structlog = "^25.3.0"
 
 [package.source]
-type = "git"
-url = "https://github.com/ONSdigital/dp-python-tools.git"
-reference = "v0.12.0"
-resolved_reference = "d26aa9ce875ebeceeb18f9092823a9e9e78b4a7a"
+type = "directory"
+url = "../dp-python-tools"
 
 [[package]]
 name = "email-validator"
@@ -2429,4 +2427,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "=3.13.*"
-content-hash = "a9090a195f7efa76cf0e46cb9add2b44a4dc8cb6212738605b78510ab4192c51"
+content-hash = "42a925ec03b0ddc064a2cbbb19acb4aeee1be27b27648c5a1de33f93bf67e47b"

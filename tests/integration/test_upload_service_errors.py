@@ -34,7 +34,7 @@ def test_upload_service_request_exception(
     Test dataset type that isn't static
     """
 
-    def throw_error(required_file_path, mimetype):
+    def throw_error(**kwargs):
         raise RequestException()
 
     mock_upload_service.upload_new.side_effect = throw_error
