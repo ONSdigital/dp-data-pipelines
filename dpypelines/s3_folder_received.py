@@ -65,12 +65,12 @@ def start(s3_object_name: str, *args, **kwargs):
             )
 
             if metadata_submitted:
-                # If metadata successfully submitted, upload data files to the Upload Service
-                files_to_upload = [
-                    decompressed_file_dir / distribution.file
-                    for distribution in metadata.distributions
-                ]
-                upload_files(files_to_upload, job_config, upload_client)
+                upload_files(
+                    decompressed_file_dir,
+                    metadata.distributions,
+                    job_config,
+                    upload_client,
+                )
 
                 # Copy all files in S3 "processing" folder to S3 "processed" folder
                 copy_s3_processing_folder_to_destination_folder(
@@ -105,7 +105,6 @@ def start(s3_object_name: str, *args, **kwargs):
                     s3_object_name, decompressed_file_dir, s3_processing_folder
                 )
                 return False
-
     except Exception as err:
         logger.error("ETL process failed", err)
         error_handler(

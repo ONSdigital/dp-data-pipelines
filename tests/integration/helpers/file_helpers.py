@@ -4,11 +4,16 @@ import tempfile
 from typing import Callable, Optional
 import zipfile
 
+from dpypelines.pipeline.models.metadata_models import QualityDesignation
 from tests.helpers.generators.data_file_generators import (
     generate_data_file,
     get_media_type_for_extension,
 )
-from tests.integration.constants import test_dataset_id, test_edition_id
+from tests.integration.constants import (
+    test_dataset_id,
+    test_edition_id,
+    MockDistributionDateTimeValue,
+)
 
 MANIFEST_FILE_NAME = "manifest.json"
 METADATA_FILE_NAME = "metadata.json"
@@ -122,10 +127,10 @@ def create_manifest(temp_path: Path, config: FileGenerationConfig):
 
 def generate_distribution_for_file_name(file_name: str) -> dict:
     file_extension = file_name.split(".")[1]
-
+    file_identifier = f"{MockDistributionDateTimeValue}-{file_name.replace(' ', '_').replace('.', '-')}"
     return {
         "title": "CSV Distribution",
-        "download_url": f"https://download.ons.gov.uk/{file_name}",
+        "download_url": f"/datasets/{file_identifier}/{file_name}",
         "file": file_name,
         "media_type": get_media_type_for_extension(file_extension),
         "format": file_extension,
@@ -142,7 +147,7 @@ def generate_metadata_dict(data_file_name: str) -> dict:
         "distributions": [distribution],
         "alerts": [{"type": "alert type", "description": "some alert"}],
         "usage_notes": [{"title": "how to use me", "note": "read"}],
-        "quality_designation": "official",
+        "quality_designation": QualityDesignation.AccreditedOfficial.value,
     }
 
 

@@ -11,17 +11,9 @@ from tests.integration.helpers.file_helpers import (
     FileGenerationConfig,
     create_test_zip_file,
 )
-from tests.integration.constants import dataset_api_url
+from tests.integration.constants import MockDistributionDateTimeValue, dataset_api_url
 
 from tests.integration.mocks.mock_dataset_api_client import MockDatasetApi
-
-
-@pytest.fixture
-def reset_pipelines_module():
-    for key in list(sys.modules.keys()):
-        if key.startswith("dpypelines"):
-            del sys.modules[key]
-
 
 TESTING_ENVIRONMENT = "test"
 SECRET_ID = f"dp-{TESTING_ENVIRONMENT}-pipeline-secrets"
@@ -31,6 +23,13 @@ DEFAULT_ENV_VARS = {
     "DISABLE_EMAILS": "False",
     "COMMIT_SHA": "some-git-commit",
 }
+
+
+@pytest.fixture
+def reset_pipelines_module():
+    for key in list(sys.modules.keys()):
+        if key.startswith("dpypelines"):
+            del sys.modules[key]
 
 
 @pytest.fixture
@@ -143,8 +142,22 @@ def generate_random_file_name():
 valid_file_config = FileGenerationConfig(True, False, False)
 
 
+def mock_datetime_result(mock: MagicMock):
+    mock.datetime.now.return_value.strftime.return_value = MockDistributionDateTimeValue
+    return mock
+
+
+@pytest.fixture
+def mock_datetime():
+    with patch("dpypelines.pipeline.models.metadata_models.datetime") as mock_datetime:
+        mock_datetime = mock_datetime_result(mock_datetime)
+        yield mock_datetime
+
+
 @pytest.fixture(scope="function")
-def zip_file_object_key_factory(s3_mock, create_zip_file_factory, aws_credentials):
+def zip_file_object_key_factory(
+    s3_mock, create_zip_file_factory, aws_credentials, mock_datetime
+):
     """Upload the test zip file to the S3 mock."""
 
     def factory(
@@ -223,7 +236,7 @@ def mock_upload_service(aws_credentials):
 
 
 @pytest.fixture(scope="function")
-def spy_notifier(mocker, reset_pipelines_module, aws_credentials, mock_slack):
+def spy_notifier(mocker, aws_credentials, mock_slack):
     # Save the original class before patching
     original_notifier_class = PipelineNotifier
 

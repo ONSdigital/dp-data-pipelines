@@ -1,7 +1,9 @@
+from unittest.mock import patch
 import boto3
 from moto import mock_aws
 import pytest
 from dpypelines.pipeline.models.metadata_models import DatasetVersion
+from tests.integration.conftest import mock_datetime_result
 from tests.integration.helpers.file_helpers import (
     FileGenerationConfig,
     generate_metadata_dict,
@@ -23,7 +25,9 @@ files_to_generate = ["csvfile.csv", "sqlite.csdb", "excel.xls", "otherexcel.xlsx
 
 @pytest.mark.parametrize("data_file_name", files_to_generate)
 @mock_aws
+@patch("dpypelines.pipeline.models.metadata_models.datetime")
 def test_successful_pipeline_execution_using_existing_metadata(
+    datetime,
     zip_file_object_key_factory,
     setup_secrets,
     ses_mock,
@@ -50,6 +54,7 @@ def test_successful_pipeline_execution_using_existing_metadata(
         del new_metadata[key]
     original_metadata = mock_versions[0]
 
+    datetime = mock_datetime_result(datetime)
     combined_metadata = original_metadata.copy()
     combined_metadata.update(new_metadata)
     combined_metadata = DatasetVersion(**combined_metadata).model_dump()
