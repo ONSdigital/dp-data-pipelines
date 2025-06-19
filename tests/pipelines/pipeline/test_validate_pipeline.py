@@ -19,6 +19,7 @@ def test_validate_manifest(mock_local_store):
     mock_local_store.get_lone_matching_json_as_dict.return_value = {
         "metadata_file": "metadata.json",
         "submission_contacts": [{"email": "jane.doe@ons.gov.uk"}],
+        "use_previous_metadata": True,
     }
     manifest = validate_manifest(mock_local_store)
 

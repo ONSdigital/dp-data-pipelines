@@ -9,7 +9,7 @@ info:
 
 paths:
   /manifest:
-    summary: A mock upload manifest pth
+    summary: A mock upload manifest path
     post:
       requestBody:
         required: true
@@ -19,7 +19,7 @@ paths:
               $ref: "#/components/schemas/Manifest"
 
   /metadata:
-    summary: A mock upload metadata pth
+    summary: A mock upload metadata path
     post:
       requestBody:
         required: true
@@ -141,9 +141,8 @@ components:
       required:
         - dataset_id
         - edition
-        - edition_title
-        - release_date
         - distributions
+        - release_date
   
 
     Submitter:
@@ -182,6 +181,10 @@ components:
           minItems: 1
           items:
             $ref: "#/components/schemas/Submitter"
+        use_previous_metadata:
+          description: Whether to use the previous dataset version's metadata and overwrite fields with new values where applicable.
+          type: boolean
       required:
         - metadata_file
         - submission_contacts
+        - use_previous_metadata
