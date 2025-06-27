@@ -31,6 +31,7 @@ class FileGenerationConfig:
     invalid: bool
     empty: bool
     missing_field_keys: list
+    overrides: dict[str, str | int | list | None]
     content: Optional[str]
 
     def __init__(
@@ -40,6 +41,7 @@ class FileGenerationConfig:
         empty: bool = False,
         missing_field_keys: list = [],
         content: Optional[str] = None,
+        overrides: dict[str, str | int | list | None] = {},
     ):
         """
         Args:
@@ -48,12 +50,14 @@ class FileGenerationConfig:
             empty: Generate an empty file for this config
             missing_field_keys: Remove these keys from the generated data
             content: Overwrite the generation with this specific file content
+            overrides: Override keys with specified values
         """
         self.include = include
         self.invalid = invalid
         self.empty = empty
         self.missing_field_keys = missing_field_keys
         self.content = content
+        self.overrides = overrides
 
 
 def write_json_file(temp_path: Path, contents: dict, file_name: str):
@@ -105,6 +109,9 @@ def file_generator(file_name: str, data_dict_generator: Callable[[], dict]):
         for key in config.missing_field_keys:
             dict_contents.pop(key)
 
+        for key, value in config.overrides.items():
+            dict_contents[key] = value
+
         write_json_file(temp_path, dict_contents, file_name)
         return dict_contents
 
@@ -145,7 +152,7 @@ def generate_metadata_dict(data_file_name: str) -> dict:
         "edition_title": "Edition title",
         "release_date": "2025-05-01T14:01:00",
         "distributions": [distribution],
-        "alerts": [{"type": "alert type", "description": "some alert"}],
+        # "alerts": [{"type": "alert type", "description": "some alert"}], //SOMETHING WRONG HERE
         "usage_notes": [{"title": "how to use me", "note": "read"}],
         "quality_designation": QualityDesignation.AccreditedOfficial.value,
     }
