@@ -986,8 +986,8 @@ structlog = "^25.3.0"
 [package.source]
 type = "git"
 url = "https://github.com/ONSdigital/dp-python-tools.git"
-reference = "v0.13.0"
-resolved_reference = "afff6fe309dad551e8d250e7b4fe17a0335795f4"
+reference = "feat/add-create-dataset-method"
+resolved_reference = "896aabdb3da36b157f3bbcfad87ef4013149ec5a"
 
 [[package]]
 name = "email-validator"
@@ -2429,4 +2429,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "=3.13.*"
-content-hash = "b1c9124d9f19a133acc9ef73535ac31226ec91e5ba5bbf9d7723ca78cad5da9c"
+content-hash = "2447572ffc86b9717fbd423aaefec8bedc5d2c0ebc746966474ceb1a9f8fd77a"
