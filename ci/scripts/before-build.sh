@@ -2,21 +2,29 @@
 
 source dp-data-pipelines/ci/scripts/shared.sh
 
-check_lambda_name
+# Copies the Dockerfile for the Lambdas to the expected location for the Concourse CI Pipeline
+copy_docker_file() {
+    local dockerfile_source="lambdas/Dockerfile"
+    local dockerfile_target="$SOURCE_DIR/Dockerfile.concourse"
 
-before_build_etl() {
-  cp ./lambdas/lambda_runs_etl/Dockerfile ./Dockerfile.concourse
+    log_info "Copying Dockerfile for Lambda: $IMAGE_NAME"
+    log_info "  From: $dockerfile_source"
+    log_info "  To: $dockerfile_target"
+
+    if [[ -f "$SOURCE_DIR/$dockerfile_source" ]]; then
+        cp "$SOURCE_DIR/$dockerfile_source" "$dockerfile_target"
+    else
+        log_error "Lambda source file not found: $SOURCE_DIR/$dockerfile_source"
+        exit 1
+    fi
 }
 
-before_build_trigger() {
-  cp ./lambdas/lambda_triggers_etl/Dockerfile ./Dockerfile.concourse
+before_build() {
+    log_info "Starting before-build script for lambda: $IMAGE_NAME"
+
+    copy_docker_file
+
+    log_info "Before-build completed successfully for: $IMAGE_NAME"
 }
 
-before_build_retry() {
-  cp ./lambdas/lambda_retry_etl/Dockerfile ./Dockerfile.concourse
-}
-
-pushd dp-data-pipelines
-  echo "before build step"
-  handle_lambda_action "before_build"
-popd
+before_build

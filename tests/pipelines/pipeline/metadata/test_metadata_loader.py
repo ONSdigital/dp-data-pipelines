@@ -7,6 +7,7 @@ from dpypelines.pipeline.models.metadata_models import (
     Manifest,
     Metadata,
     MinimalMetadata,
+    QualityDesignation,
 )
 from dpytools.stores.directory.local import LocalDirectoryStore
 from dpytools.http.api.dataset_api_service import DatasetAPIService
@@ -80,7 +81,7 @@ class TestMetadataLoader:
         return {
             "dataset_id": "test-dataset",
             "edition": "test-edition",
-            "quality_designation": "original",
+            "quality_designation": QualityDesignation.OfficialInDevelopment.value,
             "edition_title": "Test Dataset",
             "release_date": "2020-01-01",
             "distributions": [

@@ -1,6 +1,14 @@
-from typing import List, Optional
+import datetime
+from enum import Enum
+from typing import Annotated, List, Optional, Self
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    EmailStr,
+    Field,
+    model_validator,
+)
 
 from dpypelines.pipeline.messages.utils import get_mimetype
 
@@ -9,12 +17,18 @@ class Distribution(BaseModel):
     title: str
     format: str
     file: str
-    download_url: Optional[str] = Field(default=None, init=False)
-    media_type: Optional[str] = Field(default=None, init=False)
+    download_url: str = ""
+    media_type: str = ""
+    identifier: str = Field(default="", exclude=True)
+    upload_path: str = Field(default="", exclude=True)
 
     def model_post_init(self, __context):
-        self.download_url = f"https://download.ons.gov.uk/{self.file}"
-        self.media_type = get_mimetype(f".{self.format}")
+        mimetype = get_mimetype(f".{self.format}")
+        self.media_type = mimetype if mimetype is not None else ".csv"
+        timestamp = datetime.datetime.now().strftime(format="%d%m%y%H%M%S")
+        self.identifier = f"{timestamp}-{self.file.replace('.', '-').replace(' ', '_')}"
+        self.upload_path = f"datasets/{self.identifier}"
+        self.download_url = f"{self.upload_path}/{self.file}"
 
 
 class Alert(BaseModel):
@@ -31,9 +45,30 @@ class SubmissionContact(BaseModel):
     email: EmailStr
 
 
+class QualityDesignation(str, Enum):
+    AccreditedOfficial = "accredited-official"
+    Official = "official"
+    OfficialInDevelopment = "official-in-development"
+
+
+def map_quality_desigination(value: Optional[str]) -> QualityDesignation:
+    if value is None:
+        return QualityDesignation.AccreditedOfficial
+    try:
+        return QualityDesignation(value)
+    except ValueError:
+        return QualityDesignation.AccreditedOfficial
+
+
+def quality_desigination_checker(value: Optional[str]) -> str:
+    return map_quality_desigination(value).value
+
+
 class DatasetVersion(BaseModel):
-    edition_title: Optional[str] = None
-    quality_designation: Optional[str] = None
+    edition_title: Optional[str] = Field(default="")
+    quality_designation: Annotated[
+        Optional[str], BeforeValidator(quality_desigination_checker)
+    ] = Field(default=None)
     usage_notes: Optional[List[UsageNote]] = Field(default_factory=list)
     alerts: Optional[List[Alert]] = Field(default_factory=list)
     distributions: List[Distribution]
@@ -43,6 +78,12 @@ class DatasetVersion(BaseModel):
 class Metadata(DatasetVersion):
     dataset_id: str
     edition: str
+
+    @model_validator(mode="after")
+    def check_edition_title_exists(self) -> Self:
+        if self.edition_title == "":
+            self.edition_title = self.edition
+        return self
 
 
 class MinimalMetadata(BaseModel):

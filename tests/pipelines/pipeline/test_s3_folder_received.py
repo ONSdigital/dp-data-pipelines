@@ -47,9 +47,10 @@ def test_start_succeeds(
     )
     mock_setup_clients.return_value = (mock_notifier, mock_email_client)
     mock_local_store = MagicMock(name="local_store")
+    decompressed_zip_dir = Path("files_dir")
     mock_process_zip_file.return_value = (
         mock_local_store,
-        Path("files_dir"),
+        decompressed_zip_dir,
         "processing/timestamp-files",
     )
     mock_manifest_validation.return_value = Manifest(
@@ -97,7 +98,8 @@ def test_start_succeeds(
     )
 
     mock_upload_files.assert_called_once_with(
-        [Path("files_dir") / "distribution.csv"],
+        decompressed_zip_dir,
+        mock_metadata.distributions,
         mock_job_configuration,
         mock_create_upload_service_client.return_value,
     )

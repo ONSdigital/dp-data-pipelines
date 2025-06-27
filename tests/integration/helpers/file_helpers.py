@@ -4,11 +4,16 @@ import tempfile
 from typing import Callable, Optional
 import zipfile
 
+from dpypelines.pipeline.models.metadata_models import QualityDesignation
 from tests.helpers.generators.data_file_generators import (
     generate_data_file,
     get_media_type_for_extension,
 )
-from tests.integration.constants import test_dataset_id, test_edition_id
+from tests.integration.constants import (
+    test_dataset_id,
+    test_edition_id,
+    MockDistributionDateTimeValue,
+)
 
 MANIFEST_FILE_NAME = "manifest.json"
 METADATA_FILE_NAME = "metadata.json"
@@ -26,6 +31,7 @@ class FileGenerationConfig:
     invalid: bool
     empty: bool
     missing_field_keys: list
+    overrides: dict[str, str | int | list | None]
     content: Optional[str]
 
     def __init__(
@@ -35,6 +41,7 @@ class FileGenerationConfig:
         empty: bool = False,
         missing_field_keys: list = [],
         content: Optional[str] = None,
+        overrides: dict[str, str | int | list | None] = {},
     ):
         """
         Args:
@@ -43,12 +50,14 @@ class FileGenerationConfig:
             empty: Generate an empty file for this config
             missing_field_keys: Remove these keys from the generated data
             content: Overwrite the generation with this specific file content
+            overrides: Override keys with specified values
         """
         self.include = include
         self.invalid = invalid
         self.empty = empty
         self.missing_field_keys = missing_field_keys
         self.content = content
+        self.overrides = overrides
 
 
 def write_json_file(temp_path: Path, contents: dict, file_name: str):
@@ -100,6 +109,9 @@ def file_generator(file_name: str, data_dict_generator: Callable[[], dict]):
         for key in config.missing_field_keys:
             dict_contents.pop(key)
 
+        for key, value in config.overrides.items():
+            dict_contents[key] = value
+
         write_json_file(temp_path, dict_contents, file_name)
         return dict_contents
 
@@ -122,10 +134,10 @@ def create_manifest(temp_path: Path, config: FileGenerationConfig):
 
 def generate_distribution_for_file_name(file_name: str) -> dict:
     file_extension = file_name.split(".")[1]
-
+    file_identifier = f"{MockDistributionDateTimeValue}-{file_name.replace(' ', '_').replace('.', '-')}"
     return {
         "title": "CSV Distribution",
-        "download_url": f"https://download.ons.gov.uk/{file_name}",
+        "download_url": f"/datasets/{file_identifier}/{file_name}",
         "file": file_name,
         "media_type": get_media_type_for_extension(file_extension),
         "format": file_extension,
@@ -140,9 +152,9 @@ def generate_metadata_dict(data_file_name: str) -> dict:
         "edition_title": "Edition title",
         "release_date": "2025-05-01T14:01:00",
         "distributions": [distribution],
-        "alerts": [{"type": "alert type", "description": "some alert"}],
+        # "alerts": [{"type": "alert type", "description": "some alert"}], //SOMETHING WRONG HERE
         "usage_notes": [{"title": "how to use me", "note": "read"}],
-        "quality_designation": "official",
+        "quality_designation": QualityDesignation.AccreditedOfficial.value,
     }
 
 
