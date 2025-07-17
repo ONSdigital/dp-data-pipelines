@@ -31,7 +31,9 @@ mock_versions = [
 def custom_matcher(
     params: Optional[Dict], *, strict_match: bool = True
 ) -> Callable[..., Any]:
-    """Matcher to match 'params' argument in request.
+    """
+    Matcher to match 'params' argument keys in request.
+    Based on responses.matchers.query_param_matcher Callable
 
     Parameters
     ----------
@@ -56,7 +58,7 @@ def custom_matcher(
 
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
-        request_params = request.params  # type: ignore[attr-defined]
+        request_params = request.params  # type:ignore
         request_params_dict = request_params or {}
 
         if not strict_match:
@@ -64,13 +66,10 @@ def custom_matcher(
             request_params_dict = {
                 k: v for k, v in request_params_dict.items() if k in params_dict
             }
-
         valid = sorted(params_dict.keys()) == sorted(request_params_dict.keys())
 
         if not valid:
-            reason = (
-                f"Keys do not match. {request_params_dict} doesn't match {params_dict}"
-            )
+            reason = f"Keys do not match. {request_params_dict.keys()} doesn't match {params_dict.keys()}"
             if not strict_match:
                 reason += (
                     "\nYou can use `strict_match=True` to do a strict parameters check."
@@ -80,29 +79,57 @@ def custom_matcher(
     return match
 
 
-class DatasetApiUrlBuilder:
-    """Builds URLs for Dataset API endpoints"""
+class ApiUrlBuilder:
+    """Builds URLs for API endpoints"""
 
     def __init__(
         self,
-        base_url: str = dataset_api_url,
+        base_dataset_api_url: str = dataset_api_url,
+        upload_service_url: str = upload_service_url,
         dataset_id: str = test_dataset_id,
         edition_id: str = test_edition_id,
     ):
-        self.base_url = base_url
+        self.base_dataset_api_url = base_dataset_api_url
+        self.upload_service_url = upload_service_url
         self.dataset_id = dataset_id
         self.edition_id = edition_id
 
     @property
     def datasets_url(self) -> str:
-        return f"{self.base_url}/{self.dataset_id}"
+        return f"{self.base_dataset_api_url}/{self.dataset_id}"
 
     @property
     def versions_url(self) -> str:
-        return f"{self.base_url}/{self.dataset_id}/editions/{self.edition_id}/versions"
+        return f"{self.base_dataset_api_url}/{self.dataset_id}/editions/{self.edition_id}/versions"
 
     def custom_url(self, path: str) -> str:
-        return f"{self.base_url}/{path}"
+        return f"{self.base_dataset_api_url}/{path}"
+
+    def get_upload_params(self, filename: str, file_size: int, dataset_id: str) -> dict:
+        mimetype = get_mimetype(f".{filename.split('.')[-1]}")
+        chunks = ceil(file_size / 5242880)
+        timestamp = datetime.now().strftime("%d%m%y%H%M%S")
+        identifier = f"{timestamp}-{filename.replace('.', '-')}"
+        return {
+            "resumableFilename": filename,
+            "resumableType": mimetype,
+            "resumableTotalChunks": chunks,
+            "resumableChunkSize": 5242880,
+            "aliasName": filename,
+            "resumableTotalSize": file_size,
+            "resumableIdentifier": identifier,
+            "resumableRelativePath": f"/tmp/{dataset_id}/{filename}",
+            "LicenceUrl": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+            "isPublishable": "False",
+            "Title": f"{filename.split('.')[0]}",
+            "SizeInBytes": file_size,
+            "Type": mimetype,
+            "Licence": "Open Government Licence v3.0",
+            "Path": f"datasets/{identifier}",
+            "collectionId": "collection-id",
+            "resumableChunkNumber": 1,
+            "resumableCurrentChunkSize": file_size,
+        }
 
 
 class DatasetApiResponseBuilder:
@@ -137,8 +164,7 @@ class MockAPIResponses:
 
     def __init__(self, responses: RequestsMock):
         self.responses = responses
-        self.upload_service_url = upload_service_url
-        self.dataset_api_url_builder = DatasetApiUrlBuilder()
+        self.api_url_builder = ApiUrlBuilder()
         self.dataset_api_response_builder = DatasetApiResponseBuilder()
         self._active_mocks = {}
 
@@ -176,42 +202,21 @@ class MockAPIResponses:
         self._remove_existing_mock(mock_key)
 
         if status_code == 404:
-            return self._mock_404_response(self.upload_service_url, mock_key, "post")
+            return self._mock_404_response(
+                self.api_url_builder.upload_service_url, mock_key, "post"
+            )
 
-        response_body = b""
-        mimetype = get_mimetype(f".{filename.split('.')[-1]}")
-        chunks = ceil(file_size / 5242880)
-        timestamp = datetime.now().strftime("%d%m%y%H%M%S")
-        identifier = f"{timestamp}-{filename.replace('.', '-')}"
-        params = {
-            "resumableFilename": filename,
-            "resumableType": mimetype,
-            "resumableTotalChunks": chunks,
-            "resumableChunkSize": 5242880,
-            "aliasName": filename,
-            "resumableTotalSize": file_size,
-            "resumableIdentifier": identifier,
-            "resumableRelativePath": f"/tmp/{dataset_id}/{filename}",
-            "LicenceUrl": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
-            "isPublishable": "False",
-            "Title": f"{filename.split('.')[0]}",
-            "SizeInBytes": file_size,
-            "Type": mimetype,
-            "Licence": "Open Government Licence v3.0",
-            "Path": f"datasets/{identifier}",
-            "collectionId": "collection-id",
-            "resumableChunkNumber": 1,
-            "resumableCurrentChunkSize": file_size,
-        }
+        params = self.api_url_builder.get_upload_params(filename, file_size, dataset_id)
 
         mock_response = self.responses.post(
-            self.upload_service_url,
-            body=response_body,
+            self.api_url_builder.upload_service_url,
+            body=b"",
             status=status_code,
             content_type="multipart/form-data",
             headers=self.dataset_api_response_builder.create_headers(),
             match=[custom_matcher(params=params, strict_match=False)],
         )
+
         self._active_mocks[mock_key] = mock_response
         return mock_response
 
@@ -228,7 +233,7 @@ class MockAPIResponses:
 
         if status_code == 404:
             return self._mock_404_response(
-                self.dataset_api_url_builder.datasets_url, mock_key, "get"
+                self.api_url_builder.datasets_url, mock_key, "get"
             )
 
         if custom_response:
@@ -240,7 +245,7 @@ class MockAPIResponses:
             )
 
         mock_response = self.responses.get(
-            self.dataset_api_url_builder.datasets_url,
+            self.api_url_builder.datasets_url,
             body=json.dumps(response_body),
             status=status_code,
             content_type="application/json",
@@ -262,7 +267,7 @@ class MockAPIResponses:
 
         if status_code == 404:
             return self._mock_404_response(
-                self.dataset_api_url_builder.versions_url, mock_key, "get"
+                self.api_url_builder.versions_url, mock_key, "get"
             )
 
         if custom_response:
@@ -273,7 +278,7 @@ class MockAPIResponses:
             response_body = self.dataset_api_response_builder.versions_response(items)
 
         mock_response = self.responses.get(
-            self.dataset_api_url_builder.versions_url,
+            self.api_url_builder.versions_url,
             body=json.dumps(response_body),
             status=status_code,
             content_type="application/json",
@@ -294,14 +299,14 @@ class MockAPIResponses:
 
         if status_code == 404:
             return self._mock_404_response(
-                self.dataset_api_url_builder.versions_url, mock_key, "post"
+                self.api_url_builder.versions_url, mock_key, "post"
             )
 
         response_matchers = (
             [] if request_body is None else [matchers.json_params_matcher(request_body)]
         )
         mock_response = self.responses.post(
-            self.dataset_api_url_builder.versions_url,
+            self.api_url_builder.versions_url,
             body=None if response_body is None else json.dumps(response_body),
             status=status_code,
             content_type="application/json",
@@ -540,8 +545,8 @@ class MockAPIResponses:
 
     @property
     def datasets_url(self) -> str:
-        return self.dataset_api_url_builder.datasets_url
+        return self.api_url_builder.datasets_url
 
     @property
     def versions_url(self) -> str:
-        return self.dataset_api_url_builder.versions_url
+        return self.api_url_builder.versions_url
