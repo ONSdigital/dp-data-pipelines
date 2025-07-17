@@ -42,12 +42,12 @@ class ETLProcessor:
     def __init__(self, s3_object_name: str):
         self.job_config = get_job_config()
         self.notifier, self.email_client = setup_clients(self.job_config)
+        self.logger = DpLogger("data-ingress-pipeline")
         self.dataset_api_service = self.get_dataset_api_service()
         self.upload_service_client = self.get_upload_service_client()
         self.db_datasets_service = self.get_db_datasets_service()
         self.s3_object = S3Object(s3_object_name=s3_object_name)
         self.current_status = models.DatasetStatusType.PENDING
-        self.logger = DpLogger("data-ingress-pipeline")
         self.submitter_email = ""
 
     def process_s3_object_event(self, status_oid: ObjectId) -> bool:
@@ -231,7 +231,7 @@ class ETLProcessor:
             client_options = DocumentDBClientOptions(
                 connection_string=self.job_config.database_connection_string
             )
-        elif host and port:
+        elif host and port and username and password:
             client_options = DocumentDBClientOptions(
                 host=host,
                 port=port,
