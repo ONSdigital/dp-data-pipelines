@@ -7,8 +7,7 @@ The [`ETLProcessor`](../dpypelines/pipeline/etl_processor.py) class encapsulates
     - Email and Slack notifications;
     - Dataset API and Upload Service request handling;
     - State management database operations.
-- Creating an `S3Object` from the given `s3_object_name`.
-<!---TODO link to file_processing.md#S3Object when merged--->
+- Creating an [`S3Object`](file_processing.md#s3object) from the given `s3_object_name`.
 
 To instantiate an `ETLProcessor` object, pass the name of the S3 object to be processed. You must be signed in to AWS via SSO so that the object can be downloaded.
 
@@ -58,8 +57,7 @@ processed_zip_file = etl_processor.get_processed_zip_file(status_oid=status_oid)
 
 This method takes `processed_zip_file` and `status_oid` arguments.
 
-<!---TODO Add links to validation.md when merged--->
-If `SKIP_DATA_UPLOAD` is set to `False`, the metadata contained in `metadata.json` is loaded and validated, and and then uploaded to the Dataset API. The [`handle_successful_metadata_upload()`](#handle_successful_metadata_upload) method is then called to validate and upload the data file(s) to the Upload Service. A value of `True` is returned if all uploads are successful.
+If `SKIP_DATA_UPLOAD` is set to `False`, the metadata contained in `metadata.json` is loaded and [validated](validation.md#manifest-and-metadata-validation), and and then uploaded to the Dataset API. The [`handle_successful_metadata_upload()`](#handle_successful_metadata_upload) method is then called to validate and upload the data file(s) to the Upload Service. A value of `True` is returned if all uploads are successful.
 
 If `SKIP_DATA_UPLOAD` is set to `True`, the metadata is validated, but no upload requests are made, and the method returns `False`.
 
@@ -95,20 +93,17 @@ handle_successful_metadata_upload(
 
 ## `__handle_exception()`
 
-<!---TODO Link to error_handling.md when merged--->
-In the event of an error during pipeline processing, the `__handle_exception()` method is called. This method utilises the `error_handler()` method described in the [error handling] documentation.
+In the event of an error during pipeline processing, the `__handle_exception()` method is called. This method utilises the `error_handler()` method described in the [error handling](error_handling.md) documentation.
 
 ## Service client methods
 
-<!---TODO Add links to API and state mgmt docs when merged--->
 There are three service client methods which handle the creation of client classes:
-- `get_dataset_api_service()`: Handles Dataset API requests and responses.
-- `get_upload_service_client()`: Handles Upload Service requests and responses.
-- `get_db_datasets_service()`: Handles state management database operations.
+- `get_dataset_api_service()`: Handles [Dataset API](external_api_services.md#dataset-api) requests and responses.
+- `get_upload_service_client()`: Handles [Upload Service](external_api_services.md#upload-service) requests and responses.
+- `get_db_datasets_service()`: Handles [state management](state_management.md) database operations.
 
 These clients are configured from job configuration variables. See the [config](config.md) documentation for more information.
 
 ## State management database operations
 
-<!---TODO Add link to state_management.md when merged--->
-Throughout pipeline processing, the state management database is updated with information about pipeline events. See the [state management] documentation for more information.
+Throughout pipeline processing, the state management database is updated with information about pipeline events. See the [state management](state_management.md) documentation for more information.

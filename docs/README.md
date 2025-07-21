@@ -2,7 +2,7 @@
 
 ## Pipeline functionality
 
-[s3_folder_received](s3_folder_received.md)
+[s3_zip_received](s3_zip_received.md)
 
 [Configuration](config.md)
 

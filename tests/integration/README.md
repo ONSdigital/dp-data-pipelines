@@ -33,7 +33,7 @@ We currently mock:
 
 ### Dataset API
 
-The Dataset API is mocked manually in the [MockDatasetAPI class](mocks/mock_dataset_api_client.py).
+The Dataset API is mocked in the [MockAPIResponses class](mocks/mock_api_responses.py).
 
 This uses the Python [responses package](https://github.com/getsentry/responses) to intercept expected HTTP requests by matching:
 
@@ -41,13 +41,19 @@ This uses the Python [responses package](https://github.com/getsentry/responses)
 - The method
 - The request body
 
-The default expected HTTP requests are configured automatically, but can be overridden if needed, e.g. for error testing. For examples of this see [test_dataset_api_errors.py](test_dataset_api_errors.py)
+The default expected HTTP requests are configured automatically, but can be overridden if needed, e.g. for error testing. For examples of this see [test_dataset_api_errors.py](test_dataset_api_errors.py).
 
-### Upload Service Mock
+### Upload Service
 
-The Upload Service is not actually mocked properly; we only mock the package (using Pytest's patch) in the [dpytools](https://github.com/ONSdigital/dp-python-tools) library. We mock the module and set the result of the `upload_new` method to be a success or error, depending on the test.
+The Upload Service is mocked in the [MockAPIResponses class](mocks/mock_api_responses.py).
 
-This should be changed to use the same process as the Dataset API mock when possible.
+This uses the Python [responses package](https://github.com/getsentry/responses) to intercept expected HTTP requests by matching:
+
+- The route
+- The method
+- The request body
+
+The default expected HTTP requests are configured automatically, but can be overridden if needed, e.g. for error testing. For examples of this see [test_upload_service_errors.py](test_upload_service_errors.py).
 
 ### Slack Notifications
 

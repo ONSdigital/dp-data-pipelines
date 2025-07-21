@@ -267,3 +267,5 @@ updated_status = datasets_service.statuses_collection.update_status(
     new_status=models.DatasetStatusType.PROCESSING
 )
 ```
+<!---TODO Add retry lambda information--->
+<!---"The retry Lambda (***TODO Link to retry lambda docs***) is configured to periodically check the database for failed submissions, and automatically rerun the pipeline on these submissions if certain conditions are met (***TODO What conditions***)."--->

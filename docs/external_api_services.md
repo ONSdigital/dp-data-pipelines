@@ -51,6 +51,7 @@ Once the metadata has been loaded into a `Metadata` model, there is some additio
 - The response must contain a `current` object.
 - The `state` field in the `current` object must be set to `published`.
 - The `type` field in the `current` object must be set to `static`.
+<!---TODO Is state/type being checked currently? GetDatasetResponse.can_publish_new_version not being called anywhere--->
 
 Once these requirements have been verified, a `POST` request is sent to the `/datasets/{dataset_id}/editions/{edition_id}/versions` endpoint, with the JSON-serialised metadata in the request body.
 
