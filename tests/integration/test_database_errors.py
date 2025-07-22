@@ -21,14 +21,15 @@ def test_new_dataset_start_succeeds(
 
     result = start(zip_file_object_key)
 
-    all_datasets = [r for r in mock_db_operations.datasets_collection.find({})]
-    created_dataset = all_datasets[-1]
-    created_status = list(created_dataset["statuses"].values())[0]
-
     assert result
+
+    all_datasets = mock_db_operations.get_all_datasets()
+    created_dataset = all_datasets[-1]
     assert len(all_datasets) > len(mock_db_operations.datasets)
-    assert created_status["status"] == "COMPLETED"
-    assert len(created_status["events"]) == 5
+    mock_db_operations.assert_completed_status_new_dataset(
+        dataset_id=created_dataset["dataset_id"], event_count=5
+    )
+
     mock_api_responses.assert_all_requests_made()
 
 
@@ -51,17 +52,15 @@ def test_new_dataset_start_fails(
     with pytest.raises(Exception) as e:
         start(zip_file_object_key)
 
-    all_datasets = [r for r in mock_db_operations.datasets_collection.find({})]
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
-    )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-
-    assert len(all_datasets) > len(mock_db_operations.datasets)
     assert "Required file not found: data.csv" in str(e)
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert status["error_message"] == "Required file not found: data.csv"
+
+    all_datasets = mock_db_operations.get_all_datasets()
+    assert len(all_datasets) > len(mock_db_operations.datasets)
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="Required file not found: data.csv",
+    )
 
     mock_api_responses.assert_get_versions_called(times=1)
     mock_api_responses.assert_get_dataset_called(times=0)
@@ -79,22 +78,19 @@ def test_existing_dataset_start_succeeds(
     mock_db_operations: MockDBOperations,
 ):
     zip_file_object_key, _ = zip_file_object_key_factory(dataset_id="dataset_id_1")
-    datasets_before = [r for r in mock_db_operations.datasets_collection.find({})]
+    datasets_before = mock_db_operations.get_all_datasets()
 
     from dpypelines.s3_zip_received import start
 
     result = start(zip_file_object_key)
 
-    all_datasets = [r for r in mock_db_operations.datasets_collection.find({})]
-    updated_dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": "dataset_id_1"}
-    )
-    created_status = list(updated_dataset["statuses"].values())[-1]  # type:ignore
-
     assert result
+
+    all_datasets = mock_db_operations.get_all_datasets()
     assert len(all_datasets) == len(datasets_before)
-    assert created_status["status"] == "COMPLETED"
-    assert len(created_status["events"]) == 5
+    mock_db_operations.assert_completed_status_existing_dataset(
+        dataset_id="dataset_id_1", event_count=5
+    )
 
     mock_api_responses.assert_all_requests_made()
 
@@ -124,19 +120,15 @@ def test_existing_dataset_start_fails(
     with pytest.raises(Exception) as e:
         start(zip_file_object_key)
 
-    all_datasets = [r for r in mock_db_operations.datasets_collection.find({})]
-    updated_dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": "dataset_id_1"}
-    )
-    created_status = list(updated_dataset["statuses"].values())[-1]  # type:ignore
-
     assert "File format validation failed for data" in str(e)
+
+    all_datasets = mock_db_operations.get_all_datasets()
     assert len(all_datasets) == len(mock_db_operations.datasets)
-    assert created_status["status"] == "FAILED"
-    assert len(created_status["events"]) == 3
-    assert (
-        created_status["error_message"]
-        == "File format validation failed for data.not-a-real-file: Extension not-a-real-file is not supported"
+
+    mock_db_operations.assert_failed_status_existing_dataset(
+        dataset_id="dataset_id_1",
+        event_count=3,
+        err_msg="File format validation failed for data.not-a-real-file: Extension not-a-real-file is not supported",
     )
 
     mock_api_responses.assert_get_versions_called(times=1)

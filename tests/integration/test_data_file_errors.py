@@ -41,13 +41,11 @@ def test_missing_data(
 
     assert DATA_FILE_NAME in str(e)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="Required file not found: data.csv",
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert status["error_message"] == "Required file not found: data.csv"
 
     assert_no_success_and_one_failure(spy_notifier)
 
@@ -89,14 +87,11 @@ def test_empty_data(
         start(zip_file_object_key)
 
     assert "File is empty: data.csv" in str(e)
-
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="File is empty: data.csv",
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert status["error_message"] == "File is empty: data.csv"
 
     assert_no_success_and_one_failure(spy_notifier)
 
@@ -146,15 +141,10 @@ def test_unsupported_filetype(
     assert "File format validation failed for" in str(e.value)
     assert f"Extension {extension} is not supported" in str(e.value)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
-    )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert (
-        status["error_message"]
-        == "File format validation failed for data.not-a-real-file: Extension not-a-real-file is not supported"
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="File format validation failed for data.not-a-real-file: Extension not-a-real-file is not supported",
     )
 
     assert_no_success_and_one_failure(spy_notifier)

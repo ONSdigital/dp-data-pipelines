@@ -458,6 +458,11 @@ class MockAPIResponses:
         self.assert_get_versions_called(times=1)
         self.assert_post_versions_called(times=1)
 
+    def assert_no_dataset_api_requests_made(self):
+        self.assert_get_dataset_called(times=0)
+        self.assert_get_versions_called(times=0)
+        self.assert_post_versions_called(times=0)
+
     def get_requests(
         self, url: Optional[str] = None, method: Optional[str] = None
     ) -> list:

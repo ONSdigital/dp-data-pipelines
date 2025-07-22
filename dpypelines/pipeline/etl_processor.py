@@ -42,7 +42,7 @@ class ETLProcessor:
     def __init__(self, s3_object_name: str):
         self.job_config = get_job_config()
         self.notifier, self.email_client = setup_clients(self.job_config)
-        self.logger = DpLogger("data-ingress-pipeline")
+        self.logger = DpLogger("etl-processor")
         self.dataset_api_service = self.get_dataset_api_service()
         self.upload_service_client = self.get_upload_service_client()
         self.db_datasets_service = self.get_db_datasets_service()
@@ -55,7 +55,9 @@ class ETLProcessor:
             processed_zip_file = self.get_processed_zip_file(status_oid)
             if processed_zip_file is None:
                 return False
-            return self.process_metadata(processed_zip_file, status_oid)
+            return self.process_metadata_and_distributions(
+                processed_zip_file, status_oid
+            )
         except Exception as err:
             self.__handle_exception(
                 s3_object_name=self.s3_object.name,
@@ -99,16 +101,16 @@ class ETLProcessor:
             manifest=manifest,
         )
 
-    def process_metadata(
+    def process_metadata_and_distributions(
         self, processed_zip_file: ProcessedZipFile, status_oid: ObjectId
     ) -> bool:
-        # Validate configuration and files.
+        # Load metadata
         metadata = MetadataLoader(self.dataset_api_service, self.logger).load_metadata(
             processed_zip_file.manifest, processed_zip_file.local_store
         )
 
         if self.job_config.skip_data_upload:
-            # Update datasets and statuses collections with completion event
+            # Update datasets and statuses collections with completion event if data upload skipped
             self.current_status = models.DatasetStatusType.COMPLETED
             updated_dataset = self.db_datasets_service.update_dataset_existing_status(
                 dataset_id=self.s3_object.dataset_id,
@@ -124,40 +126,7 @@ class ETLProcessor:
             )
             return False
 
-        # Upload metadata to Dataset API.
-        validate_and_upload_metadata(
-            metadata=metadata,
-            dataset_api_service=self.dataset_api_service,
-        )
-
-        # Update datasets and statuses collections with upload event (Dataset API)
-        self.current_status = models.DatasetStatusType.PROCESSING
-        updated_dataset = self.db_datasets_service.update_dataset_existing_status(
-            dataset_id=self.s3_object.dataset_id,
-            status_oid=status_oid,
-            event=DatasetEventFactory.create_uploaded_dataset_event(
-                dataset_id=self.s3_object.dataset_id,
-                event_data=DatasetEventDataFactory.create_dataset_event_data(
-                    s3_object_key=self.s3_object.key,
-                    upload_location=models.UploadLocation.DATASET_API,
-                ),
-            ),
-            new_status=self.current_status,
-        )
-        self.logger.info(
-            "Datasets collection updated",
-            data={"dataset_id": updated_dataset.dataset_id},
-        )
-        self.handle_successful_metadata_upload(processed_zip_file, metadata, status_oid)
-        return True
-
-    def handle_successful_metadata_upload(
-        self,
-        processed_zip_file: ProcessedZipFile,
-        metadata: Metadata,
-        status_oid: ObjectId,
-    ):
-        # If metadata successfully submitted, upload data files to the Upload Service
+        # Upload distributions to Upload Service
         files_to_upload = [
             processed_zip_file.decompressed_file_dir / distribution.file
             for distribution in metadata.distributions
@@ -165,7 +134,6 @@ class ETLProcessor:
         upload_files(files_to_upload, self.job_config, self.upload_service_client)
 
         # Update datasets and statuses collections with upload event (Upload Service)
-        self.current_status = models.DatasetStatusType.PROCESSING
         updated_dataset = self.db_datasets_service.update_dataset_existing_status(
             dataset_id=self.s3_object.dataset_id,
             status_oid=status_oid,
@@ -174,6 +142,38 @@ class ETLProcessor:
                 event_data=DatasetEventDataFactory.create_dataset_event_data(
                     s3_object_key=self.s3_object.key,
                     upload_location=models.UploadLocation.UPLOAD_SERVICE,
+                ),
+            ),
+            new_status=self.current_status,
+        )
+        self.logger.info(
+            "Datasets collection updated",
+            data={"dataset_id": updated_dataset.dataset_id},
+        )
+
+        self.handle_successful_data_upload(metadata, status_oid)
+        return True
+
+    def handle_successful_data_upload(
+        self,
+        metadata: Metadata,
+        status_oid: ObjectId,
+    ):
+        # Upload metadata to Dataset API.
+        validate_and_upload_metadata(
+            metadata=metadata,
+            dataset_api_service=self.dataset_api_service,
+        )
+
+        # Update datasets and statuses collections with upload event (Dataset API)
+        updated_dataset = self.db_datasets_service.update_dataset_existing_status(
+            dataset_id=self.s3_object.dataset_id,
+            status_oid=status_oid,
+            event=DatasetEventFactory.create_uploaded_dataset_event(
+                dataset_id=self.s3_object.dataset_id,
+                event_data=DatasetEventDataFactory.create_dataset_event_data(
+                    s3_object_key=self.s3_object.key,
+                    upload_location=models.UploadLocation.DATASET_API,
                 ),
             ),
             new_status=self.current_status,

@@ -41,17 +41,16 @@ def test_upload_service_request_unsupported_filetype(
 
     assert_no_success_and_one_failure(spy_notifier)
 
-    mock_api_responses.assert_all_dataset_api_requests_made()
+    mock_api_responses.assert_get_versions_called(times=1)
+    mock_api_responses.assert_get_dataset_called(times=0)
+    mock_api_responses.assert_post_versions_called(times=0)
     mock_api_responses.assert_upload_service_called(times=0)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="Uploading file type .txt not supported for file",
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 4
-    assert "Uploading file type .txt not supported for file" in status["error_message"]
-
     # Not desired behaviour
     assert_exception_email_sent(str(e.value))
 
@@ -87,17 +86,15 @@ def test_upload_service_returns_404_error(
 
     assert_no_success_and_one_failure(spy_notifier)
 
-    mock_api_responses.assert_all_requests_made()
+    mock_api_responses.assert_get_versions_called(times=1)
+    mock_api_responses.assert_get_dataset_called(times=0)
+    mock_api_responses.assert_post_versions_called(times=0)
+    mock_api_responses.assert_upload_service_called(times=1)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
-    )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 4
-    assert (
-        "404 Client Error: Not Found for url: http://test-upload-service.url/upload-new"
-        in status["error_message"]
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="404 Client Error: Not Found for url: http://test-upload-service.url/upload-new",
     )
 
     assert_exception_email_sent(str(e.value))

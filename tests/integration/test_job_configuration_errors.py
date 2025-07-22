@@ -42,10 +42,7 @@ def test_invalid_environment_variables(
     assert "Input should be a valid boolean" in str(e)
     assert "DISABLE_NOTIFICATIONS" in error_string
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
-    )
-    assert dataset is None
+    mock_db_operations.assert_no_dataset_found(s3_object.dataset_id)
 
     mock_api_responses.assert_no_requests()
 
@@ -79,10 +76,7 @@ def test_missing_secret(
 
     assert "Secrets Manager can't find the specified secret" in str(e)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
-    )
-    assert dataset is None
+    mock_db_operations.assert_no_dataset_found(s3_object.dataset_id)
 
     mock_api_responses.assert_no_requests()
 
@@ -128,10 +122,7 @@ def test_missing_secret_keys(
 
     assert "1 validation error for JobConfig\nDE_SLACK_WEBHOOK" in str(e)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
-    )
-    assert dataset is None
+    mock_db_operations.assert_no_dataset_found(s3_object.dataset_id)
 
     mock_api_responses.assert_no_requests()
 

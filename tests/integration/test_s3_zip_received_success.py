@@ -66,12 +66,9 @@ def test_successful_pipeline_execution_using_existing_metadata(
 
     mock_api_responses.assert_all_requests_made()
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_completed_status_new_dataset(
+        dataset_id=s3_object.dataset_id, event_count=5
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "COMPLETED"
-    assert len(status["events"]) == 5
 
     spy_notifier.assert_called_once()
     spy_notifier_instance = spy_notifier.instances[0]
@@ -120,12 +117,9 @@ def test_successful_pipeline_execution_with_new_metadata(
 
     mock_api_responses.assert_all_requests_made()
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_completed_status_new_dataset(
+        dataset_id=s3_object.dataset_id, event_count=5
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "COMPLETED"
-    assert len(status["events"]) == 5
 
     spy_notifier.assert_called_once()
     spy_notifier_instance = spy_notifier.instances[0]

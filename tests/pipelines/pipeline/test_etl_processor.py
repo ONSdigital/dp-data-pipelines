@@ -318,7 +318,9 @@ def test_process_s3_object_event_validate_metadata_fails(
     etl_processor = ETLProcessor(s3_object_name)
     with pytest.raises(HTTPError) as e:
         etl_processor.process_s3_object_event(status_oid)
-    mock_upload_files.assert_not_called()
+    mock_upload_files.assert_called_once_with(
+        [], mock_job_config.return_value, mock_upload_client
+    )
     assert "HTTPError" in str(e)
 
 
@@ -381,7 +383,7 @@ def test_get_processed_zip_file_success(
 @patch("dpypelines.pipeline.etl_processor.DatasetAPIService")
 @patch("dpypelines.pipeline.etl_processor.setup_clients")
 @patch("dpypelines.pipeline.etl_processor.get_job_config")
-def test_process_metadata_success(
+def test_process_metadata_and_distributions_success(
     mock_job_config,
     mock_setup_clients,
     mock_DatasetAPIService,
@@ -412,7 +414,9 @@ def test_process_metadata_success(
     metadata = Metadata(
         dataset_id="dataset_id_1",
         edition="edition_id",
-        distributions=[],
+        distributions=[
+            Distribution(title="CSV distribution", format=".csv", file="data.csv"),
+        ],
         release_date="release_date",
     )
     mock_MetadataLoader.return_value.load_metadata.return_value = metadata
@@ -432,13 +436,18 @@ def test_process_metadata_success(
 
     status_oid = mongomock.ObjectId()
     etl_processor = ETLProcessor(s3_object_name)
-    metadata_processed = etl_processor.process_metadata(processed_zip_file, status_oid)
+    metadata_processed = etl_processor.process_metadata_and_distributions(
+        processed_zip_file, status_oid
+    )
     mock_MetadataLoader.return_value.load_metadata.assert_called_once_with(
         processed_zip_file.manifest, processed_zip_file.local_store
     )
     mock_validate_metadata.assert_called_once_with(
         metadata=metadata,
         dataset_api_service=mock_dataset_api_service,
+    )
+    mock_upload_client.upload_new.assert_called_once_with(
+        Path("files/data.csv"), "text/csv"
     )
     assert metadata_processed
 
@@ -498,7 +507,7 @@ def test_process_metadata_fails_metadata_loader(
     status_oid = mongomock.ObjectId()
     etl_processor = ETLProcessor(s3_object_name)
     with pytest.raises(ValueError) as e:
-        etl_processor.process_metadata(processed_zip_file, status_oid)
+        etl_processor.process_metadata_and_distributions(processed_zip_file, status_oid)
     assert "File is empty" in str(e)
 
 
@@ -566,11 +575,10 @@ def test_process_metadata_fails_metadata_validation(
     status_oid = mongomock.ObjectId()
     etl_processor = ETLProcessor(s3_object_name)
     with pytest.raises(DatasetNotFoundException) as e:
-        etl_processor.process_metadata(processed_zip_file, status_oid)
+        etl_processor.process_metadata_and_distributions(processed_zip_file, status_oid)
     assert "Dataset dataset_id_1 not found" in str(e)
 
 
-@patch("dpypelines.pipeline.etl_processor.upload_files")
 @patch("dpypelines.pipeline.etl_processor.DocumentDBClient")
 @patch(
     "dpypelines.pipeline.etl_processor.DatasetsServiceFactory.create_db_datasets_service"
@@ -579,15 +587,13 @@ def test_process_metadata_fails_metadata_validation(
 @patch("dpypelines.pipeline.etl_processor.DatasetAPIService")
 @patch("dpypelines.pipeline.etl_processor.setup_clients")
 @patch("dpypelines.pipeline.etl_processor.get_job_config")
-def test_handle_successful_metadata_upload_success(
+def test_handle_successful_data_upload_success(
     mock_job_config,
     mock_setup_clients,
     mock_DatasetAPIService,
     mock_UploadServiceClient,
     mock_DatasetsServiceFactory,
     mock_DocumentDBClient,
-    mock_upload_files,
-    tmp_path,
 ):
     mock_job_config.return_value.skip_data_upload = False
 
@@ -607,16 +613,7 @@ def test_handle_successful_metadata_upload_success(
     mock_DocumentDBClient.connect.return_value = mock_mongo_client
 
     s3_object_name = "bucket/input/dataset_id_1 - test.zip"
-    processed_zip_file = ProcessedZipFile(
-        S3Object(s3_object_name),
-        LocalDirectoryStore(tmp_path),
-        Path("files"),
-        Manifest(
-            metadata_file="metadata.json",
-            submission_contacts=[SubmissionContact(email="test@example.org")],
-            use_previous_metadata=False,
-        ),
-    )
+
     metadata = Metadata(
         dataset_id="dataset_id_1",
         edition="edition_id",
@@ -625,20 +622,18 @@ def test_handle_successful_metadata_upload_success(
         ],
         release_date="release_date",
     )
+
     status_oid = mongomock.ObjectId()
     etl_processor = ETLProcessor(s3_object_name)
-    etl_processor.handle_successful_metadata_upload(
-        processed_zip_file, metadata, status_oid
-    )
-    mock_upload_files.assert_called_once_with(
-        [Path("files/data.csv")], mock_job_config.return_value, mock_upload_client
-    )
+    etl_processor.handle_successful_data_upload(metadata, status_oid)
+
     mock_email_client.send.assert_called_once()
     mock_notifier.success.assert_called_once()
     assert mock_datasets_service.update_dataset_existing_status.call_count == 2
 
 
-@patch("dpypelines.pipeline.etl_processor.upload_files")
+@patch("dpypelines.pipeline.etl_processor.validate_and_upload_metadata")
+@patch("dpypelines.pipeline.etl_processor.MetadataLoader")
 @patch("dpypelines.pipeline.etl_processor.DocumentDBClient")
 @patch(
     "dpypelines.pipeline.etl_processor.DatasetsServiceFactory.create_db_datasets_service"
@@ -647,15 +642,15 @@ def test_handle_successful_metadata_upload_success(
 @patch("dpypelines.pipeline.etl_processor.DatasetAPIService")
 @patch("dpypelines.pipeline.etl_processor.setup_clients")
 @patch("dpypelines.pipeline.etl_processor.get_job_config")
-def test_handle_successful_metadata_upload_fails_upload(
+def test_handle_successful_data_upload_fails_metadata_validation(
     mock_job_config,
     mock_setup_clients,
     mock_DatasetAPIService,
     mock_UploadServiceClient,
     mock_DatasetsServiceFactory,
     mock_DocumentDBClient,
-    mock_upload_files,
-    tmp_path,
+    mock_MetadataLoader,
+    mock_validate_metadata,
 ):
     mock_job_config.return_value.skip_data_upload = False
 
@@ -674,19 +669,19 @@ def test_handle_successful_metadata_upload_fails_upload(
     mock_mongo_client = mongomock.MongoClient()
     mock_DocumentDBClient.connect.return_value = mock_mongo_client
 
-    mock_upload_files.side_effect = HTTPError
+    metadata = Metadata(
+        dataset_id="dataset_id_1",
+        edition="edition_id",
+        distributions=[],
+        release_date="release_date",
+    )
+    mock_MetadataLoader.return_value.load_metadata.return_value = metadata
+    mock_validate_metadata.side_effect = DatasetNotFoundException(
+        "dataset_id_1", "dataset_path"
+    )
 
     s3_object_name = "bucket/input/dataset_id_1 - test.zip"
-    processed_zip_file = ProcessedZipFile(
-        S3Object(s3_object_name),
-        LocalDirectoryStore(tmp_path),
-        Path("files"),
-        Manifest(
-            metadata_file="metadata.json",
-            submission_contacts=[SubmissionContact(email="test@example.org")],
-            use_previous_metadata=False,
-        ),
-    )
+
     metadata = Metadata(
         dataset_id="dataset_id_1",
         edition="edition_id",
@@ -697,8 +692,6 @@ def test_handle_successful_metadata_upload_fails_upload(
     )
     status_oid = mongomock.ObjectId()
     etl_processor = ETLProcessor(s3_object_name)
-    with pytest.raises(HTTPError) as e:
-        etl_processor.handle_successful_metadata_upload(
-            processed_zip_file, metadata, status_oid
-        )
-    assert "HTTPError" in str(e)
+    with pytest.raises(DatasetNotFoundException) as e:
+        etl_processor.handle_successful_data_upload(metadata, status_oid)
+    assert "Dataset dataset_id_1 not found" in str(e)

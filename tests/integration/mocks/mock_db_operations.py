@@ -25,6 +25,45 @@ class MockDBOperations:
         self.datasets_collection.delete_many({})
         self.statuses_collection.delete_many({})
 
+    def get_all_datasets(self):
+        return [r for r in self.datasets_collection.find({})]
+
+    def assert_no_dataset_found(self, dataset_id: str):
+        dataset = self.datasets_collection.find_one({"dataset_id": dataset_id})
+        assert dataset is None
+
+    def assert_completed_status_new_dataset(self, dataset_id: str, event_count: int):
+        dataset = self.datasets_collection.find_one({"dataset_id": dataset_id})
+        status = list(dataset["statuses"].values())[0]  # type:ignore
+        assert status["status"] == "COMPLETED"
+        assert len(status["events"]) == event_count
+
+    def assert_completed_status_existing_dataset(
+        self, dataset_id: str, event_count: int
+    ):
+        dataset = self.datasets_collection.find_one({"dataset_id": dataset_id})
+        status = list(dataset["statuses"].values())[-1]  # type:ignore
+        assert status["status"] == "COMPLETED"
+        assert len(status["events"]) == event_count
+
+    def assert_failed_status_new_dataset(
+        self, dataset_id: str, event_count: int, err_msg: str
+    ):
+        dataset = self.datasets_collection.find_one({"dataset_id": dataset_id})
+        status = list(dataset["statuses"].values())[0]  # type:ignore
+        assert status["status"] == "FAILED"
+        assert len(status["events"]) == event_count
+        assert err_msg in status["error_message"]
+
+    def assert_failed_status_existing_dataset(
+        self, dataset_id: str, event_count: int, err_msg: str
+    ):
+        dataset = self.datasets_collection.find_one({"dataset_id": dataset_id})
+        status = list(dataset["statuses"].values())[-1]  # type:ignore
+        assert status["status"] == "FAILED"
+        assert len(status["events"]) == event_count
+        assert err_msg in status["error_message"]
+
 
 def create_event(
     dataset_id: str,

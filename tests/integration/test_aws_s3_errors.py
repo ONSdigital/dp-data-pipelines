@@ -64,15 +64,10 @@ def test_s3_download_error(
 
     mock_api_responses.assert_no_requests()
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
-    )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert (
-        status["error_message"]
-        == "An error occurred (AccessDenied) when calling the GetObject operation: Access Denied"
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="An error occurred (AccessDenied) when calling the GetObject operation: Access Denied",
     )
 
     # Unexpected behaviour

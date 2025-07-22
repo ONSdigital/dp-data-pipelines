@@ -42,13 +42,11 @@ def test_missing_metadata(
 
     assert METADATA_FILE_NAME in str(e)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="Required file not found: metadata.json",
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert status["error_message"] == "Required file not found: metadata.json"
 
     assert_no_success_and_one_failure(spy_notifier)
     mock_api_responses.assert_no_requests()
@@ -79,13 +77,11 @@ def test_empty_metadata(
     assert "File is empty" in str(e)
     assert METADATA_FILE_NAME in str(e)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg=f"File is empty: {METADATA_FILE_NAME}",
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert status["error_message"] == f"File is empty: {METADATA_FILE_NAME}"
 
     assert_no_success_and_one_failure(spy_notifier)
     mock_api_responses.assert_no_requests()
@@ -136,15 +132,10 @@ def test_metadata_fails_when_missing_required_field(
 
     assert field_to_remove in str(e.value)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
-    )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert (
-        f"1 validation error for MinimalMetadata\n{field_to_remove}"
-        in status["error_message"]
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg=f"1 validation error for MinimalMetadata\n{field_to_remove}",
     )
 
     assert_no_success_and_one_failure(spy_notifier)
@@ -194,12 +185,9 @@ def test_metadata_succeeds_when_missing_optional_field(
     result = start(zip_file_object_key)
     assert result
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_completed_status_new_dataset(
+        dataset_id=s3_object.dataset_id, event_count=5
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "COMPLETED"
-    assert len(status["events"]) == 5
 
     assert len(spy_notifier.instances) == 1
     spy_notifier.instances[0].success.assert_called_once()
@@ -233,15 +221,10 @@ def test_metadata_fails_when_invalid_json(
     assert "not valid JSON" in str(e.value), str(e.value)
     assert "metadata.json" in str(e.value), str(e.value)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
-    )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert (
-        "not valid JSON: Expecting value: line 1 column 1 (char 0)"
-        in status["error_message"]
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="not valid JSON: Expecting value: line 1 column 1 (char 0)",
     )
 
     assert_no_success_and_one_failure(spy_notifier)

@@ -40,12 +40,9 @@ def test_slack_notification_error(
 
     mock_api_responses.assert_all_requests_made()
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_completed_status_new_dataset(
+        dataset_id=s3_object.dataset_id, event_count=5
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "COMPLETED"
-    assert len(status["events"]) == 5
 
     assert len(spy_notifier.call_args_list) == 1
     spy_notifier_instance = spy_notifier.instances[0]

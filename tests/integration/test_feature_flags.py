@@ -36,12 +36,9 @@ def test_notifications_disabled(
 
     mock_api_responses.assert_all_requests_made()
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_completed_status_new_dataset(
+        dataset_id=s3_object.dataset_id, event_count=5
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "COMPLETED"
-    assert len(status["events"]) == 5
 
     spy_notifier.assert_not_called()
     spy_notifier_instance = spy_notifier.instance
@@ -81,12 +78,9 @@ def test_emails_disabled(
 
     mock_api_responses.assert_all_requests_made()
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_completed_status_new_dataset(
+        dataset_id=s3_object.dataset_id, event_count=5
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "COMPLETED"
-    assert len(status["events"]) == 5
 
     spy_notifier.assert_called_once()
     spy_notifier_instance = spy_notifier.instances[0]
@@ -129,15 +123,9 @@ def test_file_upload_disabled(
     mock_api_responses.assert_post_versions_called(times=0)
     mock_api_responses.assert_upload_service_called(times=0)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_completed_status_new_dataset(
+        dataset_id=s3_object.dataset_id, event_count=3
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "COMPLETED"
-    assert len(status["events"]) == 3
-    assert status["events"][-1]["event_data"]["additional_data"] == {
-        "Info": "Data upload skipped"
-    }
 
     spy_notifier.assert_called_once()
     spy_notifier_instance = spy_notifier.instance

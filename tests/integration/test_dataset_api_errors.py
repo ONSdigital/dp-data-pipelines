@@ -38,13 +38,11 @@ def test_get_versions_404_error(
 
     assert "GET failed with status code: 404" in str(e)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="GET failed with status code: 404",
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert status["error_message"] == "GET failed with status code: 404"
 
     assert_no_success_and_one_failure(spy_notifier)
 
@@ -90,18 +88,15 @@ def test_post_json_error(
 
     assert "POST failed with status code: 500" in str(e.value)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=4,
+        err_msg="POST failed with status code: 500",
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert status["error_message"] == "POST failed with status code: 500"
 
     assert_no_success_and_one_failure(spy_notifier)
 
-    mock_api_responses.assert_all_dataset_api_requests_made()
-    mock_api_responses.assert_upload_service_called(times=0)
+    mock_api_responses.assert_all_requests_made()
 
     assert_email_sent(
         [

@@ -41,15 +41,10 @@ def test_missing_manifest(
 
     assert "Failed to retrieve manifest from the local directory store" in str(e.value)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
-    )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert (
-        status["error_message"]
-        == "Failed to retrieve manifest from the local directory store."
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="Failed to retrieve manifest from the local directory store.",
     )
 
     assert_no_success_and_one_failure(spy_notifier)
@@ -84,13 +79,11 @@ def test_empty_manifest(
     with pytest.raises(JSONDecodeError):
         start(zip_file_object_key)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="Expecting value: line 1 column 1 (char 0)",
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert status["error_message"] == "Expecting value: line 1 column 1 (char 0)"
     assert_no_success_and_one_failure(spy_notifier)
 
     mock_api_responses.assert_no_requests()
@@ -136,15 +129,10 @@ def test_manifest_missing_fields(
 
     assert field_to_remove in str(e.value)
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
-    )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert (
-        f"Manifest schema validation failed: \nException: Invalid manifest\nException details: '{field_to_remove}' is a required property"
-        in status["error_message"]
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg=f"Manifest schema validation failed: \nException: Invalid manifest\nException details: '{field_to_remove}' is a required property",
     )
 
     assert_no_success_and_one_failure(spy_notifier)
@@ -177,14 +165,11 @@ def test_manifest_fails_when_invalid_json(
     with pytest.raises(JSONDecodeError):
         start(zip_file_object_key)
 
-    #    Check database operations
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
+    mock_db_operations.assert_failed_status_new_dataset(
+        dataset_id=s3_object.dataset_id,
+        event_count=3,
+        err_msg="Expecting value: line 1 column 1 (char 0)",
     )
-    status = list(dataset["statuses"].values())[0]  # type:ignore
-    assert status["status"] == "FAILED"
-    assert len(status["events"]) == 3
-    assert status["error_message"] == "Expecting value: line 1 column 1 (char 0)"
 
     assert_no_success_and_one_failure(spy_notifier)
 

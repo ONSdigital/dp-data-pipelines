@@ -61,11 +61,7 @@ def test_secretsmanager_error(
 
     mock_api_responses.assert_no_requests()
 
-    dataset = mock_db_operations.datasets_collection.find_one(
-        {"dataset_id": s3_object.dataset_id}
-    )
-    # Pipeline failed before first database operation
-    assert dataset is None
+    mock_db_operations.assert_no_dataset_found(dataset_id=s3_object.dataset_id)
 
     # Is this what it should be?
     spy_notifier.assert_not_called()
