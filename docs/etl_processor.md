@@ -24,7 +24,7 @@ The following methods are available.
 
 ## `process_s3_object_event()`
 
-This method takes a `status_oid` argument, which is the `ObjectId` of the `Status` document to be updated with pipeline events during processing. It calls the [`get_processed_zip_file()`](#get_processed_zip_file) method to get a `ProcessedZipFile` object, and then calls [`process_metadata()`](#process_metadata) on this object.
+This method takes a `status_oid` argument, which is the `ObjectId` of the `Status` document to be updated with pipeline events during processing. It calls the [`get_processed_zip_file()`](#get_processed_zip_file) method to get a `ProcessedZipFile` object, and then calls [`process_metadata_and_distributions()`](#process_metadata_and_distributions) on this object.
 
 It returns a value of `True` if the processing is successful (including uploading the metadata to the Dataset API, and uploading the data file(s) to the Upload Service). If `SKIP_DATA_UPLOAD` is set to `True`, but all files are successfully validated, it returns `False`. In the event of a processing error, the [`__handle_exception()`](#__handle_exception) method is called.
 
@@ -54,29 +54,29 @@ processed_zip_file = etl_processor.get_processed_zip_file(status_oid=status_oid)
 #)
 ```
 
-## `process_metadata()`
+## `process_metadata_and_distributions()`
 
 This method takes `processed_zip_file` and `status_oid` arguments.
 
 <!---TODO Add links to validation.md when merged--->
-If `SKIP_DATA_UPLOAD` is set to `False`, the metadata contained in `metadata.json` is loaded and validated, and and then uploaded to the Dataset API. The [`handle_successful_metadata_upload()`](#handle_successful_metadata_upload) method is then called to validate and upload the data file(s) to the Upload Service. A value of `True` is returned if all uploads are successful.
+If `SKIP_DATA_UPLOAD` is set to `False`, the metadata contained in `metadata.json` is loaded and validated, and  the distributions listed in the metadata are uploaded to the Upload Service. The [`handle_successful_data_upload()`](#handle_successful_data_upload) method is then called to validate and upload the metadata to the Dataset API. A value of `True` is returned if all uploads are successful.
 
 If `SKIP_DATA_UPLOAD` is set to `True`, the metadata is validated, but no upload requests are made, and the method returns `False`.
 
 In the event of a pipeline error, the [`__handle_exception()`](#__handle_exception) method is called.
 
 ```python
-metadata_processed = etl_processor.process_metadata(
+metadata_processed = etl_processor.process_metadata_and_distributions(
     processed_zip_file=processed_zip_file,
     status_oid=status_oid
 )
 ```
 
-## `handle_successful_metadata_upload()`
+## `handle_successful_data_upload()`
 
-This method takes `processed_zip_file`, `metadata` and `status_oid` arguments.
+This method takes `metadata` and `status_oid` arguments.
 
-The names of the files to be uploaded are extracted from `metadata.distributions`. These files are then uploaded to the Upload Service. If the upload is successful, a confirmation email is sent to the data submitter, and a success notification is sent to the Slack channel.
+The metadata is submitted to the Dataset API as a `POST` request. If the request is successful, a confirmation email is sent to the data submitter, and a success notification is sent to the Slack channel.
 
 ```python
 metadata = MetadataLoader(
@@ -87,7 +87,6 @@ metadata = MetadataLoader(
 )
 
 handle_successful_metadata_upload(
-    processed_zip_file=processed_zip_file,
     metadata=metadata,
     status_oid=status_oid
 )
