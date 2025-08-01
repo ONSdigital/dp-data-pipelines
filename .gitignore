@@ -6,4 +6,5 @@ features/fixtures/data/
 data
 .env
 .venv*
+
 dpypelines/pipeline/db/eu-west-2-bundle.pem

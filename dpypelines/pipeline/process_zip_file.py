@@ -22,7 +22,7 @@ class S3Object:
         self.filename = parts[-1]
         self.extension = parts[-1].split(".")[-1]
         self.folder = "/".join(parts[1:-1])
-        if "-" in parts[-1]:
+        if " - " in parts[-1]:
             self.dataset_id = parts[-1].split(" - ")[0]
         else:
             self.dataset_id = parts[-1].split(".")[0]

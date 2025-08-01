@@ -2,7 +2,7 @@
 
 The `s3_zip_received` pipeline is triggered upon receipt of a `.zip` file into an AWS S3 bucket, which calls the `s3_zip_received.start()` function, with the S3 object name of the `.zip` file as an argument.
 
-Pipeline operation is configured by a `manifest.json` file which **must** be included in the submitted `.zip` file. See the [pipeline process requirements](pipeline-process-requirements.md) documentation for more information about manifest requirements.
+Pipeline operation is configured by a `manifest.json` file which **must** be included in the submitted `.zip` file. See the [file specifications](file_specifications.md#manifest-and-metadata-files) documentation for more information about manifest requirements.
 
 ## `s3_zip_received.start()` function
 

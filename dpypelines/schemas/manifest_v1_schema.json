@@ -20,10 +20,14 @@
           ]
         }
       ]
+    },
+    "use_previous_metadata": {
+      "type": "boolean"
     }
   },
   "required": [
     "metadata_file",
-    "submission_contacts"
+    "submission_contacts",
+    "use_previous_metadata"
   ]
 }

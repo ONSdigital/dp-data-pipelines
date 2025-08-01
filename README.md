@@ -2,65 +2,74 @@
 
 Python scripts and tooling for automated website data ingress pipelines.
 
-## Installation
+## Developer setup
 
-This repository is provided as an installable Python package. To install it, open your terminal and enter the following command:
+### AWS
 
-```bash
-pip install git+https://github.com/ONSdigital/dp-data-pipelines.git
-```
-
-## Usage
-
-The `dp-data-pipelines` package provides multiple data pipelines. Details of these can be found in the [`dpypelines` README](./dpypelines/README.md).
-
-## Setup
-
-Before you start using `dp-data-pipelines`, you need to configure your environment by logging in to AWS SSO (Amazon Web Services Single Sign On). This is necessary for pipeline functionality to access S3 buckets and process input files. To log in, open your terminal and enter the following command:
+`dp-data-pipelines` relies on a number of AWS services to operate. You will need to log in to AWS via SSO (Single Sign On) to access S3 and Secrets Manager. To log in via AWS SSO, open your terminal and enter the following command:
 
 ```bash
 aws sso login --profile <AWS_PROFILE>
 ```
 
-## Development
+### Python
 
-To ensure code quality, all Python code should follow `black` code formatting standards, with imports sorted according to `isort`. Code should also be linted according to the `ruff` linter. When raising a Pull Request, a GitHub Action will check that these tools have been run, as well as checking that all unit and acceptance tests pass. If any of these requirements are not met, the Action will fail.
+We recommend using [pyenv](https://github.com/pyenv/pyenv) for Python version management. `dp-data-pipelines` uses Python 3.13.
 
-For convenience, a Makefile is provided to make it simpler to run these utilities. The table below describes the available commands. To run any of these commands, open your terminal and enter the relevant command - for example, to run `black` and `isort`:
+### Poetry
+
+We use [`poetry`](https://python-poetry.org/) to manage project dependencies. If you do not have `poetry` installed, you can install it by running `pip install poetry`. To install `dp-data-pipelines` dependencies, run `poetry install` from the root directory of the cloned repository.
+
+### Environment configuration
+
+Pipeline environment configuration is managed using AWS Secrets Manager and environment variables. See the [config](docs/config.md) documentation for further details. An example [`.env`](.env.example) file is also available. To use this, save a copy as `.env` in the root directory, and replace the values as necessary.
+
+### Lambdas
+
+The ingest pipeline depends on two AWS Lambda functions, which can be found in the [lambdas/][lambdas/] folder. View the [README](lambdas/README.md) for more information about these functions.
+
+### Code quality
+
+Repository conventions can be found in the [Conventions](CONVENTIONS.md) documentation.
+
+<!---TODO reinstall isort?--->
+To ensure code quality, all Python code should follow `ruff` code formatting standards. Code should also be linted according to the `ruff` linter. When raising a Pull Request, a GitHub Action will check that all code meets these quality standards, as well as checking that all unit and integration tests pass. If any of these requirements are not met, the Action will fail.
+
+For convenience, a Makefile is provided to make it simpler to run these utilities. The table below describes the available commands. To run any of these commands, open your terminal and enter the relevant command - for example, to run `ruff format`:
 
 ```bash
 make fmt
 ```
 
-| Command        | Description                                                                               |
-|:---------------|:------------------------------------------------------------------------------------------|
-| `make fmt`     | Runs `black` and `isort` on all Python files in the `dpypelines` and `tests` directories. |
-| `make lint`    | Runs `ruff` on all Python files in the `dpypelines` and `tests` directories.              |
-| `make test`    | Runs all unit tests.                                                                      |
-| `make feature` | Runs all acceptance tests.                                                                |
+| Command                  | Description                                                    |
+|:-------------------------|:---------------------------------------------------------------|
+| `make fmt`               | Runs `ruff format` on all Python files in the repository.      |
+| `make lint`              | Runs `ruff check --fix` on all Python files in the repository. |
+| `make test`              | Runs all unit and integration tests.                           |
+| `make tests-integration` | Runs all integration tests.                                    |
+| `make tests-unit`        | Runs all unit tests.                                           |
+| `make deploy`            | Builds `dpypelines` wheel and uploads to AWS S3 bucket.        |
+| `make symlink`           | Switches to local `dpytools` version.                          |
+| `make unlink`            | Switches to production `dpytools` version.                     |
 
-## Configuration
+### Docker
 
-The following environment variables are required for certain pipeline functionality to work correctly. To set environment variables, open your terminal and enter the following command:
+Docker is required for running integration tests. See the [Integration tests README](tests/integration/README.md#documentdbmongodb) for more information.
+
+<!---TODO--->
+<!---### Pre-commit--->
+
+## Installation as a third-party package
+
+This repository is also provided as an installable Python package. To install it, open your terminal and enter the following command:
 
 ```bash
-export <ENVIRONMENT_VARIABLE_NAME>=<environment_variable_value>
+pip install git+https://github.com/ONSdigital/dp-data-pipelines.git
 ```
-
-| Environment variable  | Default | Description                                    | Usage                                                            |
-|:----------------------|:-------:|:-----------------------------------------------|:-----------------------------------------------------------------|
-| DE_SLACK_WEBHOOK      |  None   | Webhook for the Data Engineering Slack channel | Set **either** `DE_SLACK_WEBHOOK` **or** `DISABLE_NOTIFICATIONS` |
-| DISABLE_NOTIFICATIONS |  False  | Toggle Slack notifications on or off           | Set **either** `DE_SLACK_WEBHOOK` **or** `DISABLE_NOTIFICATIONS` |
-| AWS_PROFILE              |  None   | The AWS environment                                     |
-| SKIP_DATA_UPLOAD         |  False  | Toggle upload functionality on or off                   | Set **either** `SKIP_DATA_UPLOAD` **or** `UPLOAD_SERVICE_URL` **and** `DATASET_API_URL` **and** `SERVICE_TOKEN_FOR_UPLOAD` |
-| UPLOAD_SERVICE_URL       |  None   | The URL of the Upload Service                           | Set **either** `SKIP_DATA_UPLOAD` **or** `UPLOAD_SERVICE_URL` **and** `SERVICE_TOKEN_FOR_UPLOAD` |
-| DATASET_API_URL          |  None   | The URL of the Dataset API                              | Set **either** `SKIP_DATA_UPLOAD` **or** `DATASET_API_URL` **and** `SERVICE_TOKEN_FOR_UPLOAD` |
-| SERVICE_TOKEN_FOR_UPLOAD |  None   | The service token required to access the Upload Service and Dataset API | Set **either** `SKIP_DATA_UPLOAD` **or** `UPLOAD_SERVICE_URL` **and** `DATASET_API_URL` **and** `SERVICE_TOKEN_FOR_UPLOAD` |
-
 
 ## Additional documentation
 
-Further documentation can be found in our [documentation folder](/docs/)
+Further documentation can be found in our [documentation folder](/docs/).
 
 Licence
 -------

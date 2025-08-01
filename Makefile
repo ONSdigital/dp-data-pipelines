@@ -31,13 +31,13 @@ deploy:
 	./buildpackage.sh
 
 symlink:
-	# Switch to production version
+	# Switch to local dpytools version
 	sed -i '' 's|${remote_tools_config}|${local_tools_config}|' pyproject.toml
 	poetry lock
 	poetry install
 
 unlink:
-	# Switch to production version
+	# Switch to production dpytools version
 	sed -i '' 's|${local_tools_config}|${remote_tools_config}|' pyproject.toml
 	poetry lock
 	poetry install

@@ -102,9 +102,7 @@ def test_successful_pipeline_execution_with_new_metadata(
     ).model_dump()
 
     zip_file_object_key, _ = zip_file_object_key_factory(
-        manifest_config=FileGenerationConfig(
-            missing_field_keys=["use_previous_metadata"]
-        ),
+        manifest_config=FileGenerationConfig(),
         data_file_name=data_file_name,
     )
     s3_object = S3Object(zip_file_object_key)
