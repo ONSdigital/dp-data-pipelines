@@ -2,33 +2,37 @@
 
 Python scripts and tooling for automated website data ingress pipelines.
 
-## Installation
+## Developer setup
 
-This repository is provided as an installable Python package. To install it, open your terminal and enter the following command:
+### AWS
 
-```bash
-pip install git+https://github.com/ONSdigital/dp-data-pipelines.git
-```
-
-## Setup
-
-Before you start using `dp-data-pipelines`, you need to configure your environment by logging in to AWS SSO (Single Sign On). This is necessary for pipeline functionality to access S3 buckets and process input files. To log in, open your terminal and enter the following command:
+`dp-data-pipelines` relies on a number of AWS services to operate. You will need to log in to AWS via SSO (Single Sign On) to access S3 and Secrets Manager. To log in via AWS SSO, open your terminal and enter the following command:
 
 ```bash
 aws sso login --profile <AWS_PROFILE>
 ```
 
-## Python
+### Python
 
 We recommend using [pyenv](https://github.com/pyenv/pyenv) for Python version management. `dp-data-pipelines` uses Python 3.13.
 
-## Poetry
+### Poetry
 
-We use [`poetry`](https://python-poetry.org/) to manage project dependencies. If you do not have `poetry` installed, you can install it by running `pip install poetry`. To install `dp-data-pipelines` dependencies, run `poetry install` from the root directory.
+We use [`poetry`](https://python-poetry.org/) to manage project dependencies. If you do not have `poetry` installed, you can install it by running `pip install poetry`. To install `dp-data-pipelines` dependencies, run `poetry install` from the root directory of the cloned repository.
 
-## Development
+### Environment configuration
 
-***TODO reinstall isort?***
+Pipeline environment configuration is managed using AWS Secrets Manager and environment variables. See the [config](docs/config.md) documentation for further details. An example [`.env`](.env.example) file is also available. To use this, save a copy as `.env` in the root directory, and replace the values as necessary.
+
+### Lambdas
+
+The ingest pipeline depends on two AWS Lambda functions, which can be found in the [lambdas/][lambdas/] folder. View the [README](lambdas/README.md) for more information about these functions.
+
+### Code quality
+
+Repository conventions can be found in the [Conventions](CONVENTIONS.md) documentation.
+
+<!---TODO reinstall isort?--->
 To ensure code quality, all Python code should follow `ruff` code formatting standards. Code should also be linted according to the `ruff` linter. When raising a Pull Request, a GitHub Action will check that all code meets these quality standards, as well as checking that all unit and integration tests pass. If any of these requirements are not met, the Action will fail.
 
 For convenience, a Makefile is provided to make it simpler to run these utilities. The table below describes the available commands. To run any of these commands, open your terminal and enter the relevant command - for example, to run `ruff format`:
@@ -48,25 +52,24 @@ make fmt
 | `make symlink`           | Switches to local `dpytools` version.                          |
 | `make unlink`            | Switches to production `dpytools` version.                     |
 
-## Configuration
+### Docker
 
-Configuration is managed using AWS Secrets Manager and environment variables. See the [config documentation](docs/config.md) for further details.
+Docker is required for running integration tests. See the [Integration tests README](tests/integration/README.md#documentdbmongodb) for more information.
 
-## Lambdas
+<!---TODO--->
+<!---### Pre-commit--->
 
-The repository is currently used by two separate Lambdas, which are in the [lambdas/][lambdas/] folder. View the [README](lambdas/README.md) for further information about them (their purpose, what they do, etc.).
+## Installation as a third-party package
 
-## Docker/Podman
+This repository is also provided as an installable Python package. To install it, open your terminal and enter the following command:
 
-***TODO Docker for integration tests***
-
-# Pre-commit
-
-***TODO is pre-commit configured properly?***
+```bash
+pip install git+https://github.com/ONSdigital/dp-data-pipelines.git
+```
 
 ## Additional documentation
 
-Further documentation can be found in our [documentation folder](/docs/)
+Further documentation can be found in our [documentation folder](/docs/).
 
 Licence
 -------

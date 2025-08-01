@@ -1,14 +1,22 @@
-# Documentation
+# Pipeline documentation
 
-## Pipeline functionality
+The pages in this section document the pipeline code, with guidance on resolving pipeline failures (see [Troubleshooting](troubleshooting.md)).
 
 [s3_zip_received](s3_zip_received.md)
 
 [ETLProcessor](etl_processor.md)
 
-[Configuration](config.md)
+[Lambdas](../lambdas/README.md)
+
+[Troubleshooting](troubleshooting.md)
+
+## dpypelines documentation
+
+The pages in this section document the underlying classes, methods and functions that are implemented in the pipeline code.
 
 [dp-python-tools](dp_python_tools.md)
+
+[Configuration](config.md)
 
 [Error handling](error_handling.md)
 
@@ -20,7 +28,7 @@
 
 [Notifications](notifications.md) (Slack and email)
 
-[State management](state_management.md)
+[State management](state_management.md) (DocumentDB database for tracking pipeline operation)
 
 [Testing](testing.md)
 
@@ -35,7 +43,3 @@
 ## Schema definitions
 
 [Manifest and metadata schemas](schemas/openapi-specification.yaml)
-
-## Coding practices
-
-[Conventions](./CONVENTIONS.md)

@@ -1,6 +1,6 @@
 # Validation
 
-All files submitted to the pipleine must be validated to minimise the potential for pipeline failures. There are different validation processes for [JSON](#manifest-and-metadata-validation) and [data files](#data-file-validation), which are described in the sections below.
+All files submitted to the pipeline must be validated to minimise the potential for pipeline failures. There are different validation processes for [JSON](#manifest-and-metadata-validation) and [data files](#data-file-validation), which are described in the sections below.
 
 ## Manifest and Metadata validation
 
@@ -15,14 +15,14 @@ Validation and loading of the manifest is handled in [`validate_pipeline.py`](..
 Validation of data files is handled by the file validator classes in the [`validation/`](../dpypelines/pipeline/validation/) directory. These classes extend the `FileFormatValidator` base class at [`file_format_validator.py`](../dpypelines/pipeline/validation/file_format_validator.py).
 
 File validators are provided for the following file types:
-- csv
-- excel
-- json
-- sqlite
-- txt (plain text)
-- xml
+- CSV
+- Excel (.xls and .xlsx)
+- JSON
+- SQLite
+- Text (plain text)
+- XML
 
-Validation is performed on all files listed in the `distributions` array of `metadata.json`. The following data file properties are validated:
+Validation is performed on all files listed in the `distributions` array in `metadata.json`. The following data file properties are validated:
 - That the file exists;
 - That the file is not empty;
 - That the file contents are consistent with the file extension.
