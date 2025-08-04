@@ -33,9 +33,10 @@ def upload_files(
             err_msg = f"Uploading file type {Path(required_file_path).suffix} not supported for file: {required_file_path}."
             raise NotImplementedError(err_msg)
 
-        timestamp = datetime.now()
-        identifier = f"{timestamp.strftime('%d-%m-%yT%H-%M-%S')}-{uuid4()}-{required_file_path.name.replace('.', '-')}"
-        # identifier = f"{timestamp}-{required_file_path.name.replace('.', '-')}"
+        timestamp = datetime.now().strftime("%d-%m-%yT%H-%M-%S")
+        identifier = (
+            f"{timestamp}-{uuid4()}-{required_file_path.name.replace('.', '-')}"
+        )
         upload_path = f"datasets/{identifier}"
 
         upload_service_response = upload_client.upload_new(
