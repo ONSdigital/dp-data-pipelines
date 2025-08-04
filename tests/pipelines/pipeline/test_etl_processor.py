@@ -1,5 +1,7 @@
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 import mongomock
 from dpytools.stores.directory.local import LocalDirectoryStore
@@ -373,6 +375,8 @@ def test_get_processed_zip_file_success(
     assert processed_zip_file.s3_object.name == s3_object_name
 
 
+@patch("dpypelines.pipeline.api.upload.datetime")
+@patch("dpypelines.pipeline.api.upload.uuid4")
 @patch("dpypelines.pipeline.etl_processor.validate_and_upload_metadata")
 @patch("dpypelines.pipeline.etl_processor.MetadataLoader")
 @patch("dpypelines.pipeline.etl_processor.DocumentDBClient")
@@ -392,6 +396,8 @@ def test_process_metadata_and_distributions_success(
     mock_DocumentDBClient,
     mock_MetadataLoader,
     mock_validate_metadata,
+    mock_uuid,
+    mock_timestamp,
     tmp_path,
 ):
     mock_job_config.return_value.skip_data_upload = False
@@ -434,6 +440,13 @@ def test_process_metadata_and_distributions_success(
         ),
     )
 
+    mock_uuid.return_value = uuid4()
+    mock_timestamp.now.return_value.strftime.return_value = datetime.now().strftime(
+        "%d-%m-%yT%H-%M-%S"
+    )
+    identifier = f"{mock_timestamp.now.return_value.strftime.return_value}-{mock_uuid.return_value}-data-csv"
+    upload_path = f"datasets/{identifier}"
+
     status_oid = mongomock.ObjectId()
     etl_processor = ETLProcessor(s3_object_name)
     metadata_processed = etl_processor.process_metadata_and_distributions(
@@ -447,7 +460,10 @@ def test_process_metadata_and_distributions_success(
         dataset_api_service=mock_dataset_api_service,
     )
     mock_upload_client.upload_new.assert_called_once_with(
-        Path("files/data.csv"), "text/csv"
+        file_path=Path("files/data.csv"),
+        mimetype="text/csv",
+        upload_path=upload_path,
+        identifier=identifier,
     )
     assert metadata_processed
 

@@ -122,7 +122,6 @@ class ApiUrlBuilder:
             "LicenceUrl": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
             "isPublishable": "False",
             "Title": f"{filename.split('.')[0]}",
-            "SizeInBytes": file_size,
             "Type": mimetype,
             "Licence": "Open Government Licence v3.0",
             "Path": f"datasets/{identifier}",
