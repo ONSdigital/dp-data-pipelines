@@ -26,7 +26,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Metadata"
+              oneOf:
+                -  $ref: "#/components/schemas/NewMetadata"
+                -  $ref: "#/components/schemas/MetadataUpdates"
+
 components:
   schemas:
     UsageNote:
@@ -138,13 +141,32 @@ components:
           minLength: 1
           items:
             $ref: "#/components/schemas/Distribution"
-      required:
-        - dataset_id
-        - edition
-        - edition_title
-        - release_date
-        - distributions
+
+    NewMetadata:
+      description: |
+        Metadata specification where _all_ the metadata is being populated from the metadata file. 
+        I.e. where we are _not_ using the metadata from the previous version.
+      allOf:
+        - $ref: "#/components/schemas/Metadata"
+        - required:
+          - dataset_id
+          - edition
+          - edition_title
+          - release_date
+          - distributions
   
+    MetadataUpdates:
+      description: |
+        Metadata specification where the metadata from the _previous version_ is to be used for the new version, but values from _this metadata_ will override existing values.
+
+        `dataset_id` and `edition` are still required fields, as they will be needed to retrieve the metadata information from the Dataset API.
+      allOf:
+        - $ref: "#/components/schemas/Metadata"
+        - required:
+          - dataset_id
+          - edition
+          - release_date
+          - distributions
 
     Submitter:
       description: An individual responsible for submitting the dataset who should be sent processing and failure notifications from the import pipeline.
@@ -176,6 +198,16 @@ components:
             the manifest currently provides. An alternative approach could be to combine the two files.
           example: metadata.json
           pattern: "^[0-9a-zA-Z_-]+.json$"
+        use_previous_metadata:
+          type: boolean
+          description: |
+            Whether to use metadata from the previous Dataset version or not.
+
+            If false or omitted then all metadata will come from the file specified by `metadata_file`
+
+            If true, then metadata from the previous version will be retrieved from the Dataset API and used for the new version.
+              - The metadata from the previous version will be used for the new version
+              - _Any_ fields supplied in the specified `metadata_file` file will be used as overrides for the previous metadata.
         submission_contacts:
           description: The list of individuals who submitted the dataset. This is the list of individuals to that will receive processing and failure notifications for the dataset import.
           type: array
@@ -183,5 +215,6 @@ components:
           items:
             $ref: "#/components/schemas/Submitter"
       required:
-        - metadata_file
         - submission_contacts
+        - use_previous_metadata
+        - metadata_file
